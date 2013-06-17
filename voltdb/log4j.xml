@@ -36,7 +36,23 @@
         </layout>
     </appender>
 
+    <!-- logger name="ADHOCPLANNERTHREAD">
+        <level value="INFO"/>
+    </logger -->
+
     <!-- logger name="AUTH">
+        <level value="INFO"/>
+    </logger -->
+
+    <!-- logger name="COMPILER">
+        <level value="INFO"/>
+    </logger -->
+
+    <!-- logger name="EXPORT">
+        <level value="INFO"/>
+    </logger -->
+
+    <!-- logger name="GC">
         <level value="INFO"/>
     </logger -->
 
@@ -48,34 +64,6 @@
         <level value="INFO"/>
     </logger -->
 
-    <!-- logger name="SQL">
-        <level value="INFO"/>
-    </logger -->
-
-    <!-- logger name="COMPILER">
-        <level value="INFO"/>
-    </logger -->
-
-    <!-- logger name="ADHOCPLANNERTHREAD">
-        <level value="INFO"/>
-    </logger -->
-
-    <!-- logger name="EXPORT">
-        <level value="INFO"/>
-    </logger -->
-
-    <!-- logger name="IV2TRACE">
-        <level value="TRACE"/>
-    </logger -->
-
-    <!-- logger name="IV2QUEUETRACE">
-        <level value="TRACE"/>
-    </logger -->
-
-    <!-- logger name="TM">
-        <level value="INFO"/>
-    </logger -->
-
     <!-- logger name="REJOIN">
         <level value="INFO"/>
     </logger -->
@@ -84,7 +72,11 @@
         <level value="INFO"/>
     </logger -->
 
-    <!-- logger name="GC">
+    <!-- logger name="SQL">
+        <level value="INFO"/>
+    </logger -->
+
+    <!-- logger name="TM">
         <level value="INFO"/>
     </logger -->
 
