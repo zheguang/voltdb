@@ -381,7 +381,7 @@ public class ProcedureRunner {
                     }
                 }
             } catch (Exception e) {
-                log.warn("Unable to check partitioning of transaction " + txnState.spHandle, e);
+                log.warn("Unable to check partitioning of transaction " + txnState.m_spHandle, e);
             }
             return false;
         } else {
@@ -1219,7 +1219,7 @@ public class ProcedureRunner {
            fragmentIds,
            null,
            params,
-           m_txnState.spHandle,
+           m_txnState.m_spHandle,
            m_txnState.uniqueId,
            m_catProc.getReadonly());
     }
