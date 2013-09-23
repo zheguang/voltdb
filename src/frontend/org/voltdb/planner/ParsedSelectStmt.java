@@ -41,10 +41,12 @@ import org.voltdb.expressions.AbstractExpression;
 import org.voltdb.expressions.AggregateExpression;
 import org.voltdb.expressions.ConstantValueExpression;
 import org.voltdb.expressions.ExpressionUtil;
+import org.voltdb.expressions.OperatorExpression;
 import org.voltdb.expressions.ParameterValueExpression;
 import org.voltdb.expressions.TupleValueExpression;
 import org.voltdb.plannodes.AggregatePlanNode;
 import org.voltdb.plannodes.HashAggregatePlanNode;
+import org.voltdb.plannodes.LimitPlanNode;
 import org.voltdb.plannodes.NodeSchema;
 import org.voltdb.plannodes.ProjectionPlanNode;
 import org.voltdb.plannodes.SchemaColumn;
@@ -124,27 +126,31 @@ public class ParsedSelectStmt extends AbstractParsedStmt {
 
     public ArrayList<ParsedColInfo> displayColumns = new ArrayList<ParsedColInfo>();
     public ArrayList<ParsedColInfo> orderColumns = new ArrayList<ParsedColInfo>();
-    public AbstractExpression having = null;
     public ArrayList<ParsedColInfo> groupByColumns = new ArrayList<ParsedColInfo>();
-
-    // It will store the final projection node schema for this plan if it is needed.
-    // Calculate once, and use it everywhere else.
-    private NodeSchema projectSchema = null;
-
     // It may has the consistent element order as the displayColumns
     public ArrayList<ParsedColInfo> aggResultColumns = new ArrayList<ParsedColInfo>();
     public Map<String, AbstractExpression> groupByExpressions = null;
 
+    public boolean distinct = false;
+
+    // This is the final projection node schema for this plan if it is needed.
+    // Calculate once, and use it everywhere else.
+    private NodeSchema projectSchema = null;
+    // Limit plan node information.
+    public LimitPlanNode limitNodeTop = null;
+    public LimitPlanNode limitNodeDist = null;
+    public boolean limitCanPushdown;
+
+    // AVG push down prepared information.
     private ArrayList<ParsedColInfo> avgPushdownDisplayColumns = null;
     private ArrayList<ParsedColInfo> avgPushdownAggResultColumns = null;
     private ArrayList<ParsedColInfo> avgPushdownOrderColumns = null;
     private NodeSchema avgPushdownNewAggSchema;
 
-    public long limit = -1;
-    public long offset = 0;
+    private long limit = -1;
+    private long offset = 0;
     private long limitParameterId = -1;
     private long offsetParameterId = -1;
-    public boolean distinct = false;
     private boolean hasComplexAgg = false;
     private boolean hasComplexGroupby = false;
     private boolean hasAggregateExpression = false;
@@ -218,6 +224,9 @@ public class ParsedSelectStmt extends AbstractParsedStmt {
             aggResultColumns = displayColumns;
         }
         placeTVEsinColumns();
+
+        // prepare the limit plan node if it needs one.
+        prepareLimitPlanNode();
 
         // Prepare for the AVG push-down optimization only if it might be required.
         if (mayNeedAvgPushdown()) {
@@ -851,6 +860,60 @@ public class ParsedSelectStmt extends AbstractParsedStmt {
         orderColumns.add(order_col);
     }
 
+    private void prepareLimitPlanNode () {
+        if (!hasLimitOrOffset()) {
+            return;
+        }
+
+        int limitParamIndex = parameterCountIndexById(limitParameterId);
+        int offsetParamIndex = parameterCountIndexById(offsetParameterId);;
+
+        // The coordinator's top limit graph fragment for a MP plan.
+        // If planning "order by ... limit", getNextSelectPlan()
+        // will have already added an order by to the coordinator frag.
+        // This is the only limit node in a SP plan
+        limitNodeTop = new LimitPlanNode();
+        limitNodeTop.setLimit((int) limit);
+        limitNodeTop.setOffset((int) offset);
+        limitNodeTop.setLimitParameterIndex(limitParamIndex);
+        limitNodeTop.setOffsetParameterIndex(offsetParamIndex);
+
+        // check if limit can be pushed down
+        limitCanPushdown = !distinct;
+        if (limitCanPushdown) {
+            for (ParsedColInfo col : displayColumns) {
+                AbstractExpression rootExpr = col.expression;
+                if (rootExpr instanceof AggregateExpression) {
+                    if (((AggregateExpression)rootExpr).isDistinct()) {
+                        limitCanPushdown = false;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (limitCanPushdown) {
+            limitNodeDist = new LimitPlanNode();
+            // Offset on a pushed-down limit node makes no sense, just defaults to 0
+            // -- the original offset must be factored into the pushed-down limit as a pad on the limit.
+            if (limit != -1) {
+                limitNodeDist.setLimit((int) (limit + offset));
+            }
+
+            if (hasLimitOrOffsetParameters()) {
+                AbstractExpression left = getParameterOrConstantAsExpression(offsetParameterId, offset);
+                assert (left != null);
+                AbstractExpression right = getParameterOrConstantAsExpression(limitParameterId, limit);
+                assert (right != null);
+                OperatorExpression expr = new OperatorExpression(ExpressionType.OPERATOR_PLUS, left, right);
+                expr.setValueType(VoltType.INTEGER);
+                expr.setValueSize(VoltType.INTEGER.getLengthInBytesForFixedTypes());
+                limitNodeDist.setLimitExpression(expr);
+            }
+            // else let the parameterized forms of offset/limit default to unused/invalid.
+        }
+    }
+
     @Override
     public String toString() {
         String retval = super.toString() + "\n";
@@ -925,7 +988,7 @@ public class ParsedSelectStmt extends AbstractParsedStmt {
         return false;
     }
 
-    public boolean hasLimitOrOffsetParameters() {
+    private boolean hasLimitOrOffsetParameters() {
         return limitParameterId != -1 || offsetParameterId != -1;
     }
 
@@ -951,14 +1014,6 @@ public class ParsedSelectStmt extends AbstractParsedStmt {
         return pve.getParameterIndex();
     }
 
-    public int getLimitParameterIndex() {
-        return parameterCountIndexById(limitParameterId);
-    }
-
-    public int getOffsetParameterIndex() {
-        return parameterCountIndexById(offsetParameterId);
-    }
-
     private AbstractExpression getParameterOrConstantAsExpression(long id, long value) {
         // The id was previously passed to parameterCountIndexById, so if not -1,
         // it has already been asserted to be a valid id for a parameter, and the
@@ -972,14 +1027,6 @@ public class ParsedSelectStmt extends AbstractParsedStmt {
         constant.setValue(Long.toString(value));
         constant.refineValueType(VoltType.BIGINT, VoltType.BIGINT.getLengthInBytesForFixedTypes());
         return constant;
-    }
-
-    public AbstractExpression getLimitExpression() {
-        return getParameterOrConstantAsExpression(limitParameterId, limit);
-    }
-
-    public AbstractExpression getOffsetExpression() {
-        return getParameterOrConstantAsExpression(offsetParameterId, offset);
     }
 
     public boolean isOrderDeterministic() {

@@ -38,7 +38,6 @@ import org.voltdb.catalog.Table;
 import org.voltdb.expressions.AbstractExpression;
 import org.voltdb.expressions.AggregateExpression;
 import org.voltdb.expressions.ConstantValueExpression;
-import org.voltdb.expressions.OperatorExpression;
 import org.voltdb.expressions.TupleAddressExpression;
 import org.voltdb.expressions.TupleValueExpression;
 import org.voltdb.planner.ParsedSelectStmt.MVFixInfo;
@@ -574,29 +573,25 @@ public class PlanAssembler {
             }
         }
 
-        if (m_parsedSelect.hasComplexAgg()) {
-            AbstractPlanNode aggNode = root.getChild(0);
-            root.clearChildren();
-            aggNode.clearParents();
-            aggNode = handleOrderBy(aggNode);
-            root.addAndLinkChild(aggNode);
-        } else {
-            root = handleOrderBy(root);
-        }
-
-        if (mvFixNeedsProjection || needProjectionNode(root)) {
-            root = addProjection(root);
-        }
+        root = handleOrderBy(root);
 
         if (m_parsedSelect.hasLimitOrOffset())
         {
             root = handleLimitOperator(root);
         }
 
+        if (mvFixNeedsProjection || needProjectionNode(root)) {
+            root = addProjection(root);
+        }
+
         return root;
     }
 
     private boolean needProjectionNode (AbstractPlanNode root) {
+        if (m_parsedSelect.hasComplexAgg()) {
+            return true;
+        }
+
         if ( (root.getPlanNodeType() == PlanNodeType.AGGREGATE) ||
                 (root.getPlanNodeType() == PlanNodeType.HASHAGGREGATE) ||
                 (root.getPlanNodeType() == PlanNodeType.DISTINCT) ||
@@ -613,8 +608,6 @@ public class PlanAssembler {
         if (m_parsedSelect.hasComplexGroupby()) {
             return false;
         }
-        // TODO(XIN): Maybe we can remove this projection node for more cases
-        // as optimization in the future.
         return true;
     }
 
@@ -1100,18 +1093,11 @@ public class PlanAssembler {
      */
     private AbstractPlanNode handleLimitOperator(AbstractPlanNode root)
     {
-        int limitParamIndex = m_parsedSelect.getLimitParameterIndex();
-        int offsetParamIndex = m_parsedSelect.getOffsetParameterIndex();
-
         // The coordinator's top limit graph fragment for a MP plan.
         // If planning "order by ... limit", getNextSelectPlan()
         // will have already added an order by to the coordinator frag.
         // This is the only limit node in a SP plan
-        LimitPlanNode topLimit = new LimitPlanNode();
-        topLimit.setLimit((int)m_parsedSelect.limit);
-        topLimit.setOffset((int) m_parsedSelect.offset);
-        topLimit.setLimitParameterIndex(limitParamIndex);
-        topLimit.setOffsetParameterIndex(offsetParamIndex);
+        LimitPlanNode topLimit = m_parsedSelect.limitNodeTop;
 
         /*
          * TODO: allow push down limit with distinct (select distinct C from T limit 5)
@@ -1125,15 +1111,7 @@ public class PlanAssembler {
             if (sendNode == null) {
                 canPushDown = false;
             } else {
-                for (ParsedSelectStmt.ParsedColInfo col : m_parsedSelect.displayColumns) {
-                    AbstractExpression rootExpr = col.expression;
-                    if (rootExpr instanceof AggregateExpression) {
-                        if (((AggregateExpression)rootExpr).isDistinct()) {
-                            canPushDown = false;
-                            break;
-                        }
-                    }
-                }
+                canPushDown = m_parsedSelect.limitCanPushdown;
             }
         }
 
@@ -1155,25 +1133,8 @@ public class PlanAssembler {
              * was not a hard-coded constant and didn't get parameterized.
              * The top level limit plan node remains the same, with the original limit and offset values.
              */
-            LimitPlanNode distLimit = new LimitPlanNode();
-            // Offset on a pushed-down limit node makes no sense, just defaults to 0
-            // -- the original offset must be factored into the pushed-down limit as a pad on the limit.
-            if (m_parsedSelect.limit != -1) {
-                distLimit.setLimit((int) (m_parsedSelect.limit + m_parsedSelect.offset));
-            }
+            LimitPlanNode distLimit = m_parsedSelect.limitNodeDist;
 
-            if (m_parsedSelect.hasLimitOrOffsetParameters()) {
-
-                AbstractExpression left = m_parsedSelect.getOffsetExpression();
-                assert (left != null);
-                AbstractExpression right = m_parsedSelect.getLimitExpression();
-                assert (right != null);
-                OperatorExpression expr = new OperatorExpression(ExpressionType.OPERATOR_PLUS, left, right);
-                expr.setValueType(VoltType.INTEGER);
-                expr.setValueSize(VoltType.INTEGER.getLengthInBytesForFixedTypes());
-                distLimit.setLimitExpression(expr);
-            }
-            // else let the parameterized forms of offset/limit default to unused/invalid.
 
             // Disconnect the distributed parts of the plan below the SEND node
             AbstractPlanNode distributedPlan = sendNode.getChild(0);
@@ -1431,9 +1392,8 @@ public class PlanAssembler {
 
             }
 
-            NodeSchema newSchema = m_parsedSelect.getFinalProjectionSchema();
             // Never push down aggregation for MV fix case.
-            root = pushDownAggregate(root, aggNode, topAggNode, m_parsedSelect.hasComplexAgg(), newSchema);
+            root = pushDownAggregate(root, aggNode, topAggNode);
 
         }
 
@@ -1474,8 +1434,7 @@ public class PlanAssembler {
      */
     AbstractPlanNode pushDownAggregate(AbstractPlanNode root,
                                        AggregatePlanNode distNode,
-                                       AggregatePlanNode coordNode,
-                                       boolean needProjectionNode, NodeSchema newSchema) {
+                                       AggregatePlanNode coordNode) {
 
         // remember that coordinating aggregation has a pushed-down
         // counterpart deeper in the plan. this allows other operators
@@ -1509,12 +1468,6 @@ public class PlanAssembler {
             // Add the top node
             coordNode.addAndLinkChild(root);
             root = coordNode;
-        }
-        if (needProjectionNode) {
-            ProjectionPlanNode proj = new ProjectionPlanNode();
-            proj.addAndLinkChild(root);
-            proj.setOutputSchema(newSchema);
-            root = proj;
         }
         return root;
     }
