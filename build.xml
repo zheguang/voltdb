@@ -1365,14 +1365,8 @@ TEST CASES
 </target>
 
 <target name="junit"
-    description="Execute JUnit test suites.">
-    <run_junit>
-        <tests>
-            <fileset dir='${build.test.dir}'>
-                <patternset refid="junit.all.path" />
-            </fileset>
-        </tests>
-    </run_junit>
+    description="Execute JUnit test suites."
+    depends = "junit_regression, junit_other">
 </target>
 
 <target name="junit_sql"
