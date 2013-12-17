@@ -59,6 +59,7 @@
 #include "storage/TupleStreamWrapper.h"
 #include "storage/TableStats.h"
 #include "storage/PersistentTableStats.h"
+#include "storage/PersistentTableIterator.h"
 #include "storage/TableStreamerInterface.h"
 #include "storage/RecoveryContext.h"
 #include "storage/ElasticIndex.h"
@@ -79,6 +80,7 @@ namespace voltdb {
 class TableColumn;
 class TableIndex;
 class TableIterator;
+class PersistentTableIterator;
 class TableFactory;
 class TupleSerializer;
 class SerializeInput;
@@ -203,7 +205,7 @@ class PersistentTable : public Table, public UndoQuantumReleaseInterest,
     PersistentTable operator=(PersistentTable const&);
 
     // default iterator
-    TableIterator m_iter;
+    PersistentTableIterator m_iter;
 
   public:
     virtual ~PersistentTable();
@@ -215,13 +217,13 @@ class PersistentTable : public Table, public UndoQuantumReleaseInterest,
     }
 
     // Return a table iterator by reference
-    TableIterator& iterator() {
+    PersistentTableIterator& iterator() {
         m_iter.reset(m_data.begin());
         return m_iter;
     }
 
-    TableIterator* makeIterator() {
-        return new TableIterator(this, m_data.begin());
+    PersistentTableIterator* makeIterator() {
+        return new PersistentTableIterator(this, m_data.begin());
     }
 
     // ------------------------------------------------------------------

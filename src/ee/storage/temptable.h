@@ -50,6 +50,7 @@
 #include "common/tabletuple.h"
 #include "common/ThreadLocalPool.h"
 #include "storage/tableiterator.h"
+#include "storage/TempTableIterator.h"
 #include "storage/TempTableLimits.h"
 #include "storage/TupleBlock.h"
 
@@ -78,17 +79,17 @@ class TempTable : public Table {
     TempTable operator=(TempTable const&);
 
     // default iterator
-    TableIterator m_iter;
+    TempTableIterator m_iter;
 
   public:
     // Return the table iterator by reference
-    TableIterator& iterator() {
+    TempTableIterator& iterator() {
         m_iter.reset(m_data.begin());
         return m_iter;
     }
 
-    TableIterator* makeIterator() {
-        return new TableIterator(this, m_data.begin());
+    TempTableIterator* makeIterator() {
+        return new TempTableIterator(this, m_data.begin());
     }
 
     virtual ~TempTable();
@@ -214,7 +215,7 @@ inline void TempTable::deleteAllTuplesNonVirtual(bool freeAllocatedStrings) {
     const uint16_t uninlinedStringColumnCount = m_schema->getUninlinedObjectColumnCount();
     if (freeAllocatedStrings && uninlinedStringColumnCount > 0) {
         TableTuple target(m_schema);
-        TableIterator iter(this, m_data.begin());
+        TempTableIterator iter(this, m_data.begin());
         while (iter.hasNext()) {
             iter.next(target);
             target.freeObjectColumns();

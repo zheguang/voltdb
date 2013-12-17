@@ -43,20 +43,13 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef HSTORETABLEITERATOR_H
-#define HSTORETABLEITERATOR_H
+#ifndef VOLTTEMPTABLEITERATOR_H
+#define VOLTTEMPTABLEITERATOR_H
 
 #include <cassert>
-#include "boost/shared_ptr.hpp"
-#include "common/tabletuple.h"
-#include "table.h"
-#include "storage/TupleIterator.h"
+#include "storage/TableIterator.h"
 
 namespace voltdb {
-
-class TempTable;
-class PersistentTable;
-
 /**
  * Iterator for table which neglects deleted tuples.
  * TableIterator is a small and copiable object.
@@ -68,25 +61,21 @@ class PersistentTable;
  * that are persvasively stack allocated...
  *
  */
-class TableIterator : public TupleIterator {
-
-    friend class TempTable;
-    friend class PersistentTable;
-
+class TempTableIterator : public TableIterator {
 public:
     // Get an iterator via table->iterator()
-    TableIterator(Table *);
+    TempTableIterator(Table *, std::vector<TBPtr>::iterator);
+
+    void reset(std::vector<TBPtr>::iterator);
 
     /**
      * Updates the given tuple so that it points to the next tuple in the table.
      * @param out the tuple will point to the retrieved tuple if this method returns true.
      * @return true if succeeded. false if no more active tuple is there.
     */
-    virtual bool next(TableTuple &out) {return false;};
-    bool hasNext();
-    int getLocation() const;
+    bool next(TableTuple &out);
 
-protected:
+private:
     /*
      * Configuration parameter that controls whether the table iterator
      * stops when it has found the expected number of tuples or when it has iterated
@@ -98,47 +87,50 @@ protected:
      * When set to false the counting of found tuples method is used. When set to true
      * all blocks are scanned.
      */
-    Table *m_table;
-    char *m_dataPtr;
-    uint32_t m_location;
-    uint32_t m_blockOffset;
-    uint32_t m_activeTuples;
-    uint32_t m_foundTuples;
-    uint32_t m_tupleLength;
-    uint32_t m_tuplesPerBlock;
-    TBPtr m_currentBlock;
-
-    void reset();
+    std::vector<TBPtr>::iterator m_tempBlockIterator;
 };
 
-inline TableIterator::TableIterator(Table *parent)
-    : m_table(parent),
-      m_dataPtr(NULL),
-      m_location(0),
-      m_blockOffset(0),
-      m_activeTuples((int) m_table->m_tupleCount),
-      m_foundTuples(0), m_tupleLength(parent->m_tupleLength),
-      m_tuplesPerBlock(parent->m_tuplesPerBlock), m_currentBlock(NULL)
+inline TempTableIterator::TempTableIterator(Table *parent, std::vector<TBPtr>::iterator start)
+    : TableIterator(parent)
     {
+        m_tempBlockIterator = start;
     }
 
-inline bool TableIterator::hasNext() {
-    return m_foundTuples < m_activeTuples;
+inline void TempTableIterator::reset(std::vector<TBPtr>::iterator start) {
+    TableIterator::reset();
+    m_tempBlockIterator = start;
 }
 
-inline void TableIterator::reset() {
-    m_dataPtr= NULL;
-    m_location = 0;
-    m_blockOffset = 0;
-    m_activeTuples = (int) m_table->m_tupleCount;
-    m_foundTuples = 0;
-    m_tupleLength = m_table->m_tupleLength;
-    m_tuplesPerBlock = m_table->m_tuplesPerBlock;
-    m_currentBlock = NULL;
-}
+inline bool TempTableIterator::next(TableTuple &out) {
+    if (m_foundTuples < m_activeTuples) {
+        if (m_currentBlock == NULL ||
+            m_blockOffset >= m_currentBlock->unusedTupleBoundry())
+        {
+            m_currentBlock = *m_tempBlockIterator;
+            m_dataPtr = m_currentBlock->address();
+            m_blockOffset = 0;
+            m_tempBlockIterator++;
+        } else {
+            m_dataPtr += m_tupleLength;
+        }
+        assert (out.sizeInValues() == m_table->columnCount());
+        out.move(m_dataPtr);
+        assert(m_dataPtr < m_currentBlock.get()->address() + m_table->m_tableAllocationTargetSize);
+        assert(m_dataPtr < m_currentBlock.get()->address() + (m_table->m_tupleLength * m_table->m_tuplesPerBlock));
 
-inline int TableIterator::getLocation() const {
-    return m_location;
+
+        //assert(m_foundTuples == m_location);
+
+        ++m_location;
+        ++m_blockOffset;
+
+        //assert(out.isActive());
+        ++m_foundTuples;
+        //assert(m_foundTuples == m_location);
+        return true;
+    }
+
+    return false;
 }
 
 }

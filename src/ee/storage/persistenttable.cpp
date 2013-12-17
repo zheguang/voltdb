@@ -108,7 +108,7 @@ PersistentTable::~PersistentTable()
     }
 
     // delete all tuples to free strings
-    TableIterator ti(this, m_data.begin());
+    PersistentTableIterator ti(this, m_data.begin());
     TableTuple tuple(m_schema);
     while (ti.next(tuple)) {
         tuple.freeObjectColumns();
@@ -196,7 +196,7 @@ void PersistentTable::nextFreeTuple(TableTuple *tuple) {
 
 void PersistentTable::deleteAllTuples(bool freeAllocatedStrings) {
     // nothing interesting
-    TableIterator ti(this, m_data.begin());
+    PersistentTableIterator ti(this, m_data.begin());
     TableTuple tuple(m_schema);
     while (ti.next(tuple)) {
         deleteTuple(tuple, true);
@@ -661,7 +661,7 @@ TableTuple PersistentTable::lookupTuple(TableTuple tuple) {
          * Do a table scan.
          */
         TableTuple tableTuple(m_schema);
-        TableIterator ti(this, m_data.begin());
+        PersistentTableIterator ti(this, m_data.begin());
         while (ti.hasNext()) {
             ti.next(tableTuple);
             if (tableTuple.equalsNoSchemaCheck(tuple)) {
@@ -1005,7 +1005,7 @@ void PersistentTable::processRecoveryMessage(RecoveryProtoMsg* message, Pool *po
  */
 size_t PersistentTable::hashCode() {
     boost::scoped_ptr<TableIndex> pkeyIndex(TableIndexFactory::cloneEmptyTreeIndex(*m_pkeyIndex));
-    TableIterator iter(this, m_data.begin());
+    PersistentTableIterator iter(this, m_data.begin());
     TableTuple tuple(schema());
     while (iter.next(tuple)) {
         pkeyIndex->addEntry(&tuple);
@@ -1307,7 +1307,7 @@ void PersistentTable::printBucketInfo() {
 }
 
 int64_t PersistentTable::validatePartitioning(TheHashinator *hashinator, int32_t partitionId) {
-    TableIterator iter = iterator();
+    PersistentTableIterator iter = iterator();
 
     int64_t mispartitionedRows = 0;
 
