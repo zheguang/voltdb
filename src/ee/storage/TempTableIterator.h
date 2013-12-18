@@ -47,7 +47,7 @@
 #define VOLTTEMPTABLEITERATOR_H
 
 #include <cassert>
-#include "storage/TableIterator.h"
+#include "storage/tableiterator.h"
 
 namespace voltdb {
 /**
