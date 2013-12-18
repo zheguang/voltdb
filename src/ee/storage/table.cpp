@@ -197,13 +197,13 @@ std::string Table::debug() {
     buffer << "===========================================================\n";
     buffer << "\tDATA\n";
 
-    TableIterator iter = iterator();
+    TableIterator * iter = iterator();
     TableTuple tuple(m_schema);
     if (this->activeTupleCount() == 0) {
         buffer << "\t<NONE>\n";
     } else {
         std::string lastTuple = "";
-        while (iter.next(tuple)) {
+        while (iter->next(tuple)) {
             if (tuple.isActive()) {
                 buffer << "\t" << tuple.debug(this->name().c_str()) << "\n";
             }
@@ -313,9 +313,9 @@ bool Table::serializeTo(SerializeOutput &serialize_io) {
     // active tuple counts
     serialize_io.writeInt(static_cast<int32_t>(m_tupleCount));
     int64_t written_count = 0;
-    TableIterator titer = iterator();
+    TableIterator * titer = iterator();
     TableTuple tuple(m_schema);
-    while (titer.next(tuple)) {
+    while (titer->next(tuple)) {
         tuple.serializeTo(serialize_io);
         ++written_count;
     }
@@ -372,12 +372,12 @@ bool Table::equals(voltdb::Table *other) {
     const voltdb::TupleSchema *otherSchema = other->schema();
     if ((!m_schema->equals(otherSchema))) return false;
 
-    voltdb::TableIterator firstTI = iterator();
-    voltdb::TableIterator secondTI = other->iterator();
+    voltdb::TableIterator * firstTI = iterator();
+    voltdb::TableIterator * secondTI = other->iterator();
     voltdb::TableTuple firstTuple(m_schema);
     voltdb::TableTuple secondTuple(otherSchema);
-    while(firstTI.next(firstTuple)) {
-        if (!(secondTI.next(secondTuple))) return false;
+    while(firstTI->next(firstTuple)) {
+        if (!(secondTI->next(secondTuple))) return false;
         if (!(firstTuple.equals(secondTuple))) return false;
     }
     return true;
@@ -523,8 +523,8 @@ void Table::addIndex(TableIndex *index) {
 
     // fill the index with tuples... potentially the slow bit
     TableTuple tuple(m_schema);
-    TableIterator iter = iterator();
-    while (iter.next(tuple)) {
+    TableIterator * iter = iterator();
+    while (iter->next(tuple)) {
         index->addEntry(&tuple);
     }
 

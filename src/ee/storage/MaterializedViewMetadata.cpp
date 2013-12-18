@@ -77,8 +77,8 @@ MaterializedViewMetadata::MaterializedViewMetadata(PersistentTable *srcTable,
     // Catch up on pre-existing source tuples UNLESS target tuples have already been migrated in.
     if (( ! srcTable->isPersistentTableEmpty()) && m_target->isPersistentTableEmpty()) {
         TableTuple scannedTuple(srcTable->schema());
-        TableIterator &iterator = srcTable->iterator();
-        while (iterator.next(scannedTuple)) {
+        TableIterator *iterator = srcTable->iterator();
+        while (iterator->next(scannedTuple)) {
             processTupleInsert(scannedTuple, false);
         }
     }
@@ -325,9 +325,9 @@ NValue MaterializedViewMetadata::findMinMaxFallbackValueSequential(const TableTu
     // loop through tuples to find the MIN / MAX
     bool skippedOne = false;
     TableTuple tuple(m_srcTable->schema());
-    TableIterator &iterator = m_srcTable->iterator();
+    TableIterator * iterator = m_srcTable->iterator();
     VOLT_TRACE("Starting iteration on: %s\n", m_srcTable->debug().c_str());
-    while (iterator.next(tuple)) {
+    while (iterator->next(tuple)) {
         // apply post filter
         VOLT_TRACE("Checking tuple: %s\n", tuple.debugNoHeader().c_str());
         if (m_filterPredicate && !m_filterPredicate->eval(&tuple, NULL).isTrue()) {

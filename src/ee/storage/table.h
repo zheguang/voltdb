@@ -136,8 +136,8 @@ class Table {
     // ------------------------------------------------------------------
     // ACCESS METHODS
     // ------------------------------------------------------------------
-    virtual TableIterator& iterator() = 0;
-    virtual TableIterator *makeIterator() = 0;
+    virtual TableIterator * iterator() = 0;
+    virtual TableIterator * makeIterator() = 0;
 
     // ------------------------------------------------------------------
     // OPERATIONS

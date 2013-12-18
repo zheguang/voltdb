@@ -141,9 +141,9 @@ TEST_F(TableTest, ValueTypes) {
     // Make sure that our table has the right types and that when
     // we pull out values from a tuple that it has the right type too
     //
-    TableIterator iterator = this->table->iterator();
+    TableIterator * iterator = this->table->iterator();
     TableTuple tuple(table->schema());
-    while (iterator.next(tuple)) {
+    while (iterator->next(tuple)) {
         for (int ctr = 0; ctr < NUM_OF_COLUMNS; ctr++) {
             EXPECT_EQ(COLUMN_TYPES[ctr], this->table->schema()->columnType(ctr));
             EXPECT_EQ(COLUMN_TYPES[ctr], tuple.getType(ctr));
@@ -156,9 +156,9 @@ TEST_F(TableTest, TupleInsert) {
     // All of the values have already been inserted, we just
     // need to make sure that the data makes sense
     //
-    TableIterator iterator = this->table->iterator();
+    TableIterator * iterator = this->table->iterator();
     TableTuple tuple(table->schema());
-    while (iterator.next(tuple)) {
+    while (iterator->next(tuple)) {
         //printf("%s\n", tuple->debug(this->table).c_str());
         //
         // Make sure it is not deleted
@@ -180,7 +180,7 @@ TEST_F(TableTest, TupleInsert) {
     // Then check to make sure that it has the same value and type
     //
     iterator = this->table->iterator();
-    ASSERT_EQ(true, iterator.next(tuple));
+    ASSERT_EQ(true, iterator->next(tuple));
     for (int col_ctr = 0, col_cnt = NUM_OF_COLUMNS; col_ctr < col_cnt; col_ctr++) {
         EXPECT_EQ(COLUMN_TYPES[col_ctr], tuple.getType(col_ctr));
         EXPECT_TRUE(temp_tuple.getNValue(col_ctr).op_equals(tuple.getNValue(col_ctr)).isTrue());
@@ -203,7 +203,7 @@ TEST_F(TableTest, TupleUpdate) {
 
     TableIterator iterator = this->table->iterator();
     TableTuple tuple(table->schema());
-    while (iterator.next(tuple)) {
+    while (iterator->next(tuple)) {
         bool update = (rand() % 2 == 0);
         TableTuple &temp_tuple = table->tempTuple();
         for (int col_ctr = 0; col_ctr < NUM_OF_COLUMNS; col_ctr++) {
@@ -237,7 +237,7 @@ TEST_F(TableTest, TupleUpdate) {
         if (isNumeric(COLUMN_TYPES[col_ctr])) {
             int64_t new_total = 0;
             iterator = this->table->iterator();
-            while (iterator.next(tuple)) {
+            while (iterator->next(tuple)) {
                 new_total += ValuePeeker::peekAsBigInt(tuple.getNValue(col_ctr));
             }
             //printf("\nCOLUMN: %s\n\tEXPECTED: %d\n\tRETURNED: %d\n", this->table->getColumn(col_ctr)->getName().c_str(), totals[col_ctr], new_total);
@@ -304,14 +304,14 @@ TEST_F(TableTest, TupleDelete) {
     //
     TableIterator iterator = this->table->iterator();
     TableTuple tuple(table.get());
-    while (iterator.next(tuple)) {
+    while (iterator->next(tuple)) {
         if (tuple.get(1).getBigInt() != 0) {
             EXPECT_EQ(true, temp_table->deleteTuple(tuple));
         }
     }
 
     iterator = this->table->iterator();
-    while (iterator.next(tuple)) {
+    while (iterator->next(tuple)) {
         EXPECT_EQ(false, tuple.get(1).getBigInt() != 0);
     }
 }
@@ -344,7 +344,7 @@ TEST_F(TableTest, TupleDelete) {
     }
 
     TableIterator iterator = this->table->iterator();
-    while ((tuple = iterator.next()) != NULL) {
+    while ((tuple = iterator->next()) != NULL) {
         //printf("BEFORE: %s\n", tuple->debug(this->table.get()).c_str());
         int xact_ctr = (rand() % xact_cnt);
         bool update = (rand() % 3 != 0);
@@ -391,7 +391,7 @@ TEST_F(TableTest, TupleDelete) {
     }
 
     //iterator = this->table->iterator();
-    //while ((tuple = iterator.next()) != NULL) {
+    //while ((tuple = iterator->next()) != NULL) {
     //    printf("TUPLE: %s\n", tuple->debug(this->table.get()).c_str());
     //}
 
@@ -402,7 +402,7 @@ TEST_F(TableTest, TupleDelete) {
         if (valueutil::isNumeric(COLUMN_TYPES[col_ctr])) {
             int64_t new_total = 0;
             iterator = this->table->iterator();
-            while ((tuple = iterator.next()) != NULL) {
+            while ((tuple = iterator->next()) != NULL) {
                 //fprintf(stderr, "TUPLE: %s\n", tuple->debug(this->table).c_str());
                 new_total += tuple->get(col_ctr).castAsBigInt();
             }
@@ -426,7 +426,7 @@ TEST_F(TableTest, TupleDelete) {
     TableIterator iterator = this->table->iterator();
     TableTuple *tuple;
     int64_t total = 0;
-    while ((tuple = iterator.next()) != NULL) {
+    while ((tuple = iterator->next()) != NULL) {
         int xact_ctr = (rand() % xact_cnt);
         //
         // Keep it and store the value before deleting
@@ -445,7 +445,7 @@ TEST_F(TableTest, TupleDelete) {
     //
     int64_t new_total = 0;
     iterator = this->table->iterator();
-    while ((tuple = iterator.next()) != NULL) {
+    while ((tuple = iterator->next()) != NULL) {
         EXPECT_EQ(true, tuple->isActive());
         new_total += 1;//tuple->get(0).getBigInt();
         VOLT_DEBUG("total2: %d", (int)total);

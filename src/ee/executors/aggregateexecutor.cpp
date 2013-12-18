@@ -572,11 +572,11 @@ bool AggregateHashExecutor::p_execute(const NValueArray& params)
     Table* input_table = m_abstractNode->getInputTables()[0];
     assert(input_table);
     VOLT_TRACE("input table\n%s", input_table->debug().c_str());
-    TableIterator it = input_table->iterator();
+    TableIterator * it = input_table->iterator();
     TableTuple nxtTuple(input_table->schema());
     PoolBackedTupleStorage nextGroupByKeyStorage(m_groupByKeySchema, &m_memoryPool);
     TableTuple& nextGroupByKeyTuple = nextGroupByKeyStorage;
-    while (it.next(nxtTuple)) {
+    while (it->next(nxtTuple)) {
         m_engine->noteTuplesProcessedForProgressMonitoring(1);
         initGroupByKeyTuple(nextGroupByKeyStorage, nxtTuple);
         AggregateRow *aggregateRow;
@@ -631,14 +631,14 @@ bool AggregateSerialExecutor::p_execute(const NValueArray& params)
     if (m_prePredicate != NULL) {
         assert(input_table->activeTupleCount() <= 1);
     }
-    TableIterator it = input_table->iterator();
+    TableIterator * it = input_table->iterator();
     TableTuple nxtTuple(input_table->schema());
     PoolBackedTupleStorage nextGroupByKeyStorage(m_groupByKeySchema, &m_memoryPool);
     TableTuple& nextGroupByKeyTuple = nextGroupByKeyStorage;
     VOLT_TRACE("looping..");
     // Use the first input tuple to "prime" the system.
     // ENG-1565: for this special case, can have only one input row, apply the predicate here
-    if (it.next(nxtTuple) && (m_prePredicate == NULL || m_prePredicate->eval(&nxtTuple, NULL).isTrue())) {
+    if (it->next(nxtTuple) && (m_prePredicate == NULL || m_prePredicate->eval(&nxtTuple, NULL).isTrue())) {
         initGroupByKeyTuple(nextGroupByKeyStorage, nxtTuple);
         // Start the aggregation calculation.
         initAggInstances(aggregateRow);
@@ -659,7 +659,7 @@ bool AggregateSerialExecutor::p_execute(const NValueArray& params)
     }
 
     TableTuple inProgressGroupByKeyTuple(m_groupByKeySchema);
-    while (it.next(nxtTuple)) {
+    while (it->next(nxtTuple)) {
         m_engine->noteTuplesProcessedForProgressMonitoring(1);
         // The nextGroupByKeyTuple now stores the key(s) of the current group in progress.
         // Swap its storage with that of the inProgressGroupByKeyTuple.

@@ -158,11 +158,11 @@ bool NestLoopExecutor::p_execute(const NValueArray &params) {
     TableTuple &joined = output_table->tempTuple();
     TableTuple null_tuple = m_null_tuple;
 
-    TableIterator iterator0 = outer_table->iterator();
+    TableIterator * iterator0 = outer_table->iterator();
     int tuple_ctr = 0;
     int tuple_skipped = 0;
     m_engine->setLastAccessedTable(inner_table);
-    while ((limit == -1 || tuple_ctr < limit) && iterator0.next(outer_tuple)) {
+    while ((limit == -1 || tuple_ctr < limit) && iterator0->next(outer_tuple)) {
         m_engine->noteTuplesProcessedForProgressMonitoring(1);
         // did this loop body find at least one match for this tuple?
         bool match = false;
@@ -176,8 +176,8 @@ bool NestLoopExecutor::p_execute(const NValueArray &params) {
             // times per outer tuple
             joined.setNValues(0, outer_tuple, 0, outer_cols);
 
-            TableIterator iterator1 = inner_table->iterator();
-            while ((limit == -1 || tuple_ctr < limit) && iterator1.next(inner_tuple)) {
+            TableIterator * iterator1 = inner_table->iterator();
+            while ((limit == -1 || tuple_ctr < limit) && iterator1->next(inner_tuple)) {
                 m_engine->noteTuplesProcessedForProgressMonitoring(1);
                 // Apply join filter to produce matches for each outer that has them,
                 // then pad unmatched outers, then filter them all

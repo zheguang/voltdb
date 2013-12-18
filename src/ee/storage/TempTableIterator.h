@@ -50,6 +50,10 @@
 #include "storage/tableiterator.h"
 
 namespace voltdb {
+
+class TempTable;
+class PersistentTable;
+
 /**
  * Iterator for table which neglects deleted tuples.
  * TableIterator is a small and copiable object.
@@ -62,12 +66,10 @@ namespace voltdb {
  *
  */
 class TempTableIterator : public TableIterator {
+    friend class TempTable;
+    friend class PersistentTable;
+
 public:
-    // Get an iterator via table->iterator()
-    TempTableIterator(Table *, std::vector<TBPtr>::iterator);
-
-    void reset(std::vector<TBPtr>::iterator);
-
     /**
      * Updates the given tuple so that it points to the next tuple in the table.
      * @param out the tuple will point to the retrieved tuple if this method returns true.
@@ -88,6 +90,10 @@ private:
      * all blocks are scanned.
      */
     std::vector<TBPtr>::iterator m_tempBlockIterator;
+
+    // Get an iterator via table->iterator()
+    TempTableIterator(Table *, std::vector<TBPtr>::iterator);
+    void reset(std::vector<TBPtr>::iterator);
 };
 
 inline TempTableIterator::TempTableIterator(Table *parent, std::vector<TBPtr>::iterator start)

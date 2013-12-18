@@ -1307,13 +1307,13 @@ void PersistentTable::printBucketInfo() {
 }
 
 int64_t PersistentTable::validatePartitioning(TheHashinator *hashinator, int32_t partitionId) {
-    PersistentTableIterator iter = iterator();
+    PersistentTableIterator *iter = iterator();
 
     int64_t mispartitionedRows = 0;
 
-    while (iter.hasNext()) {
+    while (iter->hasNext()) {
         TableTuple tuple(schema());
-        iter.next(tuple);
+        iter->next(tuple);
         if (hashinator->hashinate(tuple.getNValue(m_partitionColumn)) != partitionId) {
             mispartitionedRows++;
         }

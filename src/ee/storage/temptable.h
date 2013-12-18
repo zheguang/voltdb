@@ -83,9 +83,9 @@ class TempTable : public Table {
 
   public:
     // Return the table iterator by reference
-    TempTableIterator& iterator() {
+    TempTableIterator* iterator() {
         m_iter.reset(m_data.begin());
-        return m_iter;
+        return &m_iter;
     }
 
     TempTableIterator* makeIterator() {

@@ -217,9 +217,9 @@ class PersistentTable : public Table, public UndoQuantumReleaseInterest,
     }
 
     // Return a table iterator by reference
-    PersistentTableIterator& iterator() {
+    PersistentTableIterator* iterator() {
         m_iter.reset(m_data.begin());
-        return m_iter;
+        return &m_iter;
     }
 
     PersistentTableIterator* makeIterator() {

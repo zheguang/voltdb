@@ -69,21 +69,17 @@ class PersistentTable;
  *
  */
 class TableIterator : public TupleIterator {
-
     friend class TempTable;
     friend class PersistentTable;
 
 public:
-    // Get an iterator via table->iterator()
-    TableIterator(Table *);
-
     /**
      * Updates the given tuple so that it points to the next tuple in the table.
      * @param out the tuple will point to the retrieved tuple if this method returns true.
      * @return true if succeeded. false if no more active tuple is there.
     */
-    virtual bool next(TableTuple &out) {return false;};
-    bool hasNext();
+    virtual bool next(TableTuple &out) = 0;
+    bool hasNext() const;
     int getLocation() const;
 
 protected:
@@ -108,6 +104,9 @@ protected:
     uint32_t m_tuplesPerBlock;
     TBPtr m_currentBlock;
 
+
+    // Get an iterator via table->iterator()
+    TableIterator(Table *);
     void reset();
 };
 
@@ -122,7 +121,7 @@ inline TableIterator::TableIterator(Table *parent)
     {
     }
 
-inline bool TableIterator::hasNext() {
+inline bool TableIterator::hasNext() const {
     return m_foundTuples < m_activeTuples;
 }
 

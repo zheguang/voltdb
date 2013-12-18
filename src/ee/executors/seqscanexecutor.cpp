@@ -158,7 +158,7 @@ bool SeqScanExecutor::p_execute(const NValueArray &params) {
         // our expression, we'll insert them into the output table.
         //
         TableTuple tuple(target_table->schema());
-        TableIterator iterator = target_table->iterator();
+        TableIterator *iterator = target_table->iterator();
         AbstractExpression *predicate = node->getPredicate();
 
         if (predicate)
@@ -179,7 +179,7 @@ bool SeqScanExecutor::p_execute(const NValueArray &params) {
         int tuple_ctr = 0;
         int tuple_skipped = 0;
         m_engine->setLastAccessedTable(target_table);
-        while ((limit == -1 || tuple_ctr < limit) && iterator.next(tuple))
+        while ((limit == -1 || tuple_ctr < limit) && iterator->next(tuple))
         {
             VOLT_TRACE("INPUT TUPLE: %s, %d/%d\n",
                        tuple.debug(target_table->name()).c_str(), tuple_ctr,

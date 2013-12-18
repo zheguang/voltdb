@@ -124,9 +124,9 @@ class TableSerializeTest : public Test {
 TEST_F(TableSerializeTest, RoundTrip) {
     // print out the first table
     /*TableTuple tuple(table_.get());
-    TableIterator iter = table_->iterator();
+    TableIterator * iter = table_->iterator();
     VOLT_DEBUG("TABLE 1");
-    while (iter.next(tuple)) {
+    while (iter->next(tuple)) {
         VOLT_DEBUG(" %s", tuple.debug(table_.get()).c_str());
     }*/
     // Serialize the table
@@ -194,10 +194,10 @@ TEST_F(TableSerializeTest, NullStrings) {
     EXPECT_EQ(VALUE_TYPE_VARCHAR, deserialized->schema()->columnType(0));
     EXPECT_EQ(true, table_->schema()->columnIsInlined(0));
 
-    TableIterator iter = deserialized->iterator();
+    TableIterator * iter = deserialized->iterator();
     TableTuple t(deserialized->schema());
     int count = 0;
-    while (iter.next(t)) {
+    while (iter->next(t)) {
         EXPECT_EQ(VALUE_TYPE_VARCHAR, tuple.getType(0));
         EXPECT_EQ(VALUE_TYPE_VARCHAR, t.getType(0));
         EXPECT_TRUE(tuple.getNValue(0).isNull());

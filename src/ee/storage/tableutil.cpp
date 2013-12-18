@@ -63,8 +63,8 @@ bool tableutil::getRandomTuple(const voltdb::PersistentTable* table, voltdb::Tab
     int cnt = (int)table->visibleTupleCount();
     if (cnt > 0) {
         int idx = (rand() % cnt);
-        voltdb::TableIterator it = table2->iterator();
-        while (it.next(out)) {
+        voltdb::TableIterator * it = table2->iterator();
+        while (it->next(out)) {
             if (idx-- == 0) {
                 return true;
             }
