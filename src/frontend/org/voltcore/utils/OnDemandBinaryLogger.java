@@ -122,8 +122,8 @@ public class OnDemandBinaryLogger {
     }
 
     public static void main(String args[]) throws Exception {
-        final long arrayTwo[] = filesToArray(new String[] { "/home/aweisberg/hashmismatch/spproceduretasklog_site_10.blog", "/home/aweisberg/hashmismatch/fragmenttasklog_site_10.blog"  });
-        final long arrayOne[] = filesToArray(new String[] { "/home/aweisberg/hashmismatch/polltasklog_site_10.blog" });
+        final long arrayTwo[] = filesToArray(new String[] { "/home/aweisberg/hashmismatch/spproceduretasklog_site_4294967307.blog" });
+        final long arrayOne[] = filesToArray(new String[] { "/home/aweisberg/hashmismatch/polltasklog_site_4294967307.blog" });
 //        final long arrayOne[] = filesToArray(new String[] { "/home/aweisberg/hashmismatch/runfragmenttasklog_site_10.blog", "/home/aweisberg/hashmismatch/runspproceduretasklog_site_10.blog"  });
 //        final long arrayTwo[] = filesToArray(new String[] { "/home/aweisberg/hashmismatch/polltasklog_site_10.blog" });
         if (arrayTwo.length > arrayOne.length) {
@@ -150,7 +150,9 @@ public class OnDemandBinaryLogger {
             }
             if (!found) {
                 zz = zzStart;
-                System.out.println("Couldn't find " + toFind + " position " + ii);
+                if (toFind > 3619633595678719L) {
+                    System.out.println("Couldn't find " + toFind + " position " + ii);
+                }
                 didNotFindCount++;
             }
         }

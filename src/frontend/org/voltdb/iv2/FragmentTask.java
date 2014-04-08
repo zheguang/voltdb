@@ -121,9 +121,9 @@ public class FragmentTask extends TransactionTask
     {
         if (!m_txnState.isReadOnly()) {
             if (m_fragmentMsg.getProcedureName() != null && m_fragmentMsg.getProcedureName().startsWith("AdHoc")) {
-                OnDemandBinaryLogger.log("fragmentadhoctasklog_site_" + siteConnection.getCorrespondingSiteId() + ".blog", m_txnState.txnId);
+                OnDemandBinaryLogger.log("fragmentadhoctasklog_site_" + siteConnection.getCorrespondingSiteId() + ".blog", m_txnState.m_spHandle);
             }
-            OnDemandBinaryLogger.log("fragmenttasklog_site_" + siteConnection.getCorrespondingSiteId() + ".blog", m_fragmentMsg.getTxnId());
+            OnDemandBinaryLogger.log("fragmenttasklog_site_" + siteConnection.getCorrespondingSiteId() + ".blog", m_fragmentMsg.getSpHandle());
             taskLog.logTask(m_fragmentMsg);
         }
 

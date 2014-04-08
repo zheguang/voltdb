@@ -144,7 +144,7 @@ public class SysprocFragmentTask extends TransactionTask
         //Provide it to the site so it can decide to enable recording in the task log
         //if it is our rejoin snapshot start
         if (SysProcFragmentId.isFirstSnapshotFragment(m_fragmentMsg.getPlanHash(0))) {
-            hostLog.info("Received first fragment for snapshot txnid " + m_fragmentMsg.getTxnId());
+            hostLog.info("Received first fragment for snapshot txnid " + m_fragmentMsg.getTxnId() + " sp handle " + m_fragmentMsg.getSpHandle());
             siteConnection.notifyOfSnapshotNonce((String)m_fragmentMsg.getParameterSetForFragment(0).toArray()[1]);
         }
         taskLog.logTask(m_fragmentMsg);

@@ -95,9 +95,9 @@ public class SpProcedureTask extends ProcedureTask
     {
         if (!m_txnState.isReadOnly()) {
             if (m_procName.startsWith("AdHoc")) {
-                OnDemandBinaryLogger.log("spprocedureadhoctasklog_site_" + siteConnection.getCorrespondingSiteId() + ".blog", m_txnState.txnId);
+                OnDemandBinaryLogger.log("spprocedureadhoctasklog_site_" + siteConnection.getCorrespondingSiteId() + ".blog", m_txnState.m_spHandle);
             }
-            OnDemandBinaryLogger.log("spproceduretasklog_site_" + siteConnection.getCorrespondingSiteId() + ".blog", m_txnState.txnId);
+            OnDemandBinaryLogger.log("spproceduretasklog_site_" + siteConnection.getCorrespondingSiteId() + ".blog", m_txnState.m_spHandle);
             taskLog.logTask(m_txnState.getNotice());
         }
 
@@ -122,7 +122,7 @@ public class SpProcedureTask extends ProcedureTask
     @Override
     public void runFromTaskLog(SiteProcedureConnection siteConnection)
     {
-        OnDemandBinaryLogger.log("runspproceduretasklog_site_" + siteConnection.getCorrespondingSiteId() + ".blog", m_txnState.txnId);
+        OnDemandBinaryLogger.log("runspproceduretasklog_site_" + siteConnection.getCorrespondingSiteId() + ".blog", m_txnState.m_spHandle);
         if (HOST_TRACE_ENABLED) {
             hostLog.trace("START replaying txn: " + this);
         }
