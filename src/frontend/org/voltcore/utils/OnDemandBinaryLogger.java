@@ -27,6 +27,7 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel.MapMode;
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.voltdb.utils.VoltFile;
@@ -90,46 +91,172 @@ public class OnDemandBinaryLogger {
         }
     }
 
-    public static void main(String args[]) throws Exception {
-        final String op = args[0];
-        final String file = args[1];
-        int tail = 0;
-        if (op.equalsIgnoreCase("tail")) {
-            tail = Integer.valueOf(args[2]);
+    public static long[] filesToArray(String files[]) throws Exception {
+        long count = 0;
+        int qq = 0;
+        long counts[] = new long[files.length];
+        for (String file : files) {
+            FileInputStream fis = new FileInputStream(file);
+            counts[qq] = fis.getChannel().map(MapMode.READ_ONLY, 0, 8).order(ByteOrder.nativeOrder()).getLong();
+            count += counts[qq++];
+            fis.close();
         }
 
-        long txnid = 0;
-        if (op.equalsIgnoreCase("grep")) {
-            txnid = Long.valueOf(args[2]);
+        final long retval[] = new long[(int)count];
+
+        qq = 0;
+        int zz = 0;
+        for (String file : files) {
+            FileInputStream fis = new FileInputStream(file);
+            fis.getChannel().position(8);
+            SnappyInputStream sis = new SnappyInputStream(fis);
+
+            DataInputStream dis = new DataInputStream(sis);
+            for (int ii = 0; ii < counts[qq]; ii++) {
+                retval[zz++] = dis.readLong();
+            }
+            qq++;
         }
-
-        FileInputStream fis = new FileInputStream(file);
-        fis.getChannel().position(8);
-
-        final long count = fis.getChannel().map(MapMode.READ_ONLY, 0, 8).order(ByteOrder.nativeOrder()).getLong();
-
-        SnappyInputStream sis = new SnappyInputStream(fis);
-
-        DataInputStream dis = new DataInputStream(sis);
-
-        if (op.equalsIgnoreCase("tail")) {
-            long skip = count > tail ? count - tail : 0;
-            for (long ii = 0; ii < skip; ii++) {
-                dis.readLong();
-            }
-
-            for (int ii = 0; ii < tail; ii++) {
-                System.out.println(dis.readLong());
-            }
-        } else if (op.equalsIgnoreCase("grep")) {
-            for (long ii = 0; ii < count; ii++) {
-                if (dis.readLong() == txnid) {
-                    System.out.println(ii + ": " + txnid);
-                }
-            }
-        } else {
-            System.err.println("Unsupported operation " + op);
-        }
-
+        Arrays.sort(retval);
+        return retval;
     }
+
+    public static void main(String args[]) throws Exception {
+        final long arrayTwo[] = filesToArray(new String[] { "/home/aweisberg/hashmismatch/spproceduretasklog_site_10.blog", "/home/aweisberg/hashmismatch/fragmenttasklog_site_10.blog"  });
+        final long arrayOne[] = filesToArray(new String[] { "/home/aweisberg/hashmismatch/polltasklog_site_10.blog" });
+//        final long arrayOne[] = filesToArray(new String[] { "/home/aweisberg/hashmismatch/runfragmenttasklog_site_10.blog", "/home/aweisberg/hashmismatch/runspproceduretasklog_site_10.blog"  });
+//        final long arrayTwo[] = filesToArray(new String[] { "/home/aweisberg/hashmismatch/polltasklog_site_10.blog" });
+        if (arrayTwo.length > arrayOne.length) {
+            System.out.println(arrayTwo.length + " was greater than " + arrayOne.length);
+        }
+
+        int didNotFindCount = 0;
+        int foundCount = 0;
+        int zz = 0;
+        long lastToFind = Long.MIN_VALUE;
+        for (int ii = 0; ii < arrayTwo.length; ii++) {
+            int zzStart = zz;
+            final long toFind = arrayTwo[ii];
+            if (toFind == lastToFind) continue;
+            lastToFind = toFind;
+            boolean found = false;
+            while (zz < arrayOne.length) {
+                if (toFind == arrayOne[zz]) {
+                    found = true;
+                    foundCount++;
+                    break;
+                }
+                zz++;
+            }
+            if (!found) {
+                zz = zzStart;
+                System.out.println("Couldn't find " + toFind + " position " + ii);
+                didNotFindCount++;
+            }
+        }
+        System.out.println("Found " + foundCount + " did not find " + didNotFindCount);
+    }
+//
+//  public static void main(String args[]) throws Exception {
+//      FileInputStream fis = new FileInputStream(new File("/home/aweisberg/hashmismatch/polltasklog_site_10.blog"));
+//      fis.getChannel().position(8);
+//
+//      final long count = fis.getChannel().map(MapMode.READ_ONLY, 0, 8).order(ByteOrder.nativeOrder()).getLong();
+//
+//      SnappyInputStream sis = new SnappyInputStream(fis);
+//
+//      DataInputStream dis = new DataInputStream(sis);
+//
+//      FileInputStream fis2 = new FileInputStream(new File("/home/aweisberg/hashmismatch/fragmenttasklog_site_10.blog"));
+//      fis2.getChannel().position(8);
+//
+//      final long count2 = fis2.getChannel().map(MapMode.READ_ONLY, 0, 8).order(ByteOrder.nativeOrder()).getLong();
+//
+//      SnappyInputStream sis2 = new SnappyInputStream(fis2);
+//
+//      DataInputStream dis2 = new DataInputStream(sis2);
+//
+//      if (count2 > count) {
+//          System.out.println(count2 + " was greater than " + count);
+//          return;
+//      }
+//
+//      final long arrayOne[] = new long[(int)count];
+//      for (int ii = 0; ii < count; ii++) {
+//          arrayOne[ii] = dis.readLong();
+//      }
+//
+//      final long arrayTwo[] = new long[(int)count2];
+//      for (int ii = 0; ii < count2; ii++) {
+//          arrayTwo[ii] = dis2.readLong();
+//      }
+//
+//      int didNotFindCount = 0;
+//      int foundCount = 0;
+//      int zz = 0;
+//      for (int ii = 0; ii < count2; ii++) {
+//          int zzStart = zz;
+//          final long toFind = arrayTwo[ii];
+//          boolean found = false;
+//          while (zz < count) {
+//              if (toFind == arrayOne[zz]) {
+//                  found = true;
+//                  foundCount++;
+//                  break;
+//              }
+//              zz++;
+//          }
+//          if (!found) {
+//              zz = zzStart;
+//              System.out.println("Couldn't find " + toFind + " position " + ii);
+//              didNotFindCount++;
+//          }
+//      }
+//      System.out.println("Found " + foundCount + " did not find " + didNotFindCount);
+//  }
+
+//    public static void main(String args[]) throws Exception {
+//        final String op = args[0];
+//        final String file = args[1];
+//        int tail = 0;
+//        if (op.equalsIgnoreCase("tail")) {
+//            tail = Integer.valueOf(args[2]);
+//        }
+//
+//        long txnid = 0;
+//        if (op.equalsIgnoreCase("grep")) {
+//            txnid = Long.valueOf(args[2]);
+//        }
+//
+//        FileInputStream fis = new FileInputStream(file);
+//        fis.getChannel().position(8);
+//
+//        final long count = fis.getChannel().map(MapMode.READ_ONLY, 0, 8).order(ByteOrder.nativeOrder()).getLong();
+//
+//        SnappyInputStream sis = new SnappyInputStream(fis);
+//
+//        DataInputStream dis = new DataInputStream(sis);
+//
+//        if (op.equalsIgnoreCase("tail")) {
+//            long skip = count > tail ? count - tail : 0;
+//            for (long ii = 0; ii < skip; ii++) {
+//                dis.readLong();
+//            }
+//
+//            for (int ii = 0; ii < tail; ii++) {
+//                System.out.println(dis.readLong());
+//            }
+//        } else if (op.equalsIgnoreCase("grep")) {
+//            for (long ii = 0; ii < count; ii++) {
+//                if (dis.readLong() == txnid) {
+//                    System.out.println(ii + ": " + txnid);
+//                }
+//            }
+//        } else {
+//            System.err.println("Unsupported operation " + op);
+//        }
+//
+//    }
+
+
 }

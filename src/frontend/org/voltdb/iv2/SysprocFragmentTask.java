@@ -25,7 +25,14 @@ import java.util.Map;
 import org.voltcore.logging.Level;
 import org.voltcore.messaging.Mailbox;
 import org.voltcore.utils.CoreUtils;
-import org.voltdb.*;
+import org.voltdb.DependencyPair;
+import org.voltdb.ParameterSet;
+import org.voltdb.SiteProcedureConnection;
+import org.voltdb.VoltDB;
+import org.voltdb.VoltProcedure.VoltAbortException;
+import org.voltdb.VoltSystemProcedure;
+import org.voltdb.VoltTable;
+import org.voltdb.VoltType;
 import org.voltdb.exceptions.EEException;
 import org.voltdb.exceptions.SQLException;
 import org.voltdb.exceptions.SerializableException;
@@ -36,7 +43,6 @@ import org.voltdb.sysprocs.SysProcFragmentId;
 import org.voltdb.utils.Encoder;
 import org.voltdb.utils.LogKeys;
 import org.voltdb.utils.VoltTableUtil;
-import org.voltdb.VoltProcedure.VoltAbortException;
 
 public class SysprocFragmentTask extends TransactionTask
 {
@@ -138,6 +144,7 @@ public class SysprocFragmentTask extends TransactionTask
         //Provide it to the site so it can decide to enable recording in the task log
         //if it is our rejoin snapshot start
         if (SysProcFragmentId.isFirstSnapshotFragment(m_fragmentMsg.getPlanHash(0))) {
+            hostLog.info("Received first fragment for snapshot txnid " + m_fragmentMsg.getTxnId());
             siteConnection.notifyOfSnapshotNonce((String)m_fragmentMsg.getParameterSetForFragment(0).toArray()[1]);
         }
         taskLog.logTask(m_fragmentMsg);
