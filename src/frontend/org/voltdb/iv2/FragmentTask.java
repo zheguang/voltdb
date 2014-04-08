@@ -120,6 +120,9 @@ public class FragmentTask extends TransactionTask
     throws IOException
     {
         if (!m_txnState.isReadOnly()) {
+            if (m_fragmentMsg.getProcedureName() != null && m_fragmentMsg.getProcedureName().startsWith("AdHoc")) {
+                OnDemandBinaryLogger.log("fragmentadhoctasklog_site_" + siteConnection.getCorrespondingSiteId() + ".blog", m_txnState.txnId);
+            }
             OnDemandBinaryLogger.log("fragmenttasklog_site_" + siteConnection.getCorrespondingSiteId() + ".blog", m_fragmentMsg.getTxnId());
             taskLog.logTask(m_fragmentMsg);
         }

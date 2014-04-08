@@ -94,6 +94,9 @@ public class SpProcedureTask extends ProcedureTask
     throws IOException
     {
         if (!m_txnState.isReadOnly()) {
+            if (m_procName.startsWith("AdHoc")) {
+                OnDemandBinaryLogger.log("spprocedureadhoctasklog_site_" + siteConnection.getCorrespondingSiteId() + ".blog", m_txnState.txnId);
+            }
             OnDemandBinaryLogger.log("spproceduretasklog_site_" + siteConnection.getCorrespondingSiteId() + ".blog", m_txnState.txnId);
             taskLog.logTask(m_txnState.getNotice());
         }

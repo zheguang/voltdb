@@ -70,7 +70,6 @@ public abstract class AdHocBase extends VoltSystemProcedure {
      * @return
      */
     public VoltTable[] runAdHoc(SystemProcedureExecutionContext ctx, byte[] serializedBatchData) {
-
         // Collections must be the same size since they all contain slices of the same data.
         assert(serializedBatchData != null);
 
