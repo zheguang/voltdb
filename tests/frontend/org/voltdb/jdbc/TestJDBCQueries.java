@@ -29,13 +29,18 @@ import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Time;
+import java.sql.Timestamp;
 
+import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.voltdb.BackendTarget;
@@ -103,7 +108,7 @@ public class TestJDBCQueries {
                         new String[] {"9999999999999", "8888888888888", "7777777777777"},
                         new String[] {"Jan 23 2011"}),
             new Data("FLOAT", 0,
-                        new String[] {"3.1415926", "2.81828", "-9.0"},
+                        new String[] {"1.0", "2.0", "-9.0"},
                         new String[] {"x"}),
             new Data("DECIMAL", 0,
                         new String[] {"1111.2222", "-3333.4444", "+5555.6666"},
@@ -124,7 +129,7 @@ public class TestJDBCQueries {
         // Add one T_<type> table for each data type.
         String ddl = "";
         for (Data d : data) {
-            ddl += String.format("CREATE TABLE %s(ID %s NOT NULL, VALUE VARCHAR(255)); ",
+            ddl += String.format("CREATE TABLE %s(ID %s, VALUE VARCHAR(255)); ",
                                  d.tablename, d.typedecl);
         }
 
@@ -137,26 +142,6 @@ public class TestJDBCQueries {
 
         // Set up ServerThread and Connection
         startServer();
-
-        // Populate tables.
-        for (Data d : data) {
-            String q = String.format("insert into %s values(?, ?)", d.tablename);
-            for (String id : d.good) {
-                try {
-                    PreparedStatement sel = conn.prepareStatement(q);
-                        sel.setString(1, id);
-                        sel.setString(2, String.format("VALUE:%s:%s", d.tablename, id));
-                        sel.execute();
-                        int count = sel.getUpdateCount();
-                        assertTrue(count==1);
-                }
-                catch(SQLException e) {
-                    System.err.printf("ERROR(INSERT): %s value='%s': %s\n",
-                                      d.typename, d.good[0], e.getMessage());
-                    fail();
-                }
-            }
-        }
     }
 
     @AfterClass
@@ -164,6 +149,45 @@ public class TestJDBCQueries {
         stopServer();
         File f = new File(testjar);
         f.delete();
+    }
+
+    @Before
+    public void populateTables()
+    {
+        // Populate tables.
+        for (Data d : data) {
+            String q = String.format("insert into %s values(?, ?)", d.tablename);
+            for (String id : d.good) {
+                try {
+                    PreparedStatement sel = conn.prepareStatement(q);
+                    sel.setString(1, id);
+                    sel.setString(2, String.format("VALUE:%s:%s", d.tablename, id));
+                    sel.execute();
+                    int count = sel.getUpdateCount();
+                    assertTrue(count==1);
+                }
+                catch(SQLException e) {
+                    System.err.printf("ERROR(INSERT): %s value='%s': %s\n",
+                            d.typename, d.good[0], e.getMessage());
+                    fail();
+                }
+            }
+        }
+    }
+
+    @After
+    public void clearTables()
+    {
+        for (Data d : data) {
+            try {
+                PreparedStatement sel =
+                        conn.prepareStatement(String.format("delete from %s", d.tablename));
+                sel.execute();
+            } catch (SQLException e) {
+                System.err.printf("ERROR(DELETE): %s: %s\n", d.tablename, e.getMessage());
+                fail();
+            }
+        }
     }
 
     private static void startServer() throws ClassNotFoundException, SQLException {
@@ -215,6 +239,86 @@ public class TestJDBCQueries {
     }
 
     @Test
+    public void testFloatDoubleVarcharColumn() throws Exception {
+        for (Data d : data) {
+            try {
+                String q = String.format("insert into %s values(?, ?)", d.tablename);
+                PreparedStatement ins = conn.prepareStatement(q);
+                ins.setString(1, d.good[0]);
+                ins.setFloat(2, (float) 1.0);
+                if (ins.executeUpdate() != 1) {
+                    fail();
+                }
+                q = String.format("select * from %s", d.tablename);
+                Statement sel = conn.createStatement();
+                sel.execute(q);
+                ResultSet rs = sel.getResultSet();
+                int rowCount = 0;
+                boolean found = false;
+                while (rs.next()) {
+                    if (rs.getString(2).equals("1.0")) {
+                        found = true;
+                    }
+                    rowCount++;
+                }
+                assertTrue(found);
+                assertEquals(4, rowCount);
+
+                //Do double
+                q = String.format("insert into %s values(?, ?)", d.tablename);
+                ins = conn.prepareStatement(q);
+                ins.setString(1, d.good[0]);
+                ins.setDouble(2, 9.999999);
+                if (ins.executeUpdate() != 1) {
+                    fail();
+                }
+                q = String.format("select * from %s", d.tablename);
+                sel = conn.createStatement();
+                sel.execute(q);
+                rs = sel.getResultSet();
+                rowCount = 0;
+                found = false;
+                while (rs.next()) {
+                    if (rs.getString(2).equals("9.999999")) {
+                        found = true;
+                    }
+                    rowCount++;
+                }
+                assertTrue(found);
+                assertEquals(5, rowCount);
+
+                //Do int
+                q = String.format("insert into %s values(?, ?)", d.tablename);
+                ins = conn.prepareStatement(q);
+                ins.setString(1, d.good[0]);
+                ins.setInt(2, 9);
+                if (ins.executeUpdate() != 1) {
+                    fail();
+                }
+                q = String.format("select * from %s", d.tablename);
+                sel = conn.createStatement();
+                sel.execute(q);
+                rs = sel.getResultSet();
+                rowCount = 0;
+                found = false;
+                while (rs.next()) {
+                    if (rs.getString(2).equals("9")) {
+                        found = true;
+                    }
+                    rowCount++;
+                }
+                assertTrue(found);
+                assertEquals(6, rowCount);
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+                System.err.printf("ERROR(SELECT): %s: %s\n", d.typename, e.getMessage());
+                fail();
+            }
+        }
+    }
+
+    @Test
     public void testQueryBatch() throws Exception
     {
         Statement batch = conn.createStatement();
@@ -225,9 +329,13 @@ public class TestJDBCQueries {
         try {
             int[] resultCodes = batch.executeBatch();
             assertEquals(data.length, resultCodes.length);
+            int total_cnt = 0;
             for (int i = 0; i < data.length; ++i) {
                 assertEquals(data[i].good.length, resultCodes[i]);
+                total_cnt += data[i].good.length;
             }
+            //Test update count
+            assertEquals(total_cnt, batch.getUpdateCount());
         }
         catch(SQLException e) {
             System.err.printf("ERROR: %s\n", e.getMessage());
@@ -274,4 +382,152 @@ public class TestJDBCQueries {
             }
         }
     }
+
+    private void nativeSet(PreparedStatement stmt, String tableName, String value, boolean useAlt)
+            throws NumberFormatException, SQLException
+    {
+        switch (tableName) {
+        case "T_TINYINT":
+            stmt.setByte(1, Byte.parseByte(value));
+            break;
+        case "T_SMALLINT":
+            stmt.setShort(1, Short.parseShort(value));
+            break;
+        case "T_INTEGER":
+            stmt.setInt(1, Integer.parseInt(value));
+            break;
+        case "T_BIGINT":
+            stmt.setLong(1, Long.parseLong(value));
+            break;
+        case "T_FLOAT":
+            if (!useAlt) {
+                stmt.setDouble(1, Double.parseDouble(value));
+            }
+            else {
+                stmt.setFloat(1, (float) Double.parseDouble(value));
+            }
+            break;
+        case "T_DECIMAL":
+        case "T_VARBINARY":
+        case "T_VARCHAR":
+            stmt.setString(1, value);
+            break;
+        case "T_TIMESTAMP":
+            // ALT METHODS FOR TIMESTAMPS DON'T WORK YET
+            //if (!useAlt) {
+                stmt.setString(1, value);
+            //}
+            //else {
+            //    long millis = Long.parseLong(value);
+            //    java.sql.Date date = new java.sql.Date(millis);
+            //    stmt.setDate(1, date);
+            //}
+            break;
+        default:
+            fail();
+        }
+    }
+
+    @Test
+    public void testParameterizedQueriesNative() throws Exception
+    {
+        boolean[] bools = { true, false };
+        for (Data d : data) {
+            for (boolean alt : bools) {
+                String q = String.format("select * from %s where id != ?", d.tablename);
+                try {
+                    PreparedStatement sel = conn.prepareStatement(q);
+                    nativeSet(sel, d.tablename, d.good[0], alt);
+                    sel.execute();
+                    ResultSet rs = sel.getResultSet();
+                    int rowCount = 0;
+                    while (rs.next()) {
+                        rowCount++;
+                    }
+                    assertEquals(d.good.length-1, rowCount);
+                }
+                catch(SQLException e) {
+                    System.err.printf("ERROR(SELECT): %s value='%s': %s\n",
+                                      d.typename, d.good[0], e.getMessage());
+                    fail();
+                }
+                if (d.bad != null) {
+                    for (String value : d.bad) {
+                        boolean exceptionReceived = false;
+                        try {
+                            PreparedStatement sel = conn.prepareStatement(q);
+                            nativeSet(sel, d.tablename, value, alt);
+                            sel.execute();
+                            System.err.printf("ERROR(SELECT): %s value='%s': * should have failed *\n",
+                                              d.typename, value);
+                        }
+                        // unlike with setString, this might not be a sqlexception, but a java format exception
+                        catch(Exception e) {
+                            exceptionReceived = true;
+                        }
+                        assertTrue(exceptionReceived);
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testGetTimestamp() throws Exception
+    {
+        PreparedStatement ins = conn.prepareStatement("insert into T_TIMESTAMP values (?, ?)");
+        // Bad reported input
+        Timestamp ts = Timestamp.valueOf("2014-03-23 05:12:08.156000");
+        ins.setTimestamp(1, ts);
+        ins.setString(2, "badinput");
+        ins.executeUpdate();
+        PreparedStatement ps = conn.prepareStatement("select ID from T_TIMESTAMP where VALUE='badinput'");
+        ps.executeQuery();
+        ResultSet rs = ps.getResultSet();
+        while (rs.next()) {
+            assertEquals(ts, rs.getTimestamp(1));
+            assertEquals(new Date(ts.getTime()), rs.getDate(1));
+            assertEquals(new Time(ts.getTime()), rs.getTime(1));
+        }
+        // Bad round-trip
+        ts = new Timestamp(System.currentTimeMillis());
+        ins.setTimestamp(1, ts);
+        ins.setString(2, "timestamp");
+        ins.executeUpdate();
+        ps = conn.prepareStatement("select ID from T_TIMESTAMP where VALUE='timestamp'");
+        ps.executeQuery();
+        rs = ps.getResultSet();
+        while (rs.next()) {
+            assertEquals(ts, rs.getTimestamp(1));
+            assertEquals(new Date(ts.getTime()), rs.getDate(1));
+            assertEquals(new Time(ts.getTime()), rs.getTime(1));
+        }
+        // Crashy null
+        ins.setTimestamp(1, null);
+        ins.setString(2, "crashy");
+        ins.executeUpdate();
+        ps = conn.prepareStatement("select ID from T_TIMESTAMP where VALUE='crashy'");
+        ps.executeQuery();
+        rs = ps.getResultSet();
+        while (rs.next()) {
+            assertEquals(null, rs.getTimestamp(1));
+            assertEquals(null, rs.getDate(1));
+            assertEquals(null, rs.getTime(1));
+        }
+        // THE TIMESTAMP BEFORE TIME
+        //Timestamp ts = new Timestamp(-10000);
+        //ts.setNanos(999999000);
+        //System.out.println("BEFORE TIME: " + ts.toString());
+        //ins.setTimestamp(1, ts);
+        //ins.setString(2, "beforetime");
+        //ins.executeUpdate();
+        //PreparedStatement ps = conn.prepareStatement("select ID from T_TIMESTAMP where VALUE='beforetime'");
+        //ps.executeQuery();
+        //ResultSet rs = ps.getResultSet();
+        //while (rs.next()) {
+        //    Timestamp ts1 = rs.getTimestamp(1);
+        //    assertEquals(ts, ts1);
+        //}
+    }
+
 }
