@@ -145,7 +145,8 @@ public class SysprocFragmentTask extends TransactionTask
         //if it is our rejoin snapshot start
         if (SysProcFragmentId.isFirstSnapshotFragment(m_fragmentMsg.getPlanHash(0))) {
             hostLog.info("Received first fragment for snapshot txnid " + m_fragmentMsg.getTxnId() + " sp handle " + m_fragmentMsg.getSpHandle());
-            siteConnection.notifyOfSnapshotNonce((String)m_fragmentMsg.getParameterSetForFragment(0).toArray()[1]);
+            siteConnection.notifyOfSnapshotNonce((String)m_fragmentMsg.getParameterSetForFragment(0).toArray()[1],
+                                                 m_fragmentMsg.getSpHandle());
         }
         taskLog.logTask(m_fragmentMsg);
 
