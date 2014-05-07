@@ -469,7 +469,6 @@ public class CommandLine extends VoltDB.Configuration
             cmdline.add("-DVoltFilePrefix=" + voltFilePrefix);
             cmdline.add("-ea");
             cmdline.add("-XX:MaxDirectMemorySize=2g");
-            cmdline.add("-XX:-UseSplitVerifier");
         }
         else
         {

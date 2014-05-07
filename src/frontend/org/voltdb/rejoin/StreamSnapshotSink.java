@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.google_voltpatches.common.base.Preconditions;
 import org.voltcore.logging.VoltLogger;
 import org.voltcore.messaging.Mailbox;
 import org.voltcore.utils.DBBPool.BBContainer;
@@ -34,8 +35,6 @@ import org.voltdb.VoltTable;
 import org.voltdb.dtxn.UndoAction;
 import org.voltdb.utils.CachedByteBufferAllocator;
 import org.voltdb.utils.FixedDBBPool;
-
-import com.google_voltpatches.common.base.Preconditions;
 
 /**
  * Takes the decompressed snapshot blocks and pass them to EE. Once constructed,
@@ -107,10 +106,10 @@ public class StreamSnapshotSink {
         public void restore(SiteProcedureConnection connection) {
             VoltTable table = PrivateVoltTableFactory.createVoltTableFromBuffer(tableBlock.duplicate(), true);
 
-            // Currently, only export cares about this TXN ID.  Since we don't have one handy,
-            // just use 0 to match how m_openSpHandle is initialized in ee/storage/TupleStreamWrapper
+            // Currently, only export cares about this TXN ID.  Since we don't have one handy, and IV2
+            // doesn't yet care about export, just use Long.MIN_VALUE.
 
-            connection.loadTable(0L, tableId, table, false, false);
+            connection.loadTable(Long.MIN_VALUE, tableId, table, false, false);
         }
     }
 
