@@ -20,8 +20,15 @@
 
 #include "boost/scoped_ptr.hpp"
 
+#include <string>
+
 namespace llvm {
+class ExecutionEngine;
+    namespace legacy {
+class FunctionPassManager;
+    }
 class LLVMContext;
+
 }
 
 namespace voltdb {
@@ -34,8 +41,11 @@ namespace voltdb {
 
     private:
         boost::scoped_ptr<llvm::LLVMContext> m_llvmContext;
+        boost::scoped_ptr<llvm::ExecutionEngine> m_executionEngine;
+        boost::scoped_ptr<llvm::legacy::FunctionPassManager> m_passManager;
 
-    };
+        std::string m_errorString;
+   };
 
 }
 

@@ -53,10 +53,15 @@
 #include <string>
 #include <vector>
 
+namespace llvm {
+class Value;
+}
+
 namespace voltdb {
 
 class NValue;
 class TableTuple;
+class CodegenContext;
 
 /**
  * Predicate objects for filtering tuples during query execution.
@@ -135,6 +140,11 @@ class AbstractExpression {
     const AbstractExpression *getRight() const {
         return m_right;
     }
+
+    virtual llvm::Value* codegen(const CodegenContext& cgCtx, const TableTuple* tuple) const {
+        throw std::exception();
+    }
+
 
   protected:
     AbstractExpression();
