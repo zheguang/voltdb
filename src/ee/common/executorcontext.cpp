@@ -45,6 +45,7 @@ ExecutorContext::ExecutorContext(int64_t siteId,
     m_undoQuantum(undoQuantum),
     m_drStream(drStream), m_engine(engine),
     m_txnId(0), m_spHandle(0),
+    m_codegenContext(),
     m_lastCommittedSpHandle(0),
     m_siteId(siteId), m_partitionId(partitionId),
     m_hostname(hostname), m_hostId(hostId),
@@ -78,4 +79,3 @@ ExecutorContext* ExecutorContext::getExecutorContext() {
     return static_cast<ExecutorContext*>(pthread_getspecific( static_key));
 }
 }
-

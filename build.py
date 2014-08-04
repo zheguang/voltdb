@@ -65,6 +65,8 @@ if CTX.PROFILE:
 # linker flags
 CTX.LDFLAGS += """ -g3"""
 CTX.LASTLDFLAGS = """ -ldl"""
+CTX.LASTLDFLAGS += (" " + getLlvmLibs() + " ")
+
 
 if CTX.COVERAGE:
     CTX.LDFLAGS += " -ftest-coverage -fprofile-arcs"
@@ -123,7 +125,7 @@ CTX.OUTPUT_PREFIX += "/"
 
 # Defaults Section
 CTX.JNIEXT = "so"
-CTX.JNILIBFLAGS += " -shared"
+CTX.JNILIBFLAGS += " " + getLlvmLibs() + " "
 CTX.SOFLAGS += " -shared"
 CTX.SOEXT = "so"
 out = Popen('java -cp tools/ SystemPropertyPrinter java.library.path'.split(),
@@ -131,6 +133,7 @@ out = Popen('java -cp tools/ SystemPropertyPrinter java.library.path'.split(),
 libpaths = ' '.join( '-L' + path for path in out.strip().split(':') if path != '' and path != '/usr/lib' )
 CTX.JNIBINFLAGS += " " + libpaths
 CTX.JNIBINFLAGS += " -ljava -ljvm -lverify"
+CTX.JNIBINFLAGS += " " + getLlvmLibs() + " "
 
 if CTX.PLATFORM == "Darwin":
     CTX.CPPFLAGS += " -DMACOSX -arch x86_64"
@@ -196,6 +199,7 @@ CTX.INPUT['structures'] = """
 """
 
 CTX.INPUT['common'] = """
+ CodegenContext.cpp
  CompactingStringPool.cpp
  CompactingStringStorage.cpp
  FatalException.cpp

@@ -1,5 +1,5 @@
 import os, sys, threading, shutil
-from subprocess import Popen, PIPE, STDOUT
+from subprocess import Popen, PIPE, STDOUT, check_output
 
 class BuildContext:
     def __init__(self, args):
@@ -213,7 +213,7 @@ def buildMakefile(CTX):
 
     makefile.write("# main jnilib target\n")
     makefile.write("nativelibs/libvoltdb-%s.$(JNIEXT): " % version + " ".join(jni_objects) + "\n")
-    makefile.write("\t$(LINK.cpp) $(JNILIBFLAGS) -o $@ $^\n")
+    makefile.write("\t$(LINK.cpp) -shared -o $@ $^ $(JNILIBFLAGS) \n")
     makefile.write("\n")
 
     makefile.write("# voltdb instance that loads the jvm from C++\n")
@@ -309,6 +309,12 @@ def buildMakefile(CTX):
     makefile.write("\n")
     makefile.close()
     return True
+
+def getLlvmLibs():
+    flags = ""
+    flags += check_output(['llvm-config', '--ldflags', '--libs', 'core', 'jit', 'native'])
+    flags += " -ltinfo "
+    return " ".join(flags.split())
 
 def buildIPC(CTX):
     retval = os.system("make --directory=%s prod/voltdbipc -j4" % (CTX.OUTPUT_PREFIX))
@@ -407,4 +413,3 @@ def getCompilerVersion():
 
 # get the version of gcc and make it avaliable
 compiler_name, compiler_major, compiler_minor, compiler_point = getCompilerVersion()
-
