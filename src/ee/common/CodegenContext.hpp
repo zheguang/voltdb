@@ -28,19 +28,26 @@ class ExecutionEngine;
 class FunctionPassManager;
     }
 class LLVMContext;
-
+class Module;
 }
 
 namespace voltdb {
+
+    class TupleSchema;
+    class AbstractExpression;
 
     class CodegenContext {
     public:
         CodegenContext();
 
+        void* compilePredicate(TupleSchema* tupleSchema,
+                               AbstractExpression* expr);
+
         ~CodegenContext();
 
     private:
         boost::scoped_ptr<llvm::LLVMContext> m_llvmContext;
+        llvm::Module* m_module;
         boost::scoped_ptr<llvm::ExecutionEngine> m_executionEngine;
         boost::scoped_ptr<llvm::legacy::FunctionPassManager> m_passManager;
 

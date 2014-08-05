@@ -16,6 +16,8 @@
  */
 
 #include "common/CodegenContext.hpp"
+#include "common/TupleSchema.h"
+#include "expressions/abstractexpression.h"
 
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/Verifier.h"
@@ -33,6 +35,7 @@
 namespace voltdb {
     CodegenContext::CodegenContext()
         : m_llvmContext()
+        , m_module(NULL)
         , m_executionEngine()
         , m_passManager()
         , m_errorString()
@@ -42,9 +45,9 @@ namespace voltdb {
 
         m_llvmContext.reset(new llvm::LLVMContext());
 
-        llvm::Module *module = new llvm::Module("voltdb_generated_code", *m_llvmContext);
+        m_module = new llvm::Module("voltdb_generated_code", *m_llvmContext);
 
-        llvm::ExecutionEngine *engine = llvm::EngineBuilder(module).setErrorStr(&m_errorString).create();
+        llvm::ExecutionEngine *engine = llvm::EngineBuilder(m_module).setErrorStr(&m_errorString).create();
 
         if (! engine) {
             // throwing in a constructor is bad
@@ -53,9 +56,11 @@ namespace voltdb {
             throw std::exception();
         }
 
+        // m_module now owned by the engine.
+
         m_executionEngine.reset(engine);
 
-        m_passManager.reset(new llvm::FunctionPassManager(module));
+        m_passManager.reset(new llvm::FunctionPassManager(m_module));
 
         m_passManager->add(new llvm::DataLayout(*m_executionEngine->getDataLayout()));
 
@@ -75,4 +80,32 @@ namespace voltdb {
 
     CodegenContext::~CodegenContext() {
     }
+
+    void*
+    CodegenContext::compilePredicate(TupleSchema* tupleSchema,
+                                     AbstractExpression* expr) {
+        // Create the type for our function:
+        // It accepts a tuple, and returns a signed, 8-bit int.
+        // (to represent true, false, and unknown)
+        llvm::LLVMContext &ctx = *m_llvmContext;
+
+        std::vector<llvm::Type*> argType(1, llvm::Type::getInt8PtrTy(ctx));
+        llvm::Type* retType = llvm::Type::getInt8Ty(ctx);
+        llvm::FunctionType* ft = llvm::FunctionType::get(retType, argType, false);
+        llvm::Function* fn = llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "pred", m_module);
+
+        fn->arg_begin()->setName("tuple");
+
+        llvm::IRBuilder<> builder(ctx);
+
+        llvm::BasicBlock *bb = llvm::BasicBlock::Create(ctx, "entry", fn);
+        builder.SetInsertPoint(bb);
+
+        llvm::Value *val = llvm::ConstantInt::get(retType, 0);
+
+        builder.CreateRet(val);
+
+        return static_cast<void*>(fn);
+    }
+
 }
