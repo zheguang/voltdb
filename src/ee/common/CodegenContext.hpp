@@ -40,8 +40,8 @@ namespace voltdb {
     public:
         CodegenContext();
 
-        void* compilePredicate(TupleSchema* tupleSchema,
-                               AbstractExpression* expr);
+        void* compilePredicate(const TupleSchema* tupleSchema,
+                               const AbstractExpression* expr);
 
         ~CodegenContext();
 

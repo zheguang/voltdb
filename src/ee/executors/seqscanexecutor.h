@@ -62,6 +62,7 @@ namespace voltdb
         SeqScanExecutor(VoltDBEngine *engine, AbstractPlanNode* abstract_node)
             : AbstractExecutor(engine, abstract_node)
             , m_aggExec(NULL)
+            , m_predFunction(NULL)
         {}
     protected:
         bool p_init(AbstractPlanNode* abstract_node,
@@ -70,6 +71,7 @@ namespace voltdb
 
     private:
         AggregateExecutorBase* m_aggExec;
+        void* m_predFunction;
     };
 }
 

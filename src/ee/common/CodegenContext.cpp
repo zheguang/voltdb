@@ -82,8 +82,8 @@ namespace voltdb {
     }
 
     void*
-    CodegenContext::compilePredicate(TupleSchema* tupleSchema,
-                                     AbstractExpression* expr) {
+    CodegenContext::compilePredicate(const TupleSchema* tupleSchema,
+                                     const AbstractExpression* expr) {
         // Create the type for our function:
         // It accepts a tuple, and returns a signed, 8-bit int.
         // (to represent true, false, and unknown)
@@ -105,7 +105,11 @@ namespace voltdb {
 
         builder.CreateRet(val);
 
-        return static_cast<void*>(fn);
+        llvm::verifyFunction(*fn);
+        m_passManager->run(*fn);
+        m_module->dump();
+
+        return m_executionEngine->getPointerToFunction(fn);
     }
 
 }

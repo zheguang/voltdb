@@ -350,6 +350,9 @@ class __attribute__((visibility("default"))) VoltDBEngine {
 
         void rebuildTableCollections();
 
+        void* compilePredicate(const TupleSchema* tupleSchema,
+                               const AbstractExpression* expr);
+
     private:
         /*
          * Tasks dispatched by executeTask
