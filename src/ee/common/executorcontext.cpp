@@ -79,8 +79,8 @@ ExecutorContext* ExecutorContext::getExecutorContext() {
     return static_cast<ExecutorContext*>(pthread_getspecific( static_key));
 }
 
-    void* ExecutorContext::compilePredicate(const TupleSchema* tupleSchema,
-                                            const AbstractExpression* expr) {
+    PredFunction ExecutorContext::compilePredicate(const TupleSchema* tupleSchema,
+                                                   const AbstractExpression* expr) {
         return m_codegenContext.compilePredicate(tupleSchema, expr);
     }
 

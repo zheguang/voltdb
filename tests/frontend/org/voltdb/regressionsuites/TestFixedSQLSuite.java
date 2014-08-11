@@ -24,7 +24,9 @@
 package org.voltdb.regressionsuites;
 
 import org.voltdb.BackendTarget;
+import org.voltdb.VoltTable;
 import org.voltdb.client.Client;
+import org.voltdb.client.ClientResponse;
 import org.voltdb.compiler.VoltProjectBuilder;
 import org.voltdb_testprocs.regressionsuites.fixedsql.Insert;
 import org.voltdb_testprocs.regressionsuites.fixedsql.TestENG1232;
@@ -1653,9 +1655,12 @@ public class TestFixedSQLSuite extends RegressionSuite {
     public void testBasicSelect() throws Exception {
         Client client = getClient();
 
-        client.callProcedure("P1.insert", 50, "a fine summer day", 71, 98.6);
+        client.callProcedure("P1.insert", 50, "a fine summer day", 32, 98.6);
 
-        client.callProcedure("@AdHoc", "select id from P1 where num = 32");
+        ClientResponse cr = client.callProcedure("@AdHoc", "select id from P1 where num = 32");
+        assertEquals(ClientResponse.SUCCESS, cr.getStatus());
+        VoltTable vt = cr.getResults()[0];
+        assertFalse(vt.advanceRow());
     }
 
     // This is a regression test for ENG-6792

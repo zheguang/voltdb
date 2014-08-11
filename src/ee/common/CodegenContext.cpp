@@ -17,6 +17,7 @@
 
 #include "common/CodegenContext.hpp"
 #include "common/TupleSchema.h"
+#include "common/types.h"
 #include "expressions/abstractexpression.h"
 
 #include "llvm/Analysis/Passes.h"
@@ -81,7 +82,7 @@ namespace voltdb {
     CodegenContext::~CodegenContext() {
     }
 
-    void*
+    PredFunction
     CodegenContext::compilePredicate(const TupleSchema* tupleSchema,
                                      const AbstractExpression* expr) {
         // Create the type for our function:
@@ -101,6 +102,9 @@ namespace voltdb {
         llvm::BasicBlock *bb = llvm::BasicBlock::Create(ctx, "entry", fn);
         builder.SetInsertPoint(bb);
 
+        // Here is where code is generated:
+        expr->codegen(*this, tupleSchema);
+
         llvm::Value *val = llvm::ConstantInt::get(retType, 0);
 
         builder.CreateRet(val);
@@ -109,7 +113,7 @@ namespace voltdb {
         m_passManager->run(*fn);
         m_module->dump();
 
-        return m_executionEngine->getPointerToFunction(fn);
+        return (PredFunction)m_executionEngine->getPointerToFunction(fn);
     }
 
 }

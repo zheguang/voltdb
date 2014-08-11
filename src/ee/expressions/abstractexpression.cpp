@@ -239,4 +239,13 @@ AbstractExpression::buildExpressionTree_recurse(PlannerDomValue obj)
     }
 }
 
+    llvm::Value* AbstractExpression::codegen(const CodegenContext&,
+                                             const TupleSchema*) const {
+        std::ostringstream oss;
+        oss << "Expression not supported for code generation: ";
+        oss << expressionToString(getExpressionType());
+        throw SQLException(SQLException::dynamic_sql_error,
+                           oss.str().c_str());
+    }
+
 }

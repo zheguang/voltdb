@@ -474,6 +474,12 @@ enum TupleSerializationFormat { TUPLE_SERIALIZATION_NATIVE = 0, TUPLE_SERIALIZAT
 // ------------------------------------------------------------------
 enum Endianess { BYTE_ORDER_BIG_ENDIAN = 0, BYTE_ORDER_LITTLE_ENDIAN = 1 };
 
+// ------------------------------------------------------------------
+// Pointer to predicate function type:
+// Pointer to a function that accepts tuple storage (char*) and
+// returns an int8_t (can be true, false, or null value)
+// ------------------------------------------------------------------
+ typedef int8_t(*PredFunction)(char*);
 
 // ------------------------------------------------------------------
 // Utility functions.

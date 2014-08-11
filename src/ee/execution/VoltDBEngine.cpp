@@ -1805,9 +1805,4 @@ void VoltDBEngine::reportProgessToTopend() {
     }
 }
 
-    void* VoltDBEngine::compilePredicate(const TupleSchema* tupleSchema,
-                                         const AbstractExpression* expr) {
-        return m_executorContext->compilePredicate(tupleSchema, expr);
-    }
-
 } // namespace voltdb

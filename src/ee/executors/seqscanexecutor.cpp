@@ -94,8 +94,8 @@ bool SeqScanExecutor::p_init(AbstractPlanNode* abstract_node,
         Table* input_table = (node->isSubQuery()) ?
             node->getChildren()[0]->getOutputTable():
             node->getTargetTable();
-        m_predFunction = m_engine->compilePredicate(input_table->schema(),
-                                                    node->getPredicate());
+        m_predFunction = compilePredicate(input_table->schema(),
+                                          node->getPredicate());
     }
 
     //
@@ -215,8 +215,7 @@ bool SeqScanExecutor::p_execute(const NValueArray &params) {
             //
             bool isTrue;
             if (m_predFunction) {
-                int8_t (*fn)(char*) = (int8_t(*)(char*))(intptr_t)m_predFunction;
-                isTrue = (fn(tuple.address()) == 0x1);
+                isTrue = (m_predFunction(tuple.address()) == 0x1);
             } else {
                 isTrue = predicate->eval(&tuple, NULL).isTrue();
             }

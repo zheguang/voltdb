@@ -71,7 +71,7 @@ namespace voltdb
 
     private:
         AggregateExecutorBase* m_aggExec;
-        void* m_predFunction;
+        PredFunction m_predFunction;
     };
 }
 

@@ -144,8 +144,8 @@ class ExecutorContext {
         return m_drStream;
     }
 
-    void* compilePredicate(const TupleSchema* tupleSchema,
-                           const AbstractExpression* expr);
+    PredFunction compilePredicate(const TupleSchema* tupleSchema,
+                                  const AbstractExpression* expr);
 
     static ExecutorContext* getExecutorContext();
 

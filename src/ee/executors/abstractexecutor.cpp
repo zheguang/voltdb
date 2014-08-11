@@ -174,3 +174,9 @@ void AbstractExecutor::setDMLCountOutputTable(TempTableLimits* limits) {
 
 
 AbstractExecutor::~AbstractExecutor() {}
+
+PredFunction AbstractExecutor::compilePredicate(const TupleSchema* tupleSchema,
+                                                const AbstractExpression *expr) {
+    return ExecutorContext::getExecutorContext()->compilePredicate(tupleSchema,
+                                                                   expr);
+}

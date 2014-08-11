@@ -19,6 +19,7 @@
 #define _CODEGENCONTEXT_HPP_
 
 #include "boost/scoped_ptr.hpp"
+#include "common/types.h"
 
 #include <string>
 
@@ -40,7 +41,7 @@ namespace voltdb {
     public:
         CodegenContext();
 
-        void* compilePredicate(const TupleSchema* tupleSchema,
+        PredFunction compilePredicate(const TupleSchema* tupleSchema,
                                const AbstractExpression* expr);
 
         ~CodegenContext();

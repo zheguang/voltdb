@@ -61,6 +61,7 @@ namespace voltdb {
 
 class NValue;
 class TableTuple;
+class TupleSchema;
 class CodegenContext;
 
 /**
@@ -141,10 +142,7 @@ class AbstractExpression {
         return m_right;
     }
 
-    virtual llvm::Value* codegen(const CodegenContext& cgCtx, const TableTuple* tuple) const {
-        throw std::exception();
-    }
-
+    virtual llvm::Value* codegen(const CodegenContext& cgCtx, const TupleSchema* tupleSchema) const;
 
   protected:
     AbstractExpression();

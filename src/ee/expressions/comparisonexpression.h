@@ -142,6 +142,18 @@ public:
         return (spacer + "ComparisonExpression\n");
     }
 
+    virtual llvm::Value* codegen(const CodegenContext& cgCtx,
+                                 const TupleSchema* tupleSchema) const {
+        llvm::Value* lval = m_left->codegen(cgCtx, tupleSchema);
+        llvm::Value* rval = m_right->codegen(cgCtx, tupleSchema);
+
+        (void) lval;
+        (void) rval;
+
+        // build the comparison instruction here....
+        return NULL;
+    }
+
 private:
     AbstractExpression *m_left;
     AbstractExpression *m_right;
