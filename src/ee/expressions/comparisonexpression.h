@@ -49,6 +49,7 @@
 #include "common/common.h"
 #include "common/serializeio.h"
 #include "common/valuevector.h"
+#include "common/CodegenContext.hpp"
 
 #include "expressions/abstractexpression.h"
 #include "expressions/parametervalueexpression.h"
@@ -63,35 +64,76 @@ namespace voltdb {
 class CmpEq {
 public:
     inline NValue cmp(NValue l, NValue r) const { return l.op_equals_withoutNull(r);}
+
+    llvm::Value* codegen(CodegenContext& ctx, llvm::Value* lhs, llvm::Value* rhs) const {
+        // For floating point types, we would CreateFCmp* here instead...
+        llvm::Value *isEq = ctx.builder().CreateICmpEQ(lhs, rhs);
+
+        // the icmp instruction produces a 1-bit integer.  zero-extend to 8 bits.
+        return ctx.builder().CreateZExt(isEq, ctx.getLlvmType(VALUE_TYPE_BOOLEAN));
+    }
 };
 class CmpNe {
 public:
     inline NValue cmp(NValue l, NValue r) const { return l.op_notEquals_withoutNull(r);}
+
+    llvm::Value* codegen(CodegenContext& ctx, llvm::Value* lhs, llvm::Value* rhs) const {
+        llvm::Value *isNe = ctx.builder().CreateICmpNE(lhs, rhs);
+        return ctx.builder().CreateZExt(isNe, ctx.getLlvmType(VALUE_TYPE_BOOLEAN));
+    }
 };
 class CmpLt {
 public:
     inline NValue cmp(NValue l, NValue r) const { return l.op_lessThan_withoutNull(r);}
+
+    llvm::Value* codegen(CodegenContext& ctx, llvm::Value* lhs, llvm::Value* rhs) const {
+        llvm::Value *isLt = ctx.builder().CreateICmpSLT(lhs, rhs);
+        return ctx.builder().CreateZExt(isLt, ctx.getLlvmType(VALUE_TYPE_BOOLEAN));
+    }
 };
 class CmpGt {
 public:
     inline NValue cmp(NValue l, NValue r) const { return l.op_greaterThan_withoutNull(r);}
+
+    llvm::Value* codegen(CodegenContext& ctx, llvm::Value* lhs, llvm::Value* rhs) const {
+        return ctx.builder().CreateZExt(ctx.builder().CreateICmpSGT(lhs, rhs),
+                                      ctx.getLlvmType(VALUE_TYPE_BOOLEAN));
+    }
 };
 class CmpLte {
 public:
     inline NValue cmp(NValue l, NValue r) const { return l.op_lessThanOrEqual_withoutNull(r);}
+
+    llvm::Value* codegen(CodegenContext& ctx, llvm::Value* lhs, llvm::Value* rhs) const {
+        return ctx.builder().CreateZExt(ctx.builder().CreateICmpSLE(lhs, rhs),
+                                      ctx.getLlvmType(VALUE_TYPE_BOOLEAN));
+    }
 };
 class CmpGte {
 public:
     inline NValue cmp(NValue l, NValue r) const { return l.op_greaterThanOrEqual_withoutNull(r);}
+
+    llvm::Value* codegen(CodegenContext& ctx, llvm::Value* lhs, llvm::Value* rhs) const {
+        return ctx.builder().CreateZExt(ctx.builder().CreateICmpSGE(lhs, rhs),
+                                      ctx.getLlvmType(VALUE_TYPE_BOOLEAN));
+    }
 };
 class CmpLike {
 public:
     inline NValue cmp(NValue l, NValue r) const { return l.like(r);}
+
+    llvm::Value* codegen(CodegenContext&, llvm::Value*, llvm::Value*) const {
+        throw std::exception();
+    }
 };
 class CmpIn {
 public:
     inline NValue cmp(NValue l, NValue r) const
     { return l.inList(r) ? NValue::getTrue() : NValue::getFalse(); }
+
+    llvm::Value* codegen(CodegenContext&, llvm::Value*, llvm::Value*) const {
+        throw std::exception();
+    }
 };
 
 template <typename C>
@@ -142,16 +184,12 @@ public:
         return (spacer + "ComparisonExpression\n");
     }
 
-    virtual llvm::Value* codegen(const CodegenContext& cgCtx,
+    virtual llvm::Value* codegen(CodegenContext& cgCtx,
                                  const TupleSchema* tupleSchema) const {
         llvm::Value* lval = m_left->codegen(cgCtx, tupleSchema);
         llvm::Value* rval = m_right->codegen(cgCtx, tupleSchema);
 
-        (void) lval;
-        (void) rval;
-
-        // build the comparison instruction here....
-        return NULL;
+        return compare.codegen(cgCtx, lval, rval);
     }
 
 private:

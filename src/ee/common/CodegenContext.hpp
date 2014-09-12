@@ -21,6 +21,8 @@
 #include "boost/scoped_ptr.hpp"
 #include "common/types.h"
 
+#include "llvm/IR/IRBuilder.h"
+
 #include <string>
 
 namespace llvm {
@@ -30,6 +32,9 @@ class FunctionPassManager;
     }
 class LLVMContext;
 class Module;
+class Value;
+class Type;
+class IntegerType;
 }
 
 namespace voltdb {
@@ -44,6 +49,17 @@ namespace voltdb {
         PredFunction compilePredicate(const TupleSchema* tupleSchema,
                                const AbstractExpression* expr);
 
+        llvm::Value* getTupleArg();
+
+        llvm::IRBuilder<>& builder();
+
+        llvm::LLVMContext& getLlvmContext();
+
+        llvm::Type* getLlvmType(ValueType voltType);
+
+        // returns an llvm integer type that can store an pointer on the jit's target
+        llvm::IntegerType* getIntPtrType();
+
         ~CodegenContext();
 
     private:
@@ -53,8 +69,11 @@ namespace voltdb {
         boost::scoped_ptr<llvm::legacy::FunctionPassManager> m_passManager;
 
         std::string m_errorString;
+        boost::scoped_ptr<llvm::IRBuilder<> > m_builder;
+        llvm::Value* m_tupleArg;
    };
 
 }
 
 #endif
+

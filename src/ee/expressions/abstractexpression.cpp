@@ -239,7 +239,7 @@ AbstractExpression::buildExpressionTree_recurse(PlannerDomValue obj)
     }
 }
 
-    llvm::Value* AbstractExpression::codegen(const CodegenContext&,
+    llvm::Value* AbstractExpression::codegen(CodegenContext&,
                                              const TupleSchema*) const {
         std::ostringstream oss;
         oss << "Expression not supported for code generation: ";

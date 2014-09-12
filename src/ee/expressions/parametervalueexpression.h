@@ -70,6 +70,8 @@ public:
         m_valueIdx(value_idx), m_paramValue(paramValue) {
     }
 
+        ~ParameterValueExpression();
+
     voltdb::NValue eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
         assert(m_paramValue != NULL);
         return *m_paramValue;
@@ -90,9 +92,11 @@ public:
         return this->m_valueIdx;
     }
 
+    virtual llvm::Value* codegen(CodegenContext& cgCtx, const TupleSchema* tupleSchema) const;
+
   private:
     int m_valueIdx;
-    voltdb::NValue* m_paramValue;
+    const voltdb::NValue* m_paramValue;
 };
 
 }

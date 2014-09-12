@@ -62,6 +62,8 @@ class TupleValueExpression : public AbstractExpression {
         VOLT_TRACE("OptimizedTupleValueExpression %d using tupleIdx %d valueIdx %d", m_type, tableIdx, valueIdx);
     };
 
+        virtual ~TupleValueExpression();
+
     virtual voltdb::NValue eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
         if (tuple_idx == 0) {
             assert(tuple1);
@@ -84,6 +86,8 @@ class TupleValueExpression : public AbstractExpression {
             return tuple2->getNValue(value_idx);
         }
     }
+
+    virtual llvm::Value* codegen(CodegenContext& cgCtx, const TupleSchema* tupleSchema) const;
 
     std::string debugInfo(const std::string &spacer) const {
         std::ostringstream buffer;

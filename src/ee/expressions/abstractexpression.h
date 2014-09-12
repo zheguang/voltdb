@@ -142,7 +142,7 @@ class AbstractExpression {
         return m_right;
     }
 
-    virtual llvm::Value* codegen(const CodegenContext& cgCtx, const TupleSchema* tupleSchema) const;
+    virtual llvm::Value* codegen(CodegenContext& cgCtx, const TupleSchema* tupleSchema) const;
 
   protected:
     AbstractExpression();

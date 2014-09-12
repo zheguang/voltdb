@@ -43,50 +43,35 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "parametervalueexpression.h"
+#include "tuplevalueexpression.h"
+#include "common/CodegenContext.hpp"
 
-#include "common/debuglog.h"
-#include "common/valuevector.h"
-#include "common/executorcontext.hpp"
-#include "execution/VoltDBEngine.h"
+#include "llvm/IR/Constants.h"
 
 #include <sstream>
 
 namespace voltdb {
-
-    ParameterValueExpression::ParameterValueExpression(int value_idx)
-        : AbstractExpression(EXPRESSION_TYPE_VALUE_PARAMETER),
-        m_valueIdx(value_idx), m_paramValue()
-    {
-        VOLT_TRACE("ParameterValueExpression %d", value_idx);
-        ExecutorContext* context = ExecutorContext::getExecutorContext();
-        VoltDBEngine* engine = context->getEngine();
-        assert(engine != NULL);
-        NValueArray& params = engine->getParameterContainer();
-        assert(value_idx < params.size());
-        m_paramValue = &params[value_idx];
+    TupleValueExpression::~TupleValueExpression() {
     }
 
-    ParameterValueExpression::~ParameterValueExpression() {
-    }
+    llvm::Value* TupleValueExpression::codegen(CodegenContext& ctx,
+                                               const TupleSchema* schema) const {
+        // find the offset of the field in the record
+        const TupleSchema::ColumnInfo *columnInfo = schema->getColumnInfo(value_idx);
+        uint32_t intOffset = TUPLE_HEADER_SIZE + columnInfo->offset;
+        llvm::Value* offset = llvm::ConstantInt::get(ctx.getLlvmType(VALUE_TYPE_INTEGER), intOffset);
 
-    llvm::Value* ParameterValueExpression::codegen(CodegenContext& ctx,
-                                                   const TupleSchema*) const {
-        llvm::Constant* nvalueAddrAsInt = llvm::ConstantInt::get(ctx.getIntPtrType(),
-                                                                 (uintptr_t)m_paramValue);
+        // emit instruction that computest the address of the value
+        llvm::Value* addr = ctx.builder().CreateGEP(ctx.getTupleArg(),
+                                                    offset);
 
-        // cast the pointer to the nvalue as a pointer to the value.
-        // Since the first member of NValue is the 16-byte m_data
-        // array, this is okay for all the numeric types.  But if
-        // NValue ever changes, this code will break.
-        llvm::PointerType* ptrTy = llvm::PointerType::getUnqual(ctx.getLlvmType(m_valueType));
-        llvm::Value* castedAddr = ctx.builder().CreateIntToPtr(nvalueAddrAsInt, ptrTy);
-
+        // Cast addr from char* to the appropriate pointer type
+        // An LLVM IR instruction is created but it will be a no-op on target
+        llvm::Type* ptrTy = llvm::PointerType::getUnqual(ctx.getLlvmType(m_valueType));
+        llvm::Value* castedAddr = ctx.builder().CreateBitCast(addr,
+                                                              ptrTy);
         std::ostringstream varName;
-        varName << "param_" << m_valueIdx;
+        varName << "field_" << value_idx;
         return ctx.builder().CreateLoad(castedAddr, varName.str().c_str());
-
     }
-
 }
-

@@ -40,6 +40,8 @@ namespace voltdb {
         , m_executionEngine()
         , m_passManager()
         , m_errorString()
+        , m_builder()
+        , m_tupleArg(NULL)
     {
         // This really only needs to be called once for the whole process.
         llvm::InitializeNativeTarget();
@@ -77,9 +79,50 @@ namespace voltdb {
         m_passManager->add(llvm::createCFGSimplificationPass());
 
         m_passManager->doInitialization();
+
+        m_builder.reset(new llvm::IRBuilder<>(*m_llvmContext));
     }
 
     CodegenContext::~CodegenContext() {
+    }
+
+    llvm::LLVMContext&
+    CodegenContext::getLlvmContext() {
+        return *m_llvmContext;
+    }
+
+    llvm::IRBuilder<>&
+    CodegenContext::builder() {
+        return *m_builder;
+    }
+
+    llvm::Value*
+    CodegenContext::getTupleArg() {
+        assert(m_tupleArg != NULL);
+        return m_tupleArg;
+    }
+
+    llvm::Type*
+    CodegenContext::getLlvmType(ValueType voltType) {
+        llvm::LLVMContext &ctx = *m_llvmContext;
+        switch (voltType) {
+        case VALUE_TYPE_TINYINT:
+            return llvm::Type::getInt8Ty(ctx);
+        case VALUE_TYPE_SMALLINT:
+            return llvm::Type::getInt16Ty(ctx);
+        case VALUE_TYPE_INTEGER:
+            return llvm::Type::getInt32Ty(ctx);
+        case VALUE_TYPE_BIGINT:
+            return llvm::Type::getInt32Ty(ctx);
+        case VALUE_TYPE_DOUBLE:
+            return llvm::Type::getDoubleTy(ctx);
+        case VALUE_TYPE_TIMESTAMP:
+            return llvm::Type::getInt64Ty(ctx);
+        case VALUE_TYPE_BOOLEAN:
+            return llvm::Type::getInt8Ty(ctx);
+        default:
+            throw std::exception();
+        }
     }
 
     PredFunction
@@ -91,29 +134,35 @@ namespace voltdb {
         llvm::LLVMContext &ctx = *m_llvmContext;
 
         std::vector<llvm::Type*> argType(1, llvm::Type::getInt8PtrTy(ctx));
-        llvm::Type* retType = llvm::Type::getInt8Ty(ctx);
+        llvm::Type* retType = getLlvmType(VALUE_TYPE_BOOLEAN);
         llvm::FunctionType* ft = llvm::FunctionType::get(retType, argType, false);
         llvm::Function* fn = llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "pred", m_module);
 
-        fn->arg_begin()->setName("tuple");
-
-        llvm::IRBuilder<> builder(ctx);
+        m_tupleArg = fn->arg_begin();
+        m_tupleArg->setName("tuple");
 
         llvm::BasicBlock *bb = llvm::BasicBlock::Create(ctx, "entry", fn);
-        builder.SetInsertPoint(bb);
+        m_builder->SetInsertPoint(bb);
 
         // Here is where code is generated:
-        expr->codegen(*this, tupleSchema);
+        llvm::Value* answer = expr->codegen(*this, tupleSchema);
 
-        llvm::Value *val = llvm::ConstantInt::get(retType, 0);
+        m_tupleArg = NULL;
 
-        builder.CreateRet(val);
+        m_builder->CreateRet(answer);
+
+        m_module->dump();
+
 
         llvm::verifyFunction(*fn);
         m_passManager->run(*fn);
+
         m_module->dump();
 
         return (PredFunction)m_executionEngine->getPointerToFunction(fn);
     }
 
+    llvm::IntegerType* CodegenContext::getIntPtrType() {
+        return m_executionEngine->getDataLayout()->getIntPtrType(*m_llvmContext);
+    }
 }
