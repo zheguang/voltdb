@@ -61,7 +61,8 @@ namespace voltdb {
         uint32_t intOffset = TUPLE_HEADER_SIZE + columnInfo->offset;
         llvm::Value* offset = llvm::ConstantInt::get(ctx.getLlvmType(VALUE_TYPE_INTEGER), intOffset);
 
-        // emit instruction that computest the address of the value
+        // emit instruction that computes the address of the value
+        // GEP is getelementptr, which amounts here to a pointer add.
         llvm::Value* addr = ctx.builder().CreateGEP(ctx.getTupleArg(),
                                                     offset);
 
