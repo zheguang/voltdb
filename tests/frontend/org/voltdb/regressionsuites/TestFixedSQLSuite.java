@@ -23,10 +23,13 @@
 
 package org.voltdb.regressionsuites;
 
+import java.io.IOException;
+
 import org.voltdb.BackendTarget;
 import org.voltdb.VoltTable;
 import org.voltdb.client.Client;
 import org.voltdb.client.ClientResponse;
+import org.voltdb.client.ProcCallException;
 import org.voltdb.compiler.VoltProjectBuilder;
 import org.voltdb_testprocs.regressionsuites.fixedsql.Insert;
 import org.voltdb_testprocs.regressionsuites.fixedsql.TestENG1232;

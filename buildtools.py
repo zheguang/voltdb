@@ -126,11 +126,13 @@ def buildMakefile(CTX):
         MAKECPPFLAGS += " -isystem ../../%s" % (dir)
     for dir in CTX.INCLUDE_DIRS:
         MAKECPPFLAGS += " -I../../%s" % (dir)
+    MAKECPPFLAGS += " -I%s" % (getLlvmIncludeDir())
     LOCALCPPFLAGS = CPPFLAGS
     for dir in CTX.SYSTEM_DIRS:
         LOCALCPPFLAGS += " -isystem %s" % (dir)
     for dir in CTX.INCLUDE_DIRS:
         LOCALCPPFLAGS += " -I%s" % (dir)
+    LOCALCPPFLAGS += " -I%s" % (getLlvmIncludeDir())        
     JNILIBFLAGS = " ".join(CTX.JNILIBFLAGS.split())
     JNIBINFLAGS = " ".join(CTX.JNIBINFLAGS.split())
     INPUT_PREFIX = CTX.INPUT_PREFIX.rstrip("/")
@@ -313,8 +315,15 @@ def buildMakefile(CTX):
 def getLlvmLibs():
     flags = ""
     flags += check_output(['llvm-config', '--ldflags', '--libs', 'core', 'jit', 'native'])
-    flags += " -ltinfo "
+    # It seems to be required that this flag is last on Linux
+    # Mac does not have this lib
+    #flags += " -ltinfo "
     return " ".join(flags.split())
+
+def getLlvmIncludeDir():
+    llvm_dir = ""
+    llvm_dir += check_output(['llvm-config', '--includedir'])
+    return llvm_dir.strip()
 
 def buildIPC(CTX):
     retval = os.system("make --directory=%s prod/voltdbipc -j4" % (CTX.OUTPUT_PREFIX))
