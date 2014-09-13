@@ -60,6 +60,8 @@ namespace voltdb {
         // returns an llvm integer type that can store an pointer on the jit's target
         llvm::IntegerType* getIntPtrType();
 
+        void emitReturnIfNull(llvm::Value* value, const std::string& labelPrefix);
+
         ~CodegenContext();
 
     private:

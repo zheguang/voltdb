@@ -87,7 +87,7 @@ class TupleValueExpression : public AbstractExpression {
         }
     }
 
-    virtual llvm::Value* codegen(CodegenContext& cgCtx, const TupleSchema* tupleSchema) const;
+    virtual std::pair<llvm::Value*, bool> codegen(CodegenContext& cgCtx, const TupleSchema* tupleSchema) const;
 
     std::string debugInfo(const std::string &spacer) const {
         std::ostringstream buffer;

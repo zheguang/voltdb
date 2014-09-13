@@ -54,7 +54,7 @@ namespace voltdb {
     TupleValueExpression::~TupleValueExpression() {
     }
 
-    llvm::Value* TupleValueExpression::codegen(CodegenContext& ctx,
+    std::pair<llvm::Value*, bool> TupleValueExpression::codegen(CodegenContext& ctx,
                                                const TupleSchema* schema) const {
         // find the offset of the field in the record
         const TupleSchema::ColumnInfo *columnInfo = schema->getColumnInfo(value_idx);
@@ -73,6 +73,7 @@ namespace voltdb {
                                                               ptrTy);
         std::ostringstream varName;
         varName << "field_" << value_idx;
-        return ctx.builder().CreateLoad(castedAddr, varName.str().c_str());
+        return std::make_pair(ctx.builder().CreateLoad(castedAddr, varName.str().c_str()),
+                              columnInfo->allowNull);
     }
 }

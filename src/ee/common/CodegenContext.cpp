@@ -18,6 +18,7 @@
 #include "common/CodegenContext.hpp"
 #include "common/TupleSchema.h"
 #include "common/types.h"
+#include "common/value_defs.h"
 #include "expressions/abstractexpression.h"
 
 #include "llvm/Analysis/Passes.h"
@@ -145,22 +146,68 @@ namespace voltdb {
         m_builder->SetInsertPoint(bb);
 
         // Here is where code is generated:
-        llvm::Value* answer = expr->codegen(*this, tupleSchema);
+        std::pair<llvm::Value*, bool> answerPair = expr->codegen(*this, tupleSchema);
 
         m_tupleArg = NULL;
 
-        m_builder->CreateRet(answer);
+        m_builder->CreateRet(answerPair.first);
 
         m_module->dump();
 
-
+        // This will throw an exception if we did anything wonky in LLVM IR
         llvm::verifyFunction(*fn);
+
+        // This will optimize the function
         m_passManager->run(*fn);
 
         m_module->dump();
 
         return (PredFunction)m_executionEngine->getPointerToFunction(fn);
     }
+
+    static llvm::Value* getNullValueForType(llvm::Type* ty) {
+        if (!ty->isIntegerTy()) {
+            throw std::exception();
+        }
+
+        llvm::IntegerType* intTy = static_cast<llvm::IntegerType*>(ty);
+        switch (intTy->getBitWidth()) {
+        case 8:
+            return llvm::ConstantInt::get(ty, INT8_NULL);
+        case 16:
+            return llvm::ConstantInt::get(ty, INT16_NULL);
+        case 32:
+            return llvm::ConstantInt::get(ty, INT32_NULL);
+        case 64:
+            return llvm::ConstantInt::get(ty, INT64_NULL);
+        default:
+            throw std::exception();
+        }
+    }
+
+    // Implement early return if a null value is encountered
+    void CodegenContext::emitReturnIfNull(llvm::Value* value, const std::string& labelPrefix) {
+        llvm::Function* curFn = builder().GetInsertBlock()->getParent();
+        std::ostringstream labelStr;
+        labelStr << labelPrefix << "_is_not_null";
+        llvm::BasicBlock *isNotNullLabel = llvm::BasicBlock::Create(*m_llvmContext,
+                                                                    labelStr.str(),
+                                                                    curFn);
+
+        llvm::BasicBlock *isNullLabel = llvm::BasicBlock::Create(*m_llvmContext,
+                                                                 "return_null", 
+                                                                 curFn);
+
+        llvm::Value* isNull = builder().CreateICmpEQ(value, getNullValueForType(value->getType()));
+        builder().CreateCondBr(isNull, isNullLabel, isNotNullLabel);
+        
+        builder().SetInsertPoint(isNullLabel);
+        builder().CreateRet(getNullValueForType(getLlvmType(VALUE_TYPE_BOOLEAN)));
+
+        // Resume code generation in the is-not-null branch
+        builder().SetInsertPoint(isNotNullLabel);
+    }
+
 
     llvm::IntegerType* CodegenContext::getIntPtrType() {
         return m_executionEngine->getDataLayout()->getIntPtrType(*m_llvmContext);

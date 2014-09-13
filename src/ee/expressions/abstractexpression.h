@@ -51,6 +51,7 @@
 #include "common/PlannerDomValue.h"
 
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace llvm {
@@ -142,7 +143,7 @@ class AbstractExpression {
         return m_right;
     }
 
-    virtual llvm::Value* codegen(CodegenContext& cgCtx, const TupleSchema* tupleSchema) const;
+    virtual std::pair<llvm::Value*, bool> codegen(CodegenContext& cgCtx, const TupleSchema* tupleSchema) const;
 
   protected:
     AbstractExpression();

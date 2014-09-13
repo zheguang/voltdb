@@ -70,8 +70,8 @@ namespace voltdb {
     ParameterValueExpression::~ParameterValueExpression() {
     }
 
-    llvm::Value* ParameterValueExpression::codegen(CodegenContext& ctx,
-                                                   const TupleSchema*) const {
+    std::pair<llvm::Value*, bool> ParameterValueExpression::codegen(CodegenContext& ctx,
+                                                                    const TupleSchema*) const {
         llvm::Constant* nvalueAddrAsInt = llvm::ConstantInt::get(ctx.getIntPtrType(),
                                                                  (uintptr_t)m_paramValue);
 
@@ -84,7 +84,8 @@ namespace voltdb {
 
         std::ostringstream varName;
         varName << "param_" << m_valueIdx;
-        return ctx.builder().CreateLoad(castedAddr, varName.str().c_str());
+        return std::make_pair(ctx.builder().CreateLoad(castedAddr, varName.str().c_str()),
+                              true); // true means value may be null
 
     }
 

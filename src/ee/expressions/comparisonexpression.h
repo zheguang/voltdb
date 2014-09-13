@@ -184,12 +184,20 @@ public:
         return (spacer + "ComparisonExpression\n");
     }
 
-    virtual llvm::Value* codegen(CodegenContext& cgCtx,
-                                 const TupleSchema* tupleSchema) const {
-        llvm::Value* lval = m_left->codegen(cgCtx, tupleSchema);
-        llvm::Value* rval = m_right->codegen(cgCtx, tupleSchema);
+    virtual std::pair<llvm::Value*, bool> codegen(CodegenContext& cgCtx,
+                                                  const TupleSchema* tupleSchema) const {
+        std::pair<llvm::Value*, bool> leftPair = m_left->codegen(cgCtx, tupleSchema);
+        if (leftPair.second) { // value produced on LHS may be null
+            cgCtx.emitReturnIfNull(leftPair.first, "cmp_lhs");
+        }
 
-        return compare.codegen(cgCtx, lval, rval);
+        std::pair<llvm::Value*, bool> rightPair = m_right->codegen(cgCtx, tupleSchema);
+        if (rightPair.second) { // value produced on RHS may be null
+            cgCtx.emitReturnIfNull(rightPair.first, "cmp_rhs");
+        }
+
+        return std::make_pair(compare.codegen(cgCtx, leftPair.first, rightPair.first),
+                              true); // true means value may be null
     }
 
 private:
