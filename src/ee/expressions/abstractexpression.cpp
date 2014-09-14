@@ -239,13 +239,21 @@ AbstractExpression::buildExpressionTree_recurse(PlannerDomValue obj)
     }
 }
 
-    std::pair<llvm::Value*, bool> AbstractExpression::codegen(CodegenContext&,
-                                             const TupleSchema*) const {
-        std::ostringstream oss;
-        oss << "Expression not supported for code generation: ";
-        oss << expressionToString(getExpressionType());
-        throw SQLException(SQLException::dynamic_sql_error,
-                           oss.str().c_str());
+bool isComparisonExpression(const AbstractExpression* expr) {
+    switch (expr->getExpressionType()) {
+    case EXPRESSION_TYPE_COMPARE_EQUAL:
+    case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
+    case EXPRESSION_TYPE_COMPARE_LESSTHAN:
+    case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
+    case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
+    case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
+    case EXPRESSION_TYPE_COMPARE_LIKE:
+    case EXPRESSION_TYPE_COMPARE_IN:
+        return true;
+    default:
+        return false;
     }
+}
+
 
 }

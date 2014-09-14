@@ -69,25 +69,5 @@ namespace voltdb {
 
     ParameterValueExpression::~ParameterValueExpression() {
     }
-
-    std::pair<llvm::Value*, bool> ParameterValueExpression::codegen(CodegenContext& ctx,
-                                                                    const TupleSchema*) const {
-        llvm::Constant* nvalueAddrAsInt = llvm::ConstantInt::get(ctx.getIntPtrType(),
-                                                                 (uintptr_t)m_paramValue);
-
-        // cast the pointer to the nvalue as a pointer to the value.
-        // Since the first member of NValue is the 16-byte m_data
-        // array, this is okay for all the numeric types.  But if
-        // NValue ever changes, this code will break.
-        llvm::PointerType* ptrTy = llvm::PointerType::getUnqual(ctx.getLlvmType(m_valueType));
-        llvm::Value* castedAddr = ctx.builder().CreateIntToPtr(nvalueAddrAsInt, ptrTy);
-
-        std::ostringstream varName;
-        varName << "param_" << m_valueIdx;
-        return std::make_pair(ctx.builder().CreateLoad(castedAddr, varName.str().c_str()),
-                              true); // true means value may be null
-
-    }
-
 }
 

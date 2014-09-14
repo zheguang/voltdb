@@ -53,27 +53,4 @@
 namespace voltdb {
     TupleValueExpression::~TupleValueExpression() {
     }
-
-    std::pair<llvm::Value*, bool> TupleValueExpression::codegen(CodegenContext& ctx,
-                                               const TupleSchema* schema) const {
-        // find the offset of the field in the record
-        const TupleSchema::ColumnInfo *columnInfo = schema->getColumnInfo(value_idx);
-        uint32_t intOffset = TUPLE_HEADER_SIZE + columnInfo->offset;
-        llvm::Value* offset = llvm::ConstantInt::get(ctx.getLlvmType(VALUE_TYPE_INTEGER), intOffset);
-
-        // emit instruction that computes the address of the value
-        // GEP is getelementptr, which amounts here to a pointer add.
-        llvm::Value* addr = ctx.builder().CreateGEP(ctx.getTupleArg(),
-                                                    offset);
-
-        // Cast addr from char* to the appropriate pointer type
-        // An LLVM IR instruction is created but it will be a no-op on target
-        llvm::Type* ptrTy = llvm::PointerType::getUnqual(ctx.getLlvmType(m_valueType));
-        llvm::Value* castedAddr = ctx.builder().CreateBitCast(addr,
-                                                              ptrTy);
-        std::ostringstream varName;
-        varName << "field_" << value_idx;
-        return std::make_pair(ctx.builder().CreateLoad(castedAddr, varName.str().c_str()),
-                              columnInfo->allowNull);
-    }
 }

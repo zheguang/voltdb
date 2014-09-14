@@ -87,8 +87,6 @@ class TupleValueExpression : public AbstractExpression {
         }
     }
 
-    virtual std::pair<llvm::Value*, bool> codegen(CodegenContext& cgCtx, const TupleSchema* tupleSchema) const;
-
     std::string debugInfo(const std::string &spacer) const {
         std::ostringstream buffer;
         buffer << spacer << "Optimized Column Reference[" << tuple_idx << ", " << value_idx << "]\n";

@@ -92,7 +92,13 @@ public:
         return this->m_valueIdx;
     }
 
-    virtual std::pair<llvm::Value*, bool> codegen(CodegenContext& cgCtx, const TupleSchema* tupleSchema) const;
+    int getValueIdx() const {
+        return m_valueIdx;
+    }
+
+    const NValue* getParamValue() const {
+        return m_paramValue;
+    }
 
   private:
     int m_valueIdx;

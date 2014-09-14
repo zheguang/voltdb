@@ -49,18 +49,13 @@ namespace voltdb {
         PredFunction compilePredicate(const TupleSchema* tupleSchema,
                                const AbstractExpression* expr);
 
-        llvm::Value* getTupleArg();
-
-        llvm::IRBuilder<>& builder();
-
+        llvm::Module* getModule();
         llvm::LLVMContext& getLlvmContext();
 
         llvm::Type* getLlvmType(ValueType voltType);
 
         // returns an llvm integer type that can store an pointer on the jit's target
         llvm::IntegerType* getIntPtrType();
-
-        void emitReturnIfNull(llvm::Value* value, const std::string& labelPrefix);
 
         ~CodegenContext();
 
@@ -71,8 +66,6 @@ namespace voltdb {
         boost::scoped_ptr<llvm::legacy::FunctionPassManager> m_passManager;
 
         std::string m_errorString;
-        boost::scoped_ptr<llvm::IRBuilder<> > m_builder;
-        llvm::Value* m_tupleArg;
    };
 
 }

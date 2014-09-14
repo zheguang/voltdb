@@ -63,7 +63,6 @@ namespace voltdb {
 class NValue;
 class TableTuple;
 class TupleSchema;
-class CodegenContext;
 
 /**
  * Predicate objects for filtering tuples during query execution.
@@ -143,8 +142,6 @@ class AbstractExpression {
         return m_right;
     }
 
-    virtual std::pair<llvm::Value*, bool> codegen(CodegenContext& cgCtx, const TupleSchema* tupleSchema) const;
-
   protected:
     AbstractExpression();
     AbstractExpression(ExpressionType type);
@@ -165,5 +162,7 @@ class AbstractExpression {
     bool m_inBytes;
 };
 
+
+bool isComparisonExpression(const AbstractExpression* expr);
 }
 #endif
