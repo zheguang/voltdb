@@ -1661,7 +1661,7 @@ public class TestFixedSQLSuite extends RegressionSuite {
         client.callProcedure("P1.insert", 50, "a fine summer day", 32, 98.6);
         client.callProcedure("P1.insert", 51, "a fine summer night", 33, 98.7);
         client.callProcedure("P1.insert", 52, "a fine winter day", 34, 98.8);
-        //client.callProcedure("P1.insert", 52, "a fine winter day", null, 98.8);
+        client.callProcedure("P1.insert", 53, "a fine winter day", null, 98.8);
 
         ClientResponse cr = client.callProcedure("@AdHoc", "select id from P1 where num = 32");
         assertEquals(ClientResponse.SUCCESS, cr.getStatus());
@@ -1673,6 +1673,17 @@ public class TestFixedSQLSuite extends RegressionSuite {
         }
 
         assertEquals(1, rowCount);
+
+//        cr = client.callProcedure("@AdHoc", "select id from P1 where (num = 32) is null");
+//        assertEquals(ClientResponse.SUCCESS, cr.getStatus());
+//        vt = cr.getResults()[0];
+//
+//        rowCount = 0;
+//        while (vt.advanceRow()) {
+//            rowCount++;
+//        }
+//
+//        assertEquals(1, rowCount);
     }
 
     // This is a regression test for ENG-6792

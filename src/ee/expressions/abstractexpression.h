@@ -161,8 +161,5 @@ class AbstractExpression {
     int m_valueSize;
     bool m_inBytes;
 };
-
-
-bool isComparisonExpression(const AbstractExpression* expr);
 }
 #endif
