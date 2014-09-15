@@ -90,6 +90,7 @@ bool SeqScanExecutor::p_init(AbstractPlanNode* abstract_node,
         setTempOutputTable(limits, temp_name);
     }
 
+    // Try to generate code for the predicate
     if (node->getPredicate()) {
         Table* input_table = (node->isSubQuery()) ?
             node->getChildren()[0]->getOutputTable():

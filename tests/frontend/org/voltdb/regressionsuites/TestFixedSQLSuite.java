@@ -23,13 +23,10 @@
 
 package org.voltdb.regressionsuites;
 
-import java.io.IOException;
-
 import org.voltdb.BackendTarget;
 import org.voltdb.VoltTable;
 import org.voltdb.client.Client;
 import org.voltdb.client.ClientResponse;
-import org.voltdb.client.ProcCallException;
 import org.voltdb.compiler.VoltProjectBuilder;
 import org.voltdb_testprocs.regressionsuites.fixedsql.Insert;
 import org.voltdb_testprocs.regressionsuites.fixedsql.TestENG1232;
@@ -1658,12 +1655,12 @@ public class TestFixedSQLSuite extends RegressionSuite {
     public void testBasicSelect() throws Exception {
         Client client = getClient();
 
-        client.callProcedure("P1.insert", 50, "a fine summer day", 32, 98.6);
-        client.callProcedure("P1.insert", 51, "a fine summer night", 33, 98.7);
-        client.callProcedure("P1.insert", 52, "a fine winter day", 34, 98.8);
-        client.callProcedure("P1.insert", 53, "a fine winter day", null, 98.8);
+        client.callProcedure("P2.insert", 50, "a fine summer day", 32, 98.6);
+        client.callProcedure("P2.insert", 51, "a fine summer night", 33, 98.7);
+        client.callProcedure("P2.insert", 52, "a fine winter day", 34, 98.8);
+        //client.callProcedure("P2.insert", 53, "a fine winter day", null, 98.8);
 
-        ClientResponse cr = client.callProcedure("@AdHoc", "select id from P1 where num = 32 and num = 33");
+        ClientResponse cr = client.callProcedure("@AdHoc", "select id from P2 where id = 51 and num = 33 and ratio < 100");
         assertEquals(ClientResponse.SUCCESS, cr.getStatus());
         VoltTable vt = cr.getResults()[0];
 

@@ -75,6 +75,7 @@ public:
         , m_projectionExpressions(NULL)
         , m_searchKeyBackingStore(NULL)
         , m_aggExec(NULL)
+        , m_predFunction(NULL)
     {}
     ~IndexScanExecutor();
 
@@ -112,6 +113,8 @@ private:
     char* m_searchKeyBackingStore;
 
     AggregateExecutorBase* m_aggExec;
+
+    PredFunction m_predFunction;
 };
 
 }

@@ -82,6 +82,15 @@ bool IndexScanExecutor::p_init(AbstractPlanNode *abstractNode,
     // Create output table based on output schema from the plan
     setTempOutputTable(limits, m_node->getTargetTable()->name());
 
+    // Try to generate code for any post_expressions
+    if (m_node->getPredicate()) {
+        Table* input_table = (m_node->isSubQuery()) ?
+            m_node->getChildren()[0]->getOutputTable():
+            m_node->getTargetTable();
+        m_predFunction = compilePredicate(input_table->schema(),
+                                          m_node->getPredicate());
+    }
+
     //
     // INLINE PROJECTION
     //
@@ -408,7 +417,22 @@ bool IndexScanExecutor::p_execute(const NValueArray &params)
         //
         // Then apply our post-predicate to do further filtering
         //
-        if (post_expression == NULL || post_expression->eval(&tuple, NULL).isTrue()) {
+        bool no_post_expr_or_true;
+        if (post_expression != NULL) {
+            if (m_predFunction) {
+                // call the native-code function we generated in p_init.
+                no_post_expr_or_true = (m_predFunction(tuple.address()) == 0x1);
+            }
+            else {
+                no_post_expr_or_true = post_expression->eval(&tuple, NULL).isTrue();
+            }
+        }
+        else {
+            no_post_expr_or_true = true;
+        }
+
+        if (no_post_expr_or_true) {
+        //if (post_expression == NULL || post_expression->eval(&tuple, NULL).isTrue()) {
             //
             // INLINE OFFSET
             //

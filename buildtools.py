@@ -126,13 +126,13 @@ def buildMakefile(CTX):
         MAKECPPFLAGS += " -isystem ../../%s" % (dir)
     for dir in CTX.INCLUDE_DIRS:
         MAKECPPFLAGS += " -I../../%s" % (dir)
-    MAKECPPFLAGS += " -I%s" % (getLlvmIncludeDir())
+#    MAKECPPFLAGS += " -I%s" % (getLlvmIncludeDir())
     LOCALCPPFLAGS = CPPFLAGS
     for dir in CTX.SYSTEM_DIRS:
         LOCALCPPFLAGS += " -isystem %s" % (dir)
     for dir in CTX.INCLUDE_DIRS:
         LOCALCPPFLAGS += " -I%s" % (dir)
-    LOCALCPPFLAGS += " -I%s" % (getLlvmIncludeDir())        
+#    LOCALCPPFLAGS += " -I%s" % (getLlvmIncludeDir())
     JNILIBFLAGS = " ".join(CTX.JNILIBFLAGS.split())
     JNIBINFLAGS = " ".join(CTX.JNIBINFLAGS.split())
     INPUT_PREFIX = CTX.INPUT_PREFIX.rstrip("/")
@@ -315,10 +315,13 @@ def buildMakefile(CTX):
 def getLlvmLibs():
     flags = ""
     flags += check_output(['llvm-config', '--ldflags', '--libs', 'core', 'jit', 'native'])
-    # It seems to be required that this flag is last on Linux
-    # Mac does not have this lib
-    #flags += " -ltinfo "
-    return " ".join(flags.split())
+    flag_list = flags.split()
+    # Library arguments are not ordered correctly for linux
+    # -ltinfo, which is required by linux, must be last.
+    if flag_list.count('-ltinfo') > 0:
+        flag_list.remove('-ltinfo')
+        flag_list.append('-ltinfo')
+    return " ".join(flag_list)
 
 def getLlvmIncludeDir():
     llvm_dir = ""
