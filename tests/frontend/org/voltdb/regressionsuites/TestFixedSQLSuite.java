@@ -1663,7 +1663,7 @@ public class TestFixedSQLSuite extends RegressionSuite {
         client.callProcedure("P1.insert", 52, "a fine winter day", 34, 98.8);
         client.callProcedure("P1.insert", 53, "a fine winter day", null, 98.8);
 
-        ClientResponse cr = client.callProcedure("@AdHoc", "select id from P1 where num = 32");
+        ClientResponse cr = client.callProcedure("@AdHoc", "select id from P1 where num = 32 and num = 33");
         assertEquals(ClientResponse.SUCCESS, cr.getStatus());
         VoltTable vt = cr.getResults()[0];
 

@@ -98,6 +98,8 @@ namespace voltdb {
         case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
         case EXPRESSION_TYPE_COMPARE_LIKE:
         case EXPRESSION_TYPE_COMPARE_IN:
+        case EXPRESSION_TYPE_CONJUNCTION_AND:
+        case EXPRESSION_TYPE_CONJUNCTION_OR:
             return VALUE_TYPE_BOOLEAN;
         default:
             return expr->getValueType();
@@ -284,11 +286,111 @@ namespace voltdb {
                 return llvm::BasicBlock::Create(getLlvmContext(), label, m_function);
             }
 
+            typedef std::pair<llvm::Value*, llvm::BasicBlock*> ValueBB;
+
+            std::pair<llvm::Value*, bool>
+            codegenConjunctionAndExpr(const TupleSchema* tupleSchema,
+                        const AbstractExpression* expr) {
+
+                //     lhs   AND    rhs
+                //
+                //   eval lhs
+                //   if (lhs == false)
+                //       answer = false
+                //       goto result
+                //
+                //   eval rhs
+                //   if (lhs == true)
+                //       answer = rhs
+                //       goto result
+                //
+                //   // lhs is unknown
+                //   if (rhs == false)
+                //       answer = false
+                //       goto result
+                //
+                //   answer = unknown
+                //   goto result
+                //
+                // result:
+                //   return phi(answer)
+
+                std::vector<ValueBB> results;
+                llvm::BasicBlock* resultBlock = getEmptyBasicBlock("and_result");
+                std::pair<llvm::Value*, bool> leftPair = codegenExpr(tupleSchema,
+                                                                     expr->getLeft());
+                llvm::BasicBlock *lhsFalseLabel = getEmptyBasicBlock("and_lhs_false");
+                llvm::BasicBlock *lhsNotFalseLabel = getEmptyBasicBlock("and_lhs_not_false");
+                llvm::Value* lhsFalseCmp = builder().CreateICmpEQ(leftPair.first, getFalseValue());
+                builder().CreateCondBr(lhsFalseCmp, lhsFalseLabel, lhsNotFalseLabel);
+                
+                builder().SetInsertPoint(lhsFalseLabel);
+                results.push_back(std::make_pair(getFalseValue(), lhsFalseLabel));
+                builder().CreateBr(resultBlock);
+
+                builder().SetInsertPoint(lhsNotFalseLabel);
+                std::pair<llvm::Value*, bool> rightPair = codegenExpr(tupleSchema,
+                                                                     expr->getRight());
+                if (! leftPair.second) {
+                    // lhs may not be null, so answer is whatever rhs is
+                    results.push_back(std::make_pair(rightPair.first, lhsNotFalseLabel));                    
+                    builder().CreateBr(resultBlock);
+                } 
+                else {
+                    llvm::BasicBlock *lhsTrueLabel = getEmptyBasicBlock("and_lhs_true");
+                    llvm::BasicBlock *lhsNullLabel = getEmptyBasicBlock("and_lhs_null");
+                    llvm::Value* lhsTrueCmp = builder().CreateICmpEQ(leftPair.first, getTrueValue());
+                    builder().CreateCondBr(lhsTrueCmp, lhsTrueLabel, lhsNullLabel);
+                    
+                    
+                    builder().SetInsertPoint(lhsTrueLabel);
+                    results.push_back(std::make_pair(rightPair.first, lhsTrueLabel));
+                    builder().CreateBr(resultBlock);
+                    
+                    // lhs is null
+                    
+                    builder().SetInsertPoint(lhsNullLabel);
+                    llvm::BasicBlock *rhsFalseLabel = getEmptyBasicBlock("and_rhs_false");
+                    llvm::BasicBlock *rhsNotFalseLabel = getEmptyBasicBlock("and_rhs_not_false");
+                    llvm::Value* rhsFalseCmp = builder().CreateICmpEQ(rightPair.first, getFalseValue());
+                    builder().CreateCondBr(rhsFalseCmp, rhsFalseLabel, rhsNotFalseLabel);
+                    
+                    // rhs false, so result is false
+                    builder().SetInsertPoint(rhsFalseLabel);
+                    results.push_back(std::make_pair(getFalseValue(), rhsFalseLabel));
+                    builder().CreateBr(resultBlock);
+                    
+                    // rhs is not false, so result is unknown
+                    builder().SetInsertPoint(rhsNotFalseLabel);
+                    results.push_back(std::make_pair(getNullValueForType(getLlvmType(getExprType(expr))), 
+                                                     rhsNotFalseLabel));
+                    builder().CreateBr(resultBlock);
+                }
+                
+                resultBlock->moveAfter(builder().GetInsertBlock());
+                builder().SetInsertPoint(resultBlock);
+                
+                std::cout << "creating phi of type " << valueToString(getExprType(expr)) << std::endl;
+                llvm::PHINode* phi = builder().CreatePHI(getLlvmType(getExprType(expr)), 3);
+                
+                m_function->dump();
+
+                std::vector<ValueBB>::iterator it = results.begin();
+                for(; it != results.end(); ++it) {
+                    it->first->dump();
+                    phi->addIncoming(it->first, it->second);
+                }
+
+                bool mayBeNull = leftPair.second || rightPair.second;
+                return std::make_pair(phi,
+                                      mayBeNull);
+            }
+
 
             std::pair<llvm::Value*, bool> 
             codegenComparisonExpr(const TupleSchema* tupleSchema,
                                   const AbstractExpression* expr) {
-                typedef std::pair<llvm::Value*, llvm::BasicBlock*> ValueBB;
+
                 std::vector<ValueBB> results;
                 llvm::BasicBlock* resultBlock = getEmptyBasicBlock("cmp_result");
                 std::pair<llvm::Value*, bool> leftPair = codegenExpr(tupleSchema,
@@ -330,6 +432,7 @@ namespace voltdb {
                 results.push_back(std::make_pair(cmp, builder().GetInsertBlock()));
                 builder().CreateBr(resultBlock);
 
+                resultBlock->moveAfter(builder().GetInsertBlock());
                 builder().SetInsertPoint(resultBlock);
                 llvm::PHINode* phi = builder().CreatePHI(getLlvmType(getExprType(expr)), 3);
                 
@@ -387,12 +490,14 @@ namespace voltdb {
                 case EXPRESSION_TYPE_COMPARE_LIKE:
                 case EXPRESSION_TYPE_COMPARE_IN:
                     return codegenComparisonExpr(tupleSchema, expr);
+                case EXPRESSION_TYPE_OPERATOR_IS_NULL:
+                    return codegenIsNullExpr(tupleSchema, static_cast<const OperatorIsNullExpression*>(expr));
+                case EXPRESSION_TYPE_CONJUNCTION_AND:
+                    return codegenConjunctionAndExpr(tupleSchema, expr);
                 case EXPRESSION_TYPE_VALUE_TUPLE:
                     return codegenTupleValueExpr(tupleSchema, static_cast<const TupleValueExpression*>(expr));
                 case EXPRESSION_TYPE_VALUE_PARAMETER:
                     return codegenParameterValueExpr(tupleSchema, static_cast<const ParameterValueExpression*>(expr));
-                case EXPRESSION_TYPE_OPERATOR_IS_NULL:
-                    return codegenIsNullExpr(tupleSchema, static_cast<const OperatorIsNullExpression*>(expr));
                 default:
                     throw UnsupportedForCodegenException(expressionToString(exprType));
                 }
