@@ -56,9 +56,9 @@ namespace voltdb {
 
 class ConstantValueExpression : public AbstractExpression {
     public:
-    ConstantValueExpression(const NValue &value)
-        : AbstractExpression(EXPRESSION_TYPE_VALUE_CONSTANT) {
-        this->value = value;
+    ConstantValueExpression(const NValue &inValue)
+        : AbstractExpression(EXPRESSION_TYPE_VALUE_CONSTANT)
+            , value(inValue) {
     }
 
     virtual ~ConstantValueExpression() {
@@ -79,7 +79,7 @@ class ConstantValueExpression : public AbstractExpression {
     }
 
   protected:
-    voltdb::NValue value;
+    const voltdb::NValue value;
 };
 }
 #endif

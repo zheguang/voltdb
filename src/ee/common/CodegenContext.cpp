@@ -20,6 +20,7 @@
 #include "common/TupleSchema.h"
 #include "common/types.h"
 #include "common/value_defs.h"
+#include "common/ValuePeeker.hpp"
 #include "expressions/abstractexpression.h"
 #include "expressions/comparisonexpression.h"
 #include "expressions/operatorexpression.h"
@@ -39,6 +40,13 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
 
+#include "boost/timer.hpp"
+
+static pthread_once_t llvmNativeTargetInitialized = PTHREAD_ONCE_INIT;
+
+static void initializeNativeTarget() {
+    (void)llvm::InitializeNativeTarget();
+}
 
 namespace voltdb {
 
@@ -370,14 +378,10 @@ namespace voltdb {
                 resultBlock->moveAfter(builder().GetInsertBlock());
                 builder().SetInsertPoint(resultBlock);
 
-                std::cout << "creating phi of type " << valueToString(getExprType(expr)) << std::endl;
                 llvm::PHINode* phi = builder().CreatePHI(getLlvmType(getExprType(expr)), 3);
-
-                m_function->dump();
 
                 std::vector<ValueBB>::iterator it = results.begin();
                 for(; it != results.end(); ++it) {
-                    it->first->dump();
                     phi->addIncoming(it->first, it->second);
                 }
 
@@ -462,10 +466,27 @@ namespace voltdb {
             }
 
             std::pair<llvm::Value*, bool>
+            codegenConstantValueExpr(const TupleSchema*,
+                                     const ConstantValueExpression* expr) {
+                // constant value should never need to access tuples,
+                // so it should be ok to just pass nulls here.
+                NValue nval = expr->eval(NULL, NULL);
+                llvm::Type* ty = getLlvmType(ValuePeeker::peekValueType(nval));
+                if (nval.isNull()) {
+                    return std::make_pair(getNullValueForType(ty),
+                                          true);
+                }
+
+                llvm::Value* k = llvm::ConstantInt::get(ty,
+                                                        ValuePeeker::peekAsBigInt(nval));
+                return std::make_pair(k, false); // never null if we get here.
+            }
+
+            std::pair<llvm::Value*, bool>
             codegenExpr(const TupleSchema* tupleSchema,
                         const AbstractExpression* expr) {
                 ExpressionType exprType = expr->getExpressionType();
-                std::cout << "Generating code for " << expressionToString(exprType) << std::endl;
+                //std::cout << "Generating code for " << expressionToString(exprType) << std::endl;
                 switch (exprType) {
                 case EXPRESSION_TYPE_COMPARE_EQUAL:
                 case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
@@ -484,6 +505,8 @@ namespace voltdb {
                     return codegenTupleValueExpr(tupleSchema, static_cast<const TupleValueExpression*>(expr));
                 case EXPRESSION_TYPE_VALUE_PARAMETER:
                     return codegenParameterValueExpr(tupleSchema, static_cast<const ParameterValueExpression*>(expr));
+                case EXPRESSION_TYPE_VALUE_CONSTANT:
+                    return codegenConstantValueExpr(tupleSchema, static_cast<const ConstantValueExpression*>(expr));
                 default:
                     throw UnsupportedForCodegenException(expressionToString(exprType));
                 }
@@ -505,7 +528,7 @@ namespace voltdb {
         , m_errorString()
     {
         // This really only needs to be called once for the whole process.
-        llvm::InitializeNativeTarget();
+        (void) pthread_once(&llvmNativeTargetInitialized, initializeNativeTarget);
 
         m_llvmContext.reset(new llvm::LLVMContext());
 
@@ -586,7 +609,10 @@ namespace voltdb {
     PredFunction
     CodegenContext::compilePredicate(const TupleSchema* tupleSchema,
                                      const AbstractExpression* expr) {
-        FnCtx fnCtx(this, "pred");
+        PredFunction nativeFunction = NULL;
+        {
+            boost::timer t;
+            FnCtx fnCtx(this, "pred");
 
         try {
             fnCtx.codegen(tupleSchema, expr);
@@ -600,22 +626,26 @@ namespace voltdb {
 
             return NULL;
         }
+            
+            // Dump the unoptimized fn
+            //m_module->dump();
+            
+            llvm::Function* fn = fnCtx.getFunction();
+            
+            // This will throw an exception if we did anything wonky in LLVM IR
+            llvm::verifyFunction(*fn);
+            
+            // This will optimize the function
+            m_passManager->run(*fn);
+            
+            nativeFunction = (PredFunction)m_executionEngine->getPointerToFunction(fn);
+            std::cout << "Predicate compilation took " << t.elapsed() << " seconds." << std::endl;
 
-        // Dump the unoptimized fn
-        m_module->dump();
+            // Dump optimized LLVM IR
+            m_module->dump();
+        }
 
-        llvm::Function* fn = fnCtx.getFunction();
-
-        // This will throw an exception if we did anything wonky in LLVM IR
-        llvm::verifyFunction(*fn);
-
-        // This will optimize the function
-        m_passManager->run(*fn);
-
-        // Dump optimized LLVM IR
-        m_module->dump();
-
-        return (PredFunction)m_executionEngine->getPointerToFunction(fn);
+        return nativeFunction;
     }
 
     void CodegenContext::shutdownLlvm() {
