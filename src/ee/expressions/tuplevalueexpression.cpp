@@ -44,13 +44,8 @@
  */
 
 #include "tuplevalueexpression.h"
-#include "common/CodegenContext.hpp"
-
-#include "llvm/IR/Constants.h"
-
-#include <sstream>
 
 namespace voltdb {
-    TupleValueExpression::~TupleValueExpression() {
-    }
+TupleValueExpression::~TupleValueExpression() {
+}
 }

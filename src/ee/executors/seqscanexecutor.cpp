@@ -74,6 +74,15 @@ bool SeqScanExecutor::p_init(AbstractPlanNode* abstract_node,
     assert(isSubquery || node->getTargetTable());
     assert((! isSubquery) || (node->getChildren().size() == 1));
 
+    // Try to generate code for the predicate
+    if (node->getPredicate()) {
+        Table* input_table = (node->isSubQuery()) ?
+            node->getChildren()[0]->getOutputTable():
+            node->getTargetTable();
+        m_predFunction = compilePredicate(input_table->schema(),
+                                          node->getPredicate());
+    }
+
     //
     // OPTIMIZATION: If there is no predicate for this SeqScan,
     // then we want to just set our OutputTable pointer to be the
@@ -88,15 +97,6 @@ bool SeqScanExecutor::p_init(AbstractPlanNode* abstract_node,
                 node->getChildren()[0]->getOutputTable()->name():
                 node->getTargetTable()->name();
         setTempOutputTable(limits, temp_name);
-    }
-
-    // Try to generate code for the predicate
-    if (node->getPredicate()) {
-        Table* input_table = (node->isSubQuery()) ?
-            node->getChildren()[0]->getOutputTable():
-            node->getTargetTable();
-        m_predFunction = compilePredicate(input_table->schema(),
-                                          node->getPredicate());
     }
 
     //
@@ -214,14 +214,20 @@ bool SeqScanExecutor::p_execute(const NValueArray &params) {
             //
             // For each tuple we need to evaluate it against our predicate
             //
-            bool isTrue;
-            if (m_predFunction) {
-                isTrue = (m_predFunction(tuple.address()) == 0x1);
-            } else {
-                isTrue = predicate->eval(&tuple, NULL).isTrue();
+            bool no_pred_or_true;
+            if (predicate) {
+                if (m_predFunction) {
+                    no_pred_or_true = (m_predFunction(tuple.address()) == 0x1);
+                }
+                else {
+                    no_pred_or_true = predicate->eval(&tuple, NULL).isTrue();
+                }
+            }
+            else {
+                no_pred_or_true = true;
             }
 
-            if (isTrue)
+            if (no_pred_or_true)
             {
                 // Check if we have to skip this tuple because of offset
                 if (tuple_skipped < offset) {

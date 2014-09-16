@@ -34,6 +34,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/PassManager.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
@@ -617,4 +618,7 @@ namespace voltdb {
         return (PredFunction)m_executionEngine->getPointerToFunction(fn);
     }
 
+    void CodegenContext::shutdownLlvm() {
+        llvm::llvm_shutdown();
+    }
 }

@@ -167,7 +167,7 @@ class ExecutorContext {
     int64_t m_uniqueId;
     int64_t m_currentTxnTimestamp;
 
-    CodegenContext m_codegenContext;
+    CodegenContext *m_codegenContext;
 
   public:
     int64_t m_lastCommittedSpHandle;

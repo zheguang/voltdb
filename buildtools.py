@@ -300,7 +300,7 @@ def buildMakefile(CTX):
 
         # link the test
         makefile.write("%s: %s objects/volt.a\n" % (binname, objectname))
-        makefile.write("\t$(LINK.cpp) -o %s %s objects/volt.a\n" % (binname, objectname))
+        makefile.write("\t$(LINK.cpp) -o %s %s objects/volt.a %s\n" % (binname, objectname, getLlvmLibs()))
         targetpath = OUTPUT_PREFIX + "/" + "/".join(binname.split("/")[:-1])
         os.system("mkdir -p %s" % (targetpath))
 
@@ -321,6 +321,9 @@ def getLlvmLibs():
     if flag_list.count('-ltinfo') > 0:
         flag_list.remove('-ltinfo')
         flag_list.append('-ltinfo')
+    if flag_list.count('-ldl') > 0:
+        flag_list.remove('-ldl')
+        flag_list.append('-ldl')
     return " ".join(flag_list)
 
 def getLlvmIncludeDir():

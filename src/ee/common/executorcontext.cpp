@@ -45,7 +45,7 @@ ExecutorContext::ExecutorContext(int64_t siteId,
     m_undoQuantum(undoQuantum),
     m_drStream(drStream), m_engine(engine),
     m_txnId(0), m_spHandle(0),
-    m_codegenContext(),
+    m_codegenContext(new CodegenContext()),
     m_lastCommittedSpHandle(0),
     m_siteId(siteId), m_partitionId(partitionId),
     m_hostname(hostname), m_hostId(hostId),
@@ -65,6 +65,9 @@ void ExecutorContext::bindToThread()
 
 ExecutorContext::~ExecutorContext() {
     // currently does not own any of its pointers
+    // execpt for the CodegenContext
+    delete m_codegenContext;
+    CodegenContext::shutdownLlvm();
 
     // There can be only one (per thread).
     assert(pthread_getspecific( static_key) == this);
@@ -81,7 +84,7 @@ ExecutorContext* ExecutorContext::getExecutorContext() {
 
     PredFunction ExecutorContext::compilePredicate(const TupleSchema* tupleSchema,
                                                    const AbstractExpression* expr) {
-        return m_codegenContext.compilePredicate(tupleSchema, expr);
+        return m_codegenContext->compilePredicate(tupleSchema, expr);
     }
 
 

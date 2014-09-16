@@ -47,7 +47,7 @@ namespace voltdb {
         CodegenContext();
 
         PredFunction compilePredicate(const TupleSchema* tupleSchema,
-                               const AbstractExpression* expr);
+                                      const AbstractExpression* expr);
 
         llvm::Module* getModule();
         llvm::LLVMContext& getLlvmContext();
@@ -58,6 +58,8 @@ namespace voltdb {
         llvm::IntegerType* getIntPtrType();
 
         ~CodegenContext();
+
+        static void shutdownLlvm();
 
     private:
         boost::scoped_ptr<llvm::LLVMContext> m_llvmContext;
@@ -71,4 +73,3 @@ namespace voltdb {
 }
 
 #endif
-
