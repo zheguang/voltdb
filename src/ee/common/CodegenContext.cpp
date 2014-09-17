@@ -15,9 +15,16 @@
  * along with VoltDB.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// #ifdef VOLT_LOG_LEVEL
+// #undef VOLT_LOG_LEVEL
+// #endif
+
+// #define VOLT_LOG_LEVEL 200
+
 #include "common/CodegenContext.hpp"
 #include "common/SQLException.h"
 #include "common/TupleSchema.h"
+#include "common/debuglog.h"
 #include "common/types.h"
 #include "common/value_defs.h"
 #include "common/ValuePeeker.hpp"
@@ -35,6 +42,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/PassManager.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Transforms/IPO.h"
@@ -531,7 +539,6 @@ namespace voltdb {
             codegenExpr(const TupleSchema* tupleSchema,
                         const AbstractExpression* expr) {
                 ExpressionType exprType = expr->getExpressionType();
-                //std::cout << "Generating code for " << expressionToString(exprType) << std::endl;
                 switch (exprType) {
                 case EXPRESSION_TYPE_COMPARE_EQUAL:
                 case EXPRESSION_TYPE_COMPARE_NOTEQUAL:
@@ -651,42 +658,62 @@ namespace voltdb {
         return m_executionEngine->getDataLayout()->getIntPtrType(*m_llvmContext);
     }
 
+    static void dumpModule(llvm::Module* module, const std::string& desc) {
+#if VOLT_LOG_LEVEL<=VOLT_LEVEL_DEBUG
+        std::string irDump;
+        llvm::raw_string_ostream rso(irDump);
+        module->print(rso, NULL);
+        VOLT_DEBUG("%s LLVM IR in module: \n%s", desc.c_str(), irDump.c_str());
+#else
+        (void)module;
+#endif
+    }
+
     PredFunction
     CodegenContext::compilePredicate(const std::string& fnName,
                                      const TupleSchema* tupleSchema,
                                      const AbstractExpression* expr) {
         PredFunction nativeFunction = NULL;
+        VOLT_DEBUG("Attempting to compile predicate:\n%s", expr->debug(true).c_str());
         {
-            boost::timer t;
             FnCtx fnCtx(this, fnName);
+            boost::timer t;
 
             try {
+                t.restart();
                 fnCtx.codegen(tupleSchema, expr);
+                VOLT_DEBUG("Predicate IR construction took %f seconds", t.elapsed());
             }
             catch (UnsupportedForCodegenException& ex) {
                 fnCtx.getFunction()->eraseFromParent();
-                std::cout << ex.getMessage() << std::endl;
+                VOLT_DEBUG("Aborted compilation: %s", ex.getMessage().c_str());
 
                 // EE will fall back to interpreting function
                 return NULL;
             }
 
             // Dump the unoptimized fn
-            //m_module->dump();
+            dumpModule(m_module, "Unoptimized");
 
             llvm::Function* fn = fnCtx.getFunction();
 
             // This will throw an exception if we did anything wonky in LLVM IR
+            t.restart();
             llvm::verifyFunction(*fn);
+            VOLT_DEBUG("Verification of IR took %f seconds", t.elapsed());
 
             // This will optimize the function
+            t.restart();
             m_passManager->run(*fn);
+            VOLT_DEBUG("Optimization took %f seconds", t.elapsed());
 
+            // Finally generate the actual code
+            t.restart();
             nativeFunction = (PredFunction)m_executionEngine->getPointerToFunction(fn);
-            std::cout << "Predicate compilation took " << t.elapsed() << " seconds." << std::endl;
+            VOLT_DEBUG("Native code generation took %f seconds", t.elapsed());
 
             // Dump optimized LLVM IR
-            m_module->dump();
+            dumpModule(m_module, "Optimized");
         }
 
         return nativeFunction;

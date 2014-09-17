@@ -87,7 +87,7 @@ bool IndexScanExecutor::p_init(AbstractPlanNode *abstractNode,
         Table* input_table = (m_node->isSubQuery()) ?
             m_node->getChildren()[0]->getOutputTable():
             m_node->getTargetTable();
-        m_predFunction = compilePredicate("index_scan_predicate",
+        m_predFunction = compilePredicate("index_scan_pred",
                                           input_table->schema(),
                                           m_node->getPredicate());
     }
