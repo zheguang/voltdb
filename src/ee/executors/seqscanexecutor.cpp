@@ -79,7 +79,8 @@ bool SeqScanExecutor::p_init(AbstractPlanNode* abstract_node,
         Table* input_table = (node->isSubQuery()) ?
             node->getChildren()[0]->getOutputTable():
             node->getTargetTable();
-        m_predFunction = compilePredicate(input_table->schema(),
+        m_predFunction = compilePredicate("seq_scan_pred",
+                                          input_table->schema(),
                                           node->getPredicate());
     }
 
@@ -98,13 +99,12 @@ bool SeqScanExecutor::p_init(AbstractPlanNode* abstract_node,
                 node->getTargetTable()->name();
         setTempOutputTable(limits, temp_name);
     }
-
-    //
-    // Otherwise create a new temp table that mirrors the
-    // output schema specified in the plan (which should mirror
-    // the output schema for any inlined projection)
-    //
     else {
+        //
+        // Otherwise create a new temp table that mirrors the
+        // output schema specified in the plan (which should mirror
+        // the output schema for any inlined projection)
+        //
         node->setOutputTable(isSubquery ?
                              node->getChildren()[0]->getOutputTable() :
                              node->getTargetTable());

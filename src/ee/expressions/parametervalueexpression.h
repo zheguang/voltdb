@@ -70,8 +70,6 @@ public:
         m_valueIdx(value_idx), m_paramValue(paramValue) {
     }
 
-        ~ParameterValueExpression();
-
     voltdb::NValue eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
         assert(m_paramValue != NULL);
         return *m_paramValue;

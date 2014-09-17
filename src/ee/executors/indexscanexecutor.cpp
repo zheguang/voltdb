@@ -87,7 +87,8 @@ bool IndexScanExecutor::p_init(AbstractPlanNode *abstractNode,
         Table* input_table = (m_node->isSubQuery()) ?
             m_node->getChildren()[0]->getOutputTable():
             m_node->getTargetTable();
-        m_predFunction = compilePredicate(input_table->schema(),
+        m_predFunction = compilePredicate("index_scan_predicate",
+                                          input_table->schema(),
                                           m_node->getPredicate());
     }
 
@@ -432,7 +433,6 @@ bool IndexScanExecutor::p_execute(const NValueArray &params)
         }
 
         if (no_post_expr_or_true) {
-        //if (post_expression == NULL || post_expression->eval(&tuple, NULL).isTrue()) {
             //
             // INLINE OFFSET
             //

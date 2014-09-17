@@ -82,9 +82,10 @@ ExecutorContext* ExecutorContext::getExecutorContext() {
     return static_cast<ExecutorContext*>(pthread_getspecific( static_key));
 }
 
-    PredFunction ExecutorContext::compilePredicate(const TupleSchema* tupleSchema,
+    PredFunction ExecutorContext::compilePredicate(const std::string& fnName,
+                                                   const TupleSchema* tupleSchema,
                                                    const AbstractExpression* expr) {
-        return m_codegenContext->compilePredicate(tupleSchema, expr);
+        return m_codegenContext->compilePredicate(fnName, tupleSchema, expr);
     }
 
 

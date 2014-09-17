@@ -46,7 +46,8 @@ namespace voltdb {
     public:
         CodegenContext();
 
-        PredFunction compilePredicate(const TupleSchema* tupleSchema,
+        PredFunction compilePredicate(const std::string& fnName,
+                                      const TupleSchema* tupleSchema,
                                       const AbstractExpression* expr);
 
         llvm::Module* getModule();

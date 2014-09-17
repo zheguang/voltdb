@@ -51,18 +51,12 @@
 #include "common/PlannerDomValue.h"
 
 #include <string>
-#include <utility>
 #include <vector>
-
-namespace llvm {
-class Value;
-}
 
 namespace voltdb {
 
 class NValue;
 class TableTuple;
-class TupleSchema;
 
 /**
  * Predicate objects for filtering tuples during query execution.
@@ -161,5 +155,6 @@ class AbstractExpression {
     int m_valueSize;
     bool m_inBytes;
 };
+
 }
 #endif

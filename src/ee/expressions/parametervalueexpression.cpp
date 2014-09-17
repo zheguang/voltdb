@@ -50,8 +50,6 @@
 #include "common/executorcontext.hpp"
 #include "execution/VoltDBEngine.h"
 
-#include <sstream>
-
 namespace voltdb {
 
     ParameterValueExpression::ParameterValueExpression(int value_idx)
@@ -65,9 +63,6 @@ namespace voltdb {
         NValueArray& params = engine->getParameterContainer();
         assert(value_idx < params.size());
         m_paramValue = &params[value_idx];
-    }
+    };
 
-    ParameterValueExpression::~ParameterValueExpression() {
-    }
 }
-

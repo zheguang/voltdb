@@ -62,8 +62,6 @@ class TupleValueExpression : public AbstractExpression {
         VOLT_TRACE("OptimizedTupleValueExpression %d using tupleIdx %d valueIdx %d", m_type, tableIdx, valueIdx);
     };
 
-        virtual ~TupleValueExpression();
-
     virtual voltdb::NValue eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
         if (tuple_idx == 0) {
             assert(tuple1);

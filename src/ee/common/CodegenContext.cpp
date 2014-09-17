@@ -117,6 +117,28 @@ namespace voltdb {
 
     namespace {
 
+        // Bundles an llvm::Value* with may-be-null meta-data.
+        class CGValue {
+        public:
+            CGValue(llvm::Value* val, bool mayBeNull)
+                : m_value(val)
+                , m_mayBeNull(mayBeNull)
+            {
+            }
+
+            llvm::Value* val() const {
+                return m_value;
+            }
+
+            bool mayBeNull() const {
+                return m_mayBeNull;
+            }
+
+        private:
+            llvm::Value* m_value;
+            bool m_mayBeNull;
+        };
+
         // maintains the current state of the LLVM function being generated
         class FnCtx {
         public:
@@ -125,17 +147,17 @@ namespace voltdb {
             //   returns a boolean
             //   has external linkage (can be called from outside llvm module)
             FnCtx(CodegenContext* codegenContext, const std::string& name)
-            : m_codegenContext(codegenContext)
-            , m_function(NULL)
-            , m_builder()
+                : m_codegenContext(codegenContext)
+                , m_function(NULL)
+                , m_builder()
             {
                 init(name, llvm::Function::ExternalLinkage, VALUE_TYPE_BOOLEAN);
             }
 
             void codegen(const TupleSchema* tupleSchema,
                          const AbstractExpression* expr) {
-                std::pair<llvm::Value*, bool> answerPair = codegenExpr(tupleSchema, expr);
-                builder().CreateRet(answerPair.first);
+                CGValue answer = codegenExpr(tupleSchema, expr);
+                builder().CreateRet(answer.val());
             }
 
             llvm::Function* getFunction() {
@@ -190,7 +212,7 @@ namespace voltdb {
                 return m_codegenContext->getLlvmType(voltType);
             }
 
-            llvm::Value* getTupleArg() {
+              llvm::Value* getTupleArg() {
                 return m_function->arg_begin();
             }
 
@@ -198,7 +220,7 @@ namespace voltdb {
                 return m_codegenContext->getLlvmContext();
             }
 
-            std::pair<llvm::Value*, bool>
+            CGValue
             codegenParameterValueExpr(const TupleSchema*,
                                       const ParameterValueExpression* expr) {
                 llvm::Constant* nvalueAddrAsInt = llvm::ConstantInt::get(getIntPtrType(),
@@ -213,11 +235,11 @@ namespace voltdb {
 
                 std::ostringstream varName;
                 varName << "param_" << expr->getValueIdx();
-                return std::make_pair(builder().CreateLoad(castedAddr, varName.str().c_str()),
-                                      true); // true means value may be null
+                return CGValue(builder().CreateLoad(castedAddr, varName.str().c_str()),
+                               true); // true means value may be null
             }
 
-            std::pair<llvm::Value*, bool>
+            CGValue
             codegenTupleValueExpr(const TupleSchema* schema,
                                   const TupleValueExpression* expr) {
                 // find the offset of the field in the record
@@ -236,8 +258,8 @@ namespace voltdb {
                                                                   ptrTy);
                 std::ostringstream varName;
                 varName << "field_" << expr->getColumnId();
-                return std::make_pair(builder().CreateLoad(castedAddr, varName.str().c_str()),
-                                      columnInfo->allowNull);
+                return CGValue(builder().CreateLoad(castedAddr, varName.str().c_str()),
+                               columnInfo->allowNull);
             }
 
             llvm::Value*
@@ -296,9 +318,9 @@ namespace voltdb {
 
             typedef std::pair<llvm::Value*, llvm::BasicBlock*> ValueBB;
 
-            std::pair<llvm::Value*, bool>
+            CGValue
             codegenConjunctionAndExpr(const TupleSchema* tupleSchema,
-                        const AbstractExpression* expr) {
+                                      const AbstractExpression* expr) {
 
                 //     lhs   AND    rhs
                 //
@@ -325,11 +347,11 @@ namespace voltdb {
 
                 std::vector<ValueBB> results;
                 llvm::BasicBlock* resultBlock = getEmptyBasicBlock("and_result");
-                std::pair<llvm::Value*, bool> leftPair = codegenExpr(tupleSchema,
-                                                                     expr->getLeft());
+                CGValue left = codegenExpr(tupleSchema,
+                                           expr->getLeft());
                 llvm::BasicBlock *lhsFalseLabel = getEmptyBasicBlock("and_lhs_false");
                 llvm::BasicBlock *lhsNotFalseLabel = getEmptyBasicBlock("and_lhs_not_false");
-                llvm::Value* lhsFalseCmp = builder().CreateICmpEQ(leftPair.first, getFalseValue());
+                llvm::Value* lhsFalseCmp = builder().CreateICmpEQ(left.val(), getFalseValue());
                 builder().CreateCondBr(lhsFalseCmp, lhsFalseLabel, lhsNotFalseLabel);
 
                 builder().SetInsertPoint(lhsFalseLabel);
@@ -337,22 +359,23 @@ namespace voltdb {
                 builder().CreateBr(resultBlock);
 
                 builder().SetInsertPoint(lhsNotFalseLabel);
-                std::pair<llvm::Value*, bool> rightPair = codegenExpr(tupleSchema,
-                                                                     expr->getRight());
-                if (! leftPair.second) {
-                    // lhs may not be null, so answer is whatever rhs is
-                    results.push_back(std::make_pair(rightPair.first, lhsNotFalseLabel));
+                CGValue right = codegenExpr(tupleSchema,
+                                            expr->getRight());
+                if (! left.mayBeNull()) {
+                    // lhs cannot be null, so it must be false.
+                    // Answer is whatever rhs is.
+                    results.push_back(std::make_pair(right.val(), lhsNotFalseLabel));
                     builder().CreateBr(resultBlock);
                 }
                 else {
                     llvm::BasicBlock *lhsTrueLabel = getEmptyBasicBlock("and_lhs_true");
                     llvm::BasicBlock *lhsNullLabel = getEmptyBasicBlock("and_lhs_null");
-                    llvm::Value* lhsTrueCmp = builder().CreateICmpEQ(leftPair.first, getTrueValue());
+                    llvm::Value* lhsTrueCmp = builder().CreateICmpEQ(left.val(), getTrueValue());
                     builder().CreateCondBr(lhsTrueCmp, lhsTrueLabel, lhsNullLabel);
 
 
                     builder().SetInsertPoint(lhsTrueLabel);
-                    results.push_back(std::make_pair(rightPair.first, lhsTrueLabel));
+                    results.push_back(std::make_pair(right.val(), lhsTrueLabel));
                     builder().CreateBr(resultBlock);
 
                     // lhs is null
@@ -360,7 +383,7 @@ namespace voltdb {
                     builder().SetInsertPoint(lhsNullLabel);
                     llvm::BasicBlock *rhsFalseLabel = getEmptyBasicBlock("and_rhs_false");
                     llvm::BasicBlock *rhsNotFalseLabel = getEmptyBasicBlock("and_rhs_not_false");
-                    llvm::Value* rhsFalseCmp = builder().CreateICmpEQ(rightPair.first, getFalseValue());
+                    llvm::Value* rhsFalseCmp = builder().CreateICmpEQ(right.val(), getFalseValue());
                     builder().CreateCondBr(rhsFalseCmp, rhsFalseLabel, rhsNotFalseLabel);
 
                     // rhs false, so result is false
@@ -385,24 +408,42 @@ namespace voltdb {
                     phi->addIncoming(it->first, it->second);
                 }
 
-                bool mayBeNull = leftPair.second || rightPair.second;
-                return std::make_pair(phi,
-                                      mayBeNull);
+                bool mayBeNull = left.mayBeNull() || right.mayBeNull();
+                return CGValue(phi,
+                               mayBeNull);
             }
 
+            // Sign-extend one side to the width of the wider side.
+            // This will only with if lhs/rhs values are NOT NULL!
+            std::pair<llvm::Value*, llvm::Value*> homogenizeTypes(llvm::Value* lhs, llvm::Value* rhs) {
+                llvm::IntegerType* lhsTy = llvm::dyn_cast<llvm::IntegerType>(lhs->getType());
+                llvm::IntegerType* rhsTy = llvm::dyn_cast<llvm::IntegerType>(rhs->getType());
 
-            std::pair<llvm::Value*, bool>
+                if (lhsTy->getBitWidth() > rhsTy->getBitWidth()) {
+                    return std::make_pair(lhs,
+                                          builder().CreateSExt(rhs, lhsTy));
+                }
+                else if (rhsTy->getBitWidth() > lhsTy->getBitWidth()) {
+                    return std::make_pair(builder().CreateSExt(lhs, rhsTy),
+                                          rhs);
+                }
+
+                // types already homogenized.
+                return std::make_pair(lhs, rhs);
+            }
+
+            CGValue
             codegenComparisonExpr(const TupleSchema* tupleSchema,
                                   const AbstractExpression* expr) {
 
                 std::vector<ValueBB> results;
                 llvm::BasicBlock* resultBlock = getEmptyBasicBlock("cmp_result");
-                std::pair<llvm::Value*, bool> leftPair = codegenExpr(tupleSchema,
-                                                                     expr->getLeft());
-                if (leftPair.second) { // value produced on LHS may be null
+                CGValue left = codegenExpr(tupleSchema,
+                                           expr->getLeft());
+                if (left.mayBeNull()) { // value produced on LHS may be null
                     llvm::BasicBlock* lhsIsNull = getEmptyBasicBlock("cmp_lhs_null");
                     llvm::BasicBlock* lhsNotNull = getEmptyBasicBlock("cmp_lhs_not_null");
-                    llvm::Value* cmp = compareToNull(leftPair.first);
+                    llvm::Value* cmp = compareToNull(left.val());
                     builder().CreateCondBr(cmp, lhsIsNull, lhsNotNull);
 
                     builder().SetInsertPoint(lhsIsNull);
@@ -413,12 +454,12 @@ namespace voltdb {
                     builder().SetInsertPoint(lhsNotNull);
                 }
 
-                std::pair<llvm::Value*, bool> rightPair = codegenExpr(tupleSchema,
-                                                                      expr->getRight());
-                if (rightPair.second) { // value produced on RHS may be null
+                CGValue right = codegenExpr(tupleSchema,
+                                            expr->getRight());
+                if (right.mayBeNull()) { // value produced on RHS may be null
                     llvm::BasicBlock* rhsIsNull = getEmptyBasicBlock("cmp_rhs_null");
                     llvm::BasicBlock* rhsNotNull = getEmptyBasicBlock("cmp_rhs_not_null");
-                    llvm::Value* cmp = compareToNull(rightPair.first);
+                    llvm::Value* cmp = compareToNull(right.val());
                     builder().CreateCondBr(cmp, rhsIsNull, rhsNotNull);
 
                     builder().SetInsertPoint(rhsIsNull);
@@ -429,10 +470,14 @@ namespace voltdb {
                     builder().SetInsertPoint(rhsNotNull);
                 }
 
+                // Types on both sides may not be the same.
+                std::pair<llvm::Value*, llvm::Value*> lhsRhs;
+                lhsRhs = homogenizeTypes(left.val(), right.val());
+
                 llvm::Value* cmp = codegenCmpOp(expr->getExpressionType(),
                                                 getExprType(expr),
-                                                leftPair.first,
-                                                rightPair.first);
+                                                lhsRhs.first,
+                                                lhsRhs.second);
                 results.push_back(std::make_pair(cmp, builder().GetInsertBlock()));
                 builder().CreateBr(resultBlock);
 
@@ -445,27 +490,27 @@ namespace voltdb {
                     phi->addIncoming(it->first, it->second);
                 }
 
-                bool mayBeNull = leftPair.second || rightPair.second;
-                return std::make_pair(phi,
-                                      mayBeNull);
+                bool mayBeNull = left.mayBeNull() || right.mayBeNull();
+                return CGValue(phi,
+                               mayBeNull);
             }
 
-            std::pair<llvm::Value*, bool>
+            CGValue
             codegenIsNullExpr(const TupleSchema* tupleSchema,
                               const OperatorIsNullExpression* expr) {
-                std::pair<llvm::Value*, bool> childPair = codegenExpr(tupleSchema,
-                                                                      expr->getLeft());
-                if (! childPair.second) {
+                CGValue child = codegenExpr(tupleSchema,
+                                            expr->getLeft());
+                if (! child.mayBeNull()) {
                     // argument is never null, is isNull is always false here.
-                    return std::make_pair(getTrueValue(), false);
+                    return CGValue(getTrueValue(), false);
                 }
 
-                llvm::Value* cmp = compareToNull(childPair.first);
-                return std::make_pair(builder().CreateZExt(cmp, getLlvmType(VALUE_TYPE_BOOLEAN)),
-                                      false); // result will never be null
+                llvm::Value* cmp = compareToNull(child.val());
+                return CGValue(builder().CreateZExt(cmp, getLlvmType(VALUE_TYPE_BOOLEAN)),
+                               false); // result will never be null
             }
 
-            std::pair<llvm::Value*, bool>
+            CGValue
             codegenConstantValueExpr(const TupleSchema*,
                                      const ConstantValueExpression* expr) {
                 // constant value should never need to access tuples,
@@ -473,16 +518,16 @@ namespace voltdb {
                 NValue nval = expr->eval(NULL, NULL);
                 llvm::Type* ty = getLlvmType(ValuePeeker::peekValueType(nval));
                 if (nval.isNull()) {
-                    return std::make_pair(getNullValueForType(ty),
-                                          true);
+                    return CGValue(getNullValueForType(ty),
+                                   true);
                 }
 
                 llvm::Value* k = llvm::ConstantInt::get(ty,
                                                         ValuePeeker::peekAsBigInt(nval));
-                return std::make_pair(k, false); // never null if we get here.
+                return CGValue(k, false); // never null if we get here.
             }
 
-            std::pair<llvm::Value*, bool>
+            CGValue
             codegenExpr(const TupleSchema* tupleSchema,
                         const AbstractExpression* expr) {
                 ExpressionType exprType = expr->getExpressionType();
@@ -607,37 +652,36 @@ namespace voltdb {
     }
 
     PredFunction
-    CodegenContext::compilePredicate(const TupleSchema* tupleSchema,
+    CodegenContext::compilePredicate(const std::string& fnName,
+                                     const TupleSchema* tupleSchema,
                                      const AbstractExpression* expr) {
         PredFunction nativeFunction = NULL;
         {
             boost::timer t;
-            FnCtx fnCtx(this, "pred");
+            FnCtx fnCtx(this, fnName);
 
-        try {
-            fnCtx.codegen(tupleSchema, expr);
-        }
-        catch (UnsupportedForCodegenException& ex) {
+            try {
+                fnCtx.codegen(tupleSchema, expr);
+            }
+            catch (UnsupportedForCodegenException& ex) {
+                fnCtx.getFunction()->eraseFromParent();
+                std::cout << ex.getMessage() << std::endl;
 
-            fnCtx.getFunction()->eraseFromParent();
+                // EE will fall back to interpreting function
+                return NULL;
+            }
 
-            std::cout << ex.getMessage() << std::endl;
-            // EE will fall back to interpreting function
-
-            return NULL;
-        }
-            
             // Dump the unoptimized fn
             //m_module->dump();
-            
+
             llvm::Function* fn = fnCtx.getFunction();
-            
+
             // This will throw an exception if we did anything wonky in LLVM IR
             llvm::verifyFunction(*fn);
-            
+
             // This will optimize the function
             m_passManager->run(*fn);
-            
+
             nativeFunction = (PredFunction)m_executionEngine->getPointerToFunction(fn);
             std::cout << "Predicate compilation took " << t.elapsed() << " seconds." << std::endl;
 
