@@ -502,7 +502,7 @@ namespace voltdb {
                                             expr->getLeft());
                 if (! child.mayBeNull()) {
                     // argument is never null, is isNull is always false here.
-                    return CGValue(getTrueValue(), false);
+                    return CGValue(getFalseValue(), false);
                 }
 
                 llvm::Value* cmp = compareToNull(child.val());
