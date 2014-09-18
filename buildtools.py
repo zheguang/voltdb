@@ -1,5 +1,5 @@
 import os, sys, threading, shutil
-from subprocess import Popen, PIPE, STDOUT, check_output
+from subprocess import Popen, PIPE, STDOUT
 
 class BuildContext:
     def __init__(self, args):
@@ -313,9 +313,17 @@ def buildMakefile(CTX):
     return True
 
 def getLlvmLibs():
-    flags = ""
-    flags += check_output(['llvm-config', '--ldflags', '--libs', 'core', 'jit', 'native'])
-    flag_list = flags.split()
+    command = 'llvm-config --ldflags --libs core jit native'
+    pipe = Popen(args=command, shell=True, bufsize=-1, stdout=PIPE, stderr=PIPE)
+    out = pipe.stdout.readlines()
+    out_err = pipe.stderr.readlines()
+    retcode = pipe.wait()
+    if retcode != 0:
+        print "Error calling llvm-config"
+        print ''.join(out_err)
+        sys.exit(-1)
+
+    flag_list = ''.join(out).split()
     # Library arguments are not ordered correctly for linux
     # -ltinfo, which is required by linux, must be last.
     if flag_list.count('-ltinfo') > 0:
@@ -326,10 +334,11 @@ def getLlvmLibs():
         flag_list.append('-ldl')
     return " ".join(flag_list)
 
-def getLlvmIncludeDir():
-    llvm_dir = ""
-    llvm_dir += check_output(['llvm-config', '--includedir'])
-    return llvm_dir.strip()
+# This may need to be called if LLVM headers are not in the system include dirs.
+# def getLlvmIncludeDir():
+#     llvm_dir = ""
+#     llvm_dir += check_output(['llvm-config', '--includedir'])
+#     return llvm_dir.strip()
 
 def buildIPC(CTX):
     retval = os.system("make --directory=%s prod/voltdbipc -j4" % (CTX.OUTPUT_PREFIX))
