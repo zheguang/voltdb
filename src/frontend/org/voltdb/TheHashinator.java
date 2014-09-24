@@ -26,13 +26,17 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.google_voltpatches.common.base.*;
-import com.google_voltpatches.common.collect.MapMaker;
 import org.apache.hadoop_voltpatches.util.PureJavaCrc32C;
 import org.voltcore.logging.VoltLogger;
 import org.voltcore.utils.Pair;
 import org.voltdb.dtxn.UndoAction;
 import org.voltdb.sysprocs.saverestore.HashinatorSnapshotData;
+
+import com.google_voltpatches.common.base.Charsets;
+import com.google_voltpatches.common.base.Supplier;
+import com.google_voltpatches.common.base.Suppliers;
+import com.google_voltpatches.common.base.Throwables;
+import com.google_voltpatches.common.collect.MapMaker;
 
 /**
  * Class that maps object values to partitions. It's rather simple
@@ -95,6 +99,7 @@ public abstract class TheHashinator {
     }
 
     protected static final VoltLogger hostLogger = new VoltLogger("HOST");
+    protected static final VoltLogger console = new VoltLogger("CONSOLE");
 
      /*
      * Stamped instance, version associated with hash function, only update for newer versions
@@ -387,8 +392,13 @@ public abstract class TheHashinator {
         }
 
         //Do a CAS loop to maintain a global instance
+        final int hostId = VoltDB.instance().getHostMessenger().getHostId();
         while (true) {
             final Pair<Long, ? extends TheHashinator> snapshot = instance.get();
+            console.info("Updating hashinator for host " + hostId +
+                         "\nOriginal version: " + snapshot.getFirst() +
+                         "\nNew version: " + version +
+                         "\nSignature: " + existingHashinator.pGetConfigurationSignature());
             if (version > snapshot.getFirst()) {
                 final Pair<Long, ? extends TheHashinator> update =
                         Pair.of(version, existingHashinator);
@@ -400,7 +410,10 @@ public abstract class TheHashinator {
                         @Override
                         public void undo() {
                             boolean rolledBack = instance.compareAndSet(update, snapshot);
+                            console.error("Rolling back global hashinator for host " + hostId +
+                                          " to " + snapshot.getSecond().pGetConfigurationSignature());
                             if (!rolledBack) {
+                                console.error("Globabl hashinator rollback failed (host " + hostId + ")");
                                 hostLogger.info(
                                         "Didn't roll back hashinator because it wasn't set to expected hashinator");
                             }
