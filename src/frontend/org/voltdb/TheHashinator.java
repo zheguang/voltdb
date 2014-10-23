@@ -26,13 +26,17 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.google_voltpatches.common.base.*;
-import com.google_voltpatches.common.collect.MapMaker;
 import org.apache.hadoop_voltpatches.util.PureJavaCrc32C;
 import org.voltcore.logging.VoltLogger;
 import org.voltcore.utils.Pair;
 import org.voltdb.dtxn.UndoAction;
 import org.voltdb.sysprocs.saverestore.HashinatorSnapshotData;
+
+import com.google_voltpatches.common.base.Charsets;
+import com.google_voltpatches.common.base.Supplier;
+import com.google_voltpatches.common.base.Suppliers;
+import com.google_voltpatches.common.base.Throwables;
+import com.google_voltpatches.common.collect.MapMaker;
 
 /**
  * Class that maps object values to partitions. It's rather simple
@@ -389,7 +393,16 @@ public abstract class TheHashinator {
         //Do a CAS loop to maintain a global instance
         while (true) {
             final Pair<Long, ? extends TheHashinator> snapshot = instance.get();
+            if (hostLogger.isDebugEnabled()) {
+                hostLogger.debug("Attempting to update the global Hashinator.\nOriginal signature: " +
+                                 snapshot.getSecond().pGetConfigurationSignature() + "\nUpdated signature: " +
+                                 existingHashinator.pGetConfigurationSignature());
+            }
             if (version > snapshot.getFirst()) {
+                if (hostLogger.isDebugEnabled()) {
+                    hostLogger.debug("This update will proceed. Old version is " + snapshot.getFirst() +
+                                     ", new version is " + version);
+                }
                 final Pair<Long, ? extends TheHashinator> update =
                         Pair.of(version, existingHashinator);
                 if (instance.compareAndSet(snapshot, update)) {
@@ -399,15 +412,31 @@ public abstract class TheHashinator {
 
                         @Override
                         public void undo() {
+                            if (hostLogger.isDebugEnabled()) {
+                                hostLogger.debug("Attempting to roll back the global Hashinator." +
+                                                 "\nUpdated signature: " + update.getSecond().pGetConfigurationSignature() +
+                                                 "\nOriginal signature: " + snapshot.getSecond().pGetConfigurationSignature());
+                            }
                             boolean rolledBack = instance.compareAndSet(update, snapshot);
                             if (!rolledBack) {
                                 hostLogger.info(
                                         "Didn't roll back hashinator because it wasn't set to expected hashinator");
+                                if (hostLogger.isDebugEnabled()) {
+                                    Pair<Long, ? extends TheHashinator> current = instance.get();
+                                    hostLogger.debug("Rollback failure detail: expected version " + update.getFirst() +
+                                                     ", signature: " + update.getSecond().pGetConfigurationSignature() +
+                                                     " but found version " + current.getFirst() + ", signature " +
+                                                     current.getSecond().pGetConfigurationSignature());
+                                }
                             }
                         }
                     }, existingHashinator);
                 }
             } else {
+                if (hostLogger.isDebugEnabled()) {
+                    hostLogger.debug("This update is a no-op. Update version is " + version +
+                                     ", which is not newer than current version " + snapshot.getFirst());
+                }
                 return Pair.of(new UndoAction() {
 
                     @Override
