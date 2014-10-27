@@ -194,7 +194,7 @@ function run_test() {
     local FUNCTION=test_$1
     _check_function $FUNCTION "test $1"
     shift
-    clean
+    run_clean
     _scenario base _start
     if [ "$PREPOPULATE_DATA" = "yes" ]; then
         _scenario base _client
