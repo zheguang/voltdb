@@ -67,8 +67,8 @@ function client() {
     java -classpath obj:$CLASSPATH:obj com.MyTPCC \
         --servers=localhost \
         --duration=180 \
-        --warehouses=256 \
-        --scalefactor=22
+        --warehouses=512 \
+        --scalefactor=8
 }
 
 function help() {
