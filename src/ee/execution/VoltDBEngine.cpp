@@ -42,6 +42,7 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+#include "common/TimeMeasure.hpp"
 
 #include "boost/shared_array.hpp"
 #include "boost/scoped_array.hpp"
@@ -52,6 +53,7 @@
 #include "common/common.h"
 #include "common/debuglog.h"
 #include "common/serializeio.h"
+#include "common/types.h"
 #include "common/valuevector.h"
 #include "common/TheHashinator.h"
 #include "common/tabletuple.h"
@@ -435,10 +437,30 @@ int VoltDBEngine::executePlanFragment(int64_t planfragmentId,
     // dependency tracking is not needed here.
     size_t ttl = execsForFrag->list.size();
 
+    timespec timePoints[2];
+    timespec timeDiff = {0, 0};
+
     for (int ctr = 0; ctr < ttl; ++ctr) {
         AbstractExecutor *executor = execsForFrag->list[ctr];
         assert (executor);
 
+        PlanNodeType type = executor->m_abstractNode->getPlanNodeType();
+        /*bool useIndex = false;
+        switch (type) {
+        case PLAN_NODE_TYPE_INDEXSCAN: 
+        case PLAN_NODE_TYPE_INDEXCOUNT:
+        case PLAN_NODE_TYPE_NESTLOOPINDEX:
+        //case PLAN_NODE_TYPE_SEQSCAN: return new SeqScanExecutor(engine, abstract_node);
+        case PLAN_NODE_TYPE_UPSERT: 
+          useIndex = true;
+          break;
+        default:
+          useIndex = false;
+          break;
+        }*/
+
+        //printf("\tSamBackend: executor[%d] has type %s\n", ctr, planNodeToString(executor->m_abstractNode->getPlanNodeType()).c_str());
+        clock_gettime(CLOCK_REALTIME, &timePoints[0]);
         try {
             // Now call the execute method to actually perform whatever action
             // it is that the node is supposed to do...
@@ -460,6 +482,9 @@ int VoltDBEngine::executePlanFragment(int64_t planfragmentId,
 
             return ENGINE_ERRORCODE_ERROR;
         }
+        clock_gettime(CLOCK_REALTIME, &timePoints[1]);
+        timeDiff = TimeMeasure::diff(timePoints[0], timePoints[1]);
+        printf("\tSamBackend: executor[%d][%s] duration=%lld.%.9ld\n", ctr, planNodeToString(type).c_str(), (long long)timeDiff.tv_sec, timeDiff.tv_nsec);
     }
     // Clean up all the tempTable when each plan finishes and reset current InputDepId
     cleanupExecutors(execsForFrag);

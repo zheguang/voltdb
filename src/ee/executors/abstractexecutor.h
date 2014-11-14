@@ -111,11 +111,13 @@ class AbstractExecutor {
     void setDMLCountOutputTable(TempTableLimits* limits);
 
     // execution engine owns the plannode allocation.
-    AbstractPlanNode* m_abstractNode;
+    //AbstractPlanNode* m_abstractNode;
     TempTable* m_tmpOutputTable;
 
     /** reference to the engine to call up to the top end */
     VoltDBEngine* m_engine;
+public:
+    AbstractPlanNode* m_abstractNode;
 };
 
 

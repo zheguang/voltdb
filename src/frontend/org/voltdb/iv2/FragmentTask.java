@@ -18,6 +18,7 @@
 package org.voltdb.iv2;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -94,7 +95,9 @@ public class FragmentTask extends TransactionTask
                 m_txnState.setBeginUndoToken(siteConnection.getLatestUndoToken());
             }
         }
+        //System.out.println("SamFrontend: start processing fragment task...");
         final FragmentResponseMessage response = processFragmentTask(siteConnection);
+        //System.out.println("SamFrontend: finish processing fragment task.");
         // completion?
         response.m_sourceHSId = m_initiator.getHSId();
         m_initiator.deliver(response);

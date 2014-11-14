@@ -20,6 +20,7 @@ package org.voltdb.jni;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.List;
 
 import org.voltcore.logging.VoltLogger;
@@ -307,6 +308,8 @@ public class ExecutionEngineJNI extends ExecutionEngine {
         // Execute the plan, passing a raw pointer to the byte buffers for input and output
         //Clear is destructive, do it before the native call
         deserializer.clear();
+        System.out.println("SamFrontend: start executing plan.");
+        long startTime = System.nanoTime();
         final int errorCode =
             nativeExecutePlanFragments(
                     pointer,
@@ -317,6 +320,8 @@ public class ExecutionEngineJNI extends ExecutionEngine {
                     lastCommittedSpHandle,
                     uniqueId,
                     undoToken);
+        long duration = System.nanoTime() - startTime;
+        System.out.println("SamFrontend: end executing plan: timeElapse: " + duration);
 
         try {
             checkErrorCode(errorCode);
