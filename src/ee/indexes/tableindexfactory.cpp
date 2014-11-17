@@ -56,6 +56,7 @@
 #include "indexes/CompactingTreeMultiMapIndex.h"
 #include "indexes/CompactingHashUniqueIndex.h"
 #include "indexes/CompactingHashMultiMapIndex.h"
+#include "indexes/BenchIndex.h"
 
 namespace voltdb {
 
@@ -215,6 +216,10 @@ private:
 };
 
 TableIndex *TableIndexFactory::getInstance(const TableIndexScheme &scheme) {
+  return new BenchIndex(getWrappedInstance(scheme));
+}
+
+TableIndex *TableIndexFactory::getWrappedInstance(const TableIndexScheme &scheme) {
     const TupleSchema *tupleSchema = scheme.tupleSchema;
     assert(tupleSchema);
     bool isIntsOnly = true;
@@ -291,7 +296,7 @@ TableIndex *TableIndexFactory::getInstance(const TableIndexScheme &scheme) {
 
 TableIndex *TableIndexFactory::cloneEmptyTreeIndex(const TableIndex& pkey_index)
 {
-    return pkey_index.cloneEmptyNonCountingTreeIndex();
+    return new BenchIndex(pkey_index.cloneEmptyNonCountingTreeIndex());
 }
 
 }

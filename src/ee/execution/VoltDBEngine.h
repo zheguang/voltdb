@@ -152,6 +152,12 @@ class __attribute__((visibility("default"))) VoltDBEngine {
           m_topend(NULL),
           m_compactionThreshold(95)
         {
+          m_backendTime.tv_sec = 0;
+          m_backendTime.tv_nsec = 0;
+          m_indexTime.tv_sec = 0;
+          m_indexTime.tv_nsec = 0;
+          m_realIndexTime.tv_sec = 0;
+          m_realIndexTime.tv_nsec = 0;
         }
 
         VoltDBEngine(Topend *topend, LogProxy *logProxy);
@@ -665,6 +671,7 @@ class __attribute__((visibility("default"))) VoltDBEngine {
 
         timespec m_backendTime;
         timespec m_indexTime;
+        timespec m_realIndexTime;
 };
 
 inline void VoltDBEngine::resetReusedResultOutputBuffer(const size_t headerSize) {

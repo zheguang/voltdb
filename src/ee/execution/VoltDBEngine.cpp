@@ -94,6 +94,8 @@
 #include "stats/StatsAgent.h"
 #include "common/FailureInjection.h"
 
+#include "indexes/BenchIndex.h"
+
 #include <iostream>
 #include <stdio.h>
 #include <fstream>
@@ -137,6 +139,8 @@ VoltDBEngine::VoltDBEngine(Topend *topend, LogProxy *logProxy)
     m_backendTime.tv_nsec = 0;
     m_indexTime.tv_sec = 0;
     m_indexTime.tv_nsec = 0;
+    m_realIndexTime.tv_sec = 0;
+    m_realIndexTime.tv_nsec = 0;
 
 #ifdef LINUX
     // We ran into an issue where memory wasn't being returned to the
@@ -379,18 +383,68 @@ int VoltDBEngine::executePlanFragments(int32_t numFragments,
 }
 
 void VoltDBEngine::printBench() {
-  printf("Backend[%ld][%d]: backend-time[%ld.%.9ld] index-time[%ld.%.9ld] index-time-percentage[%g]\n",
+  for (
+      map<string, catalog::Table*>::const_iterator tableIter = m_database->tables().begin(); 
+      tableIter != m_database->tables().end(); 
+      tableIter++
+  ) {
+    catalog::Table *srcCatalogTable = tableIter->second;
+    PersistentTable *srcTable = dynamic_cast<PersistentTable*>(m_tables[srcCatalogTable->relativeIndex()]);
+    vector<TableIndex*> indexes = srcTable->allIndexes();
+    for (
+        vector<TableIndex*>::const_iterator indexIter = indexes.begin();
+        indexIter != indexes.end();
+        indexIter++
+    ) {
+      BenchIndex* bi = dynamic_cast<BenchIndex*>(*indexIter);
+      if (bi == NULL) {
+        printf("BAD BAD BAD: index seems not of type BenchIndex!");
+        fflush(stdout);
+        return;
+      } 
+      m_realIndexTime = TimeMeasure::sum(m_realIndexTime, bi->getTime());
+    }
+  }
+
+  printf("Backend[%ld][%d]: backend-time[%ld.%.9ld] index-time[%ld.%.9ld] real-index-time[%ld.%.9ld] index-time-percentage[%g] real-index-time-percentage[%g]\n",
          m_executorContext->m_siteId,
          m_executorContext->m_partitionId,
          m_backendTime.tv_sec,
          m_backendTime.tv_nsec,
          m_indexTime.tv_sec,
          m_indexTime.tv_nsec,
-         TimeMeasure::percentage(m_indexTime, m_backendTime));
+         m_realIndexTime.tv_sec,
+         m_realIndexTime.tv_nsec,
+         TimeMeasure::percentage(m_indexTime, m_backendTime),
+         TimeMeasure::percentage(m_realIndexTime, m_backendTime));
   fflush(stdout);
+
 }
 
 void VoltDBEngine::clearBench() {
+  for (
+      map<string, catalog::Table*>::const_iterator tableIter = m_database->tables().begin(); 
+      tableIter != m_database->tables().end(); 
+      tableIter++
+  ) {
+    catalog::Table *srcCatalogTable = tableIter->second;
+    PersistentTable *srcTable = dynamic_cast<PersistentTable*>(m_tables[srcCatalogTable->relativeIndex()]);
+    vector<TableIndex*> indexes = srcTable->allIndexes();
+    for (
+        vector<TableIndex*>::const_iterator indexIter = indexes.begin();
+        indexIter != indexes.end();
+        indexIter++
+    ) {
+      BenchIndex* bi = dynamic_cast<BenchIndex*>(*indexIter);
+      if (bi == NULL) {
+        printf("BAD BAD BAD: index seems not of type BenchIndex!");
+        fflush(stdout);
+        return;
+      } 
+      bi->clearTime();
+    }
+  }
+
   m_backendTime.tv_sec = 0;
   m_backendTime.tv_nsec = 0;
   m_indexTime.tv_sec = 0;
@@ -503,6 +557,7 @@ int VoltDBEngine::executePlanFragment(int64_t planfragmentId,
           case PLAN_NODE_TYPE_INDEXSCAN:
           case PLAN_NODE_TYPE_INDEXCOUNT:
           case PLAN_NODE_TYPE_NESTLOOPINDEX:
+          case PLAN_NODE_TYPE_UPDATE:
           case PLAN_NODE_TYPE_UPSERT:
             timespec endExecutor;
             clock_gettime(CLOCK_REALTIME, &endExecutor);

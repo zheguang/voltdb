@@ -455,6 +455,11 @@ public:
 
     virtual voltdb::IndexStats* getIndexStats();
 
+    // This should always/only be required for unique key indexes used for primary keys.
+    virtual TableIndex *cloneEmptyNonCountingTreeIndex() const {
+        throwFatalException("Primary key index discovered to be non-unique or missing a cloneEmptyTreeIndex implementation.");
+    }
+
 protected:
     const TupleSchema *getTupleSchema() const
     {
@@ -463,8 +468,10 @@ protected:
 
     TableIndex(const TupleSchema *keySchema, const TableIndexScheme &scheme);
 
+public:
     TableIndexScheme m_scheme;
     const TupleSchema * const m_keySchema;
+protected:
     const std::string m_id;
 
     // counters
@@ -477,12 +484,6 @@ protected:
     IndexStats m_stats;
 
 private:
-
-    // This should always/only be required for unique key indexes used for primary keys.
-    virtual TableIndex *cloneEmptyNonCountingTreeIndex() const {
-        throwFatalException("Primary key index discovered to be non-unique or missing a cloneEmptyTreeIndex implementation.");
-    }
-
     ThreadLocalPool m_tlPool;
 };
 
