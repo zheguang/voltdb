@@ -910,7 +910,12 @@ public class ExecutionEngineIPC extends ExecutionEngine {
 
     @Override
     public void printBench() {
-        return;
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void clearBench() {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
 

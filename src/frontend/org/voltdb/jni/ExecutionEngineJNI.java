@@ -478,6 +478,11 @@ public class ExecutionEngineJNI extends ExecutionEngine {
     }
 
     @Override
+    public void clearBench() {
+        nativeClearBench(pointer);
+    }
+
+    @Override
     public boolean releaseUndoToken(final long undoToken) {
         return nativeReleaseUndoToken(pointer, undoToken);
     }

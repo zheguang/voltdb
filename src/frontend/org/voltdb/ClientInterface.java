@@ -1872,7 +1872,6 @@ public class ClientInterface implements SnapshotDaemon.DaemonInitiator {
                 return dispatchUpdateApplicationCatalog(task, handler, ccxn);
             }
             else if (task.procName.equals("@SamBenchmark")) {
-                System.out.println("SAMDEBUG: dispatchSamBenchmark...");
                 return dispatchSamBenchmark(catProc, buf, task, handler, ccxn);
             }
             else if (task.procName.equals("@SnapshotSave")) {

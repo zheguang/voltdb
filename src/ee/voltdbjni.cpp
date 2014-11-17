@@ -866,6 +866,17 @@ JNIEXPORT jint JNICALL Java_org_voltdb_jni_ExecutionEngine_nativePrintBench
   return org_voltdb_jni_ExecutionEngine_ERRORCODE_ERROR;
 }
 
+JNIEXPORT jint JNICALL Java_org_voltdb_jni_ExecutionEngine_nativeClearBench
+(JNIEnv *env, jobject obj, jlong engine_ptr)
+{
+  VoltDBEngine *engine = castToEngine(engine_ptr);
+  if (engine) {
+    engine->clearBench();
+    return org_voltdb_jni_ExecutionEngine_ERRORCODE_SUCCESS;
+  }
+  return org_voltdb_jni_ExecutionEngine_ERRORCODE_ERROR;
+}
+
 /**
  * Release the undo token
  * @returns JNI_TRUE on success. JNI_FALSE otherwise.

@@ -162,6 +162,8 @@ public interface SiteProcedureConnection {
 
     public void printBench();
 
+    public void clearBench();
+
     public void tick();
 
     public void quiesce();

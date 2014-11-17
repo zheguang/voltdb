@@ -415,6 +415,11 @@ public class MpRoSite implements Runnable, SiteProcedureConnection
     }
 
     @Override
+    public void clearBench() {
+        throw new RuntimeException("RO MP Site doesn't do this, shouldn't be here.");
+    }
+
+    @Override
     public void tick()
     {
         throw new RuntimeException("RO MP Site doesn't do this, shouldn't be here.");

@@ -162,6 +162,10 @@ public class MockExecutionEngine extends ExecutionEngine {
     }
 
     @Override
+    public void clearBench() {
+    }
+
+    @Override
     public boolean undoUndoToken(final long undoToken) {
         return false;
     }

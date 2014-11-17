@@ -793,7 +793,7 @@ public class SQLCommand
         Procedures.put("@UpdateApplicationCatalog",
                 ImmutableMap.<Integer, List<String>>builder().put( 2, Arrays.asList("varchar", "varchar")).build());
         Procedures.put("@SamBenchmark",
-                ImmutableMap.<Integer, List<String>>builder().put( 0, new ArrayList<String>()).build());
+                ImmutableMap.<Integer, List<String>>builder().put( 1, Arrays.asList("varchar")).build());
         Procedures.put("@UpdateLogging",
                 ImmutableMap.<Integer, List<String>>builder().put( 1, Arrays.asList("varchar")).build());
         Procedures.put("@Promote",

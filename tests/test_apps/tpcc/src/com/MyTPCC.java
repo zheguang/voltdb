@@ -69,6 +69,13 @@ public class MyTPCC
 
     public void run()
     {
+        try {
+            m_clientCon.execute("@SamBenchmark", SamBenchmark.Command.CLEAR.toString());
+        } catch (Exception e) {
+            System.out.println("SamBenchmark: error encountered: " + e.getMessage());
+            e.printStackTrace();
+        }
+
         long transactions_per_second = m_helpah.longValue("ratelimit");
         long transactions_per_milli = transactions_per_second / 1000l;
         long client_feedback_interval_secs = m_helpah.longValue("displayinterval");
@@ -168,7 +175,7 @@ public class MyTPCC
         }
 
         try {
-            m_clientCon.execute("@SamBenchmark");
+            m_clientCon.execute("@SamBenchmark", SamBenchmark.Command.PRINT.toString());
         } catch (Exception e) {
             System.out.println("SamBenchmark: error encountered: " + e.getMessage());
             e.printStackTrace();

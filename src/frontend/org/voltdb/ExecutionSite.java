@@ -1294,6 +1294,11 @@ implements Runnable, SiteProcedureConnection, SiteSnapshotConnection
     }
 
     @Override
+    public void clearBench() {
+        ee.clearBench();
+    }
+
+    @Override
     public void quiesce()
     {
         ee.quiesce(lastCommittedTxnId);

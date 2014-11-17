@@ -199,6 +199,8 @@ class __attribute__((visibility("default"))) VoltDBEngine {
         
         void printBench();
 
+        void clearBench();
+
         inline int getUsedParamcnt() const { return m_usedParamcnt;}
 
         /** index of the batch piece being executed */

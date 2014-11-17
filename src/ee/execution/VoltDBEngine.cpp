@@ -133,10 +133,10 @@ VoltDBEngine::VoltDBEngine(Topend *topend, LogProxy *logProxy)
     // require a site id, at least, to inititalize.
     m_executorContext = NULL;
 
-    m_backendTime.tv_sec = 0,
-    m_backendTime.tv_nsec = 0,
-    m_indexTime.tv_sec = 0,
-    m_indexTime.tv_nsec = 0,
+    m_backendTime.tv_sec = 0;
+    m_backendTime.tv_nsec = 0;
+    m_indexTime.tv_sec = 0;
+    m_indexTime.tv_nsec = 0;
 
 #ifdef LINUX
     // We ran into an issue where memory wasn't being returned to the
@@ -387,6 +387,17 @@ void VoltDBEngine::printBench() {
          m_indexTime.tv_sec,
          m_indexTime.tv_nsec,
          TimeMeasure::percentage(m_indexTime, m_backendTime));
+  fflush(stdout);
+}
+
+void VoltDBEngine::clearBench() {
+  m_backendTime.tv_sec = 0;
+  m_backendTime.tv_nsec = 0;
+  m_indexTime.tv_sec = 0;
+  m_indexTime.tv_nsec = 0;
+  printf("Backend[%ld][%d]: clear time\n",
+         m_executorContext->m_siteId,
+         m_executorContext->m_partitionId);
   fflush(stdout);
 }
 
