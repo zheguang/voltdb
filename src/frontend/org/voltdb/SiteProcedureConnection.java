@@ -160,6 +160,8 @@ public interface SiteProcedureConnection {
 
     public void toggleProfiler(int toggle);
 
+    public void printBench();
+
     public void tick();
 
     public void quiesce();

@@ -29,6 +29,14 @@ public:
 
     return result;
   }
+
+  static double percentage(timespec numerator, timespec denominator) {
+    return double(asNanoSeconds(numerator)) / double(asNanoSeconds(denominator));
+  }
+
+  static long long asNanoSeconds(timespec t) {
+    return 1000000000LL * t.tv_sec + t.tv_nsec;
+  }
 };
 
 #endif

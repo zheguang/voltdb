@@ -517,6 +517,8 @@ public abstract class ExecutionEngine implements FastDeserializer.Deserializatio
      */
     public abstract void toggleProfiler(int toggle);
 
+    public abstract void printBench();
+
     /**
      * Release all undo actions up to and including the specified undo token
      * @param undoToken The undo token.
@@ -730,6 +732,8 @@ public abstract class ExecutionEngine implements FastDeserializer.Deserializatio
      * @return 0 on success.
      */
     protected native int nativeToggleProfiler(long pointer, int mode);
+
+    protected native int nativePrintBench(long pointer);
 
     /**
      * Use the EE's hashinator to compute the partition to which the

@@ -908,6 +908,11 @@ public class ExecutionEngineIPC extends ExecutionEngine {
         return;
     }
 
+    @Override
+    public void printBench() {
+        return;
+    }
+
 
     @Override
     public byte[] loadTable(final int tableId, final VoltTable table, final long spHandle,

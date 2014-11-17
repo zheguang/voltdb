@@ -42,8 +42,6 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "common/TimeMeasure.hpp"
-
 #include "boost/shared_array.hpp"
 #include "boost/scoped_array.hpp"
 #include "boost/foreach.hpp"
@@ -134,6 +132,11 @@ VoltDBEngine::VoltDBEngine(Topend *topend, LogProxy *logProxy)
 
     // require a site id, at least, to inititalize.
     m_executorContext = NULL;
+
+    m_backendTime.tv_sec = 0,
+    m_backendTime.tv_nsec = 0,
+    m_indexTime.tv_sec = 0,
+    m_indexTime.tv_nsec = 0,
 
 #ifdef LINUX
     // We ran into an issue where memory wasn't being returned to the
@@ -229,7 +232,7 @@ VoltDBEngine::~VoltDBEngine() {
     // greatly increases the risk of accidentally freeing the same
     // object multiple times.  Change at your own risk.
     // --izzy 8/19/2009
-
+    
     // clean up execution plans
     m_plans.clear();
 
@@ -324,6 +327,9 @@ int VoltDBEngine::executePlanFragments(int32_t numFragments,
                                        int64_t uniqueId,
                                        int64_t undoToken)
 {
+    timespec timePointsPerPlan[2];
+    clock_gettime(CLOCK_REALTIME, &timePointsPerPlan[0]);
+
     // count failures
     int failures = 0;
 
@@ -367,7 +373,21 @@ int VoltDBEngine::executePlanFragments(int32_t numFragments,
 
     m_stringPool.purge();
 
+    clock_gettime(CLOCK_REALTIME, &timePointsPerPlan[1]);
+    m_backendTime = TimeMeasure::sum(m_backendTime, TimeMeasure::diff(timePointsPerPlan[0], timePointsPerPlan[1]));
     return failures;
+}
+
+void VoltDBEngine::printBench() {
+  printf("Backend[%ld][%d]: backend-time[%ld.%.9ld] index-time[%ld.%.9ld] index-time-percentage[%g]\n",
+         m_executorContext->m_siteId,
+         m_executorContext->m_partitionId,
+         m_backendTime.tv_sec,
+         m_backendTime.tv_nsec,
+         m_indexTime.tv_sec,
+         m_indexTime.tv_nsec,
+         TimeMeasure::percentage(m_indexTime, m_backendTime));
+  fflush(stdout);
 }
 
 int VoltDBEngine::executePlanFragment(int64_t planfragmentId,
@@ -437,30 +457,13 @@ int VoltDBEngine::executePlanFragment(int64_t planfragmentId,
     // dependency tracking is not needed here.
     size_t ttl = execsForFrag->list.size();
 
-    timespec timePoints[2];
-    timespec timeDiff = {0, 0};
-
     for (int ctr = 0; ctr < ttl; ++ctr) {
         AbstractExecutor *executor = execsForFrag->list[ctr];
         assert (executor);
 
-        PlanNodeType type = executor->m_abstractNode->getPlanNodeType();
-        /*bool useIndex = false;
-        switch (type) {
-        case PLAN_NODE_TYPE_INDEXSCAN: 
-        case PLAN_NODE_TYPE_INDEXCOUNT:
-        case PLAN_NODE_TYPE_NESTLOOPINDEX:
-        //case PLAN_NODE_TYPE_SEQSCAN: return new SeqScanExecutor(engine, abstract_node);
-        case PLAN_NODE_TYPE_UPSERT: 
-          useIndex = true;
-          break;
-        default:
-          useIndex = false;
-          break;
-        }*/
 
-        //printf("\tSamBackend: executor[%d] has type %s\n", ctr, planNodeToString(executor->m_abstractNode->getPlanNodeType()).c_str());
-        clock_gettime(CLOCK_REALTIME, &timePoints[0]);
+        timespec startExecutor;
+        clock_gettime(CLOCK_REALTIME, &startExecutor);
         try {
             // Now call the execute method to actually perform whatever action
             // it is that the node is supposed to do...
@@ -482,9 +485,21 @@ int VoltDBEngine::executePlanFragment(int64_t planfragmentId,
 
             return ENGINE_ERRORCODE_ERROR;
         }
-        clock_gettime(CLOCK_REALTIME, &timePoints[1]);
-        timeDiff = TimeMeasure::diff(timePoints[0], timePoints[1]);
-        printf("\tSamBackend: executor[%d][%s] duration=%lld.%.9ld\n", ctr, planNodeToString(type).c_str(), (long long)timeDiff.tv_sec, timeDiff.tv_nsec);
+
+
+        PlanNodeType type = executor->m_abstractNode->getPlanNodeType();
+        switch (type) {
+          case PLAN_NODE_TYPE_INDEXSCAN:
+          case PLAN_NODE_TYPE_INDEXCOUNT:
+          case PLAN_NODE_TYPE_NESTLOOPINDEX:
+          case PLAN_NODE_TYPE_UPSERT:
+            timespec endExecutor;
+            clock_gettime(CLOCK_REALTIME, &endExecutor);
+            m_indexTime = TimeMeasure::sum(m_indexTime, TimeMeasure::diff(startExecutor, endExecutor));
+            break;
+          default:
+            break;
+        }
     }
     // Clean up all the tempTable when each plan finishes and reset current InputDepId
     cleanupExecutors(execsForFrag);
@@ -512,6 +527,10 @@ int VoltDBEngine::executePlanFragment(int64_t planfragmentId,
             static_cast<int32_t>((m_resultOutput.position() - m_startOfResultBuffer) - sizeof(int32_t)));
         m_resultOutput.writeBoolAt(m_startOfResultBuffer + sizeof(int32_t), m_dirtyFragmentBatch);
     }
+
+    /*clock_gettime(CLOCK_REALTIME, &timePointsPerFragment[1]);
+    timeDiffPerFragment = TimeMeasure::diff(timePointsPerFragment[0], timePointsPerFragment[1]);
+    printf("\tExecutor[%d][%ld][%ld][*][*] time[%lld.%.9ld]\n", m_executorContext->m_partitionId, spHandle, planfragmentId, (long long)timeDiffPerFragment.tv_sec, timeDiffPerFragment.tv_nsec);*/
 
     VOLT_DEBUG("Finished executing.");
     return ENGINE_ERRORCODE_SUCCESS;

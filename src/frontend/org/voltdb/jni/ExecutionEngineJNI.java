@@ -308,8 +308,7 @@ public class ExecutionEngineJNI extends ExecutionEngine {
         // Execute the plan, passing a raw pointer to the byte buffers for input and output
         //Clear is destructive, do it before the native call
         deserializer.clear();
-        System.out.println("SamFrontend: start executing plan.");
-        long startTime = System.nanoTime();
+        //long startTime = System.nanoTime();
         final int errorCode =
             nativeExecutePlanFragments(
                     pointer,
@@ -320,8 +319,8 @@ public class ExecutionEngineJNI extends ExecutionEngine {
                     lastCommittedSpHandle,
                     uniqueId,
                     undoToken);
-        long duration = System.nanoTime() - startTime;
-        System.out.println("SamFrontend: end executing plan: timeElapse: " + duration);
+        //long duration = System.nanoTime() - startTime;
+        //System.out.println("Frontend ExecutionEngine[" + m_partitionId + "][" + spHandle +"][" + Arrays.toString(planFragmentIds) + "] time[" + duration +"]");
 
         try {
             checkErrorCode(errorCode);
@@ -471,6 +470,11 @@ public class ExecutionEngineJNI extends ExecutionEngine {
     public void toggleProfiler(final int toggle) {
         nativeToggleProfiler(pointer, toggle);
         return;
+    }
+
+    @Override
+    public void printBench() {
+        nativePrintBench(pointer);
     }
 
     @Override

@@ -1658,6 +1658,27 @@ public class ClientInterface implements SnapshotDaemon.DaemonInitiator {
         }
     }
 
+    ClientResponseImpl dispatchSamBenchmark(Procedure sysProc,
+                                            ByteBuffer buf,
+                                            StoredProcedureInvocation task,
+                                            ClientInputHandler handler,
+                                            Connection ccxn) {
+        // This only happens on one node so we don't need to pick a leader.
+        System.out.println("Frontend site[" + m_siteId + "] partitions[" + Arrays.toString(m_allPartitions) + "]");
+        for (int p : m_allPartitions) {
+            createTransaction(
+                    handler.connectionId(),
+                    task,
+                    sysProc.getReadonly(),
+                    true, //sysProc.getSinglepartition(),
+                    false, //sysProc.getEverysite(),
+                    p,
+                    buf.capacity(),
+                    System.nanoTime());
+        }
+        return null;
+    }
+
     ClientResponseImpl dispatchPromote(Procedure sysProc,
                                        ByteBuffer buf,
                                        StoredProcedureInvocation task,
@@ -1849,6 +1870,10 @@ public class ClientInterface implements SnapshotDaemon.DaemonInitiator {
 
             if (task.procName.equals("@UpdateApplicationCatalog")) {
                 return dispatchUpdateApplicationCatalog(task, handler, ccxn);
+            }
+            else if (task.procName.equals("@SamBenchmark")) {
+                System.out.println("SAMDEBUG: dispatchSamBenchmark...");
+                return dispatchSamBenchmark(catProc, buf, task, handler, ccxn);
             }
             else if (task.procName.equals("@SnapshotSave")) {
                 m_snapshotDaemon.requestUserSnapshot(task, ccxn);

@@ -158,6 +158,10 @@ public class MockExecutionEngine extends ExecutionEngine {
     }
 
     @Override
+    public void printBench() {
+    }
+
+    @Override
     public boolean undoUndoToken(final long undoToken) {
         return false;
     }

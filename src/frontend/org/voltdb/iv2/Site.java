@@ -895,6 +895,11 @@ public class Site implements Runnable, SiteProcedureConnection, SiteSnapshotConn
     }
 
     @Override
+    public void printBench() {
+        m_ee.printBench();
+    }
+
+    @Override
     public void tick()
     {
         long time = System.currentTimeMillis();

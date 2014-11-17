@@ -265,40 +265,38 @@ public class TPCCSimulation
         // This is not strictly accurate: The requirement is for certain
         // *minimum* percentages to be maintained. This is close to the right
         // thing, but not precisely correct. See TPC-C 5.2.4 (page 68).
-        System.out.println("SamTpcc: start a stored procedure...");
-        Transaction transaction = null;
-        long transactionStart = System.nanoTime();
+        //Transaction transaction = null;
+        //long transactionStart = System.nanoTime();
         int x = generator.number(1, 100);
         try {
             if (x <= 4) { // 4%
-                transaction = Transaction.STOCK_LEVEL;
+                //transaction = Transaction.STOCK_LEVEL;
                 doStockLevel();
                 return Transaction.STOCK_LEVEL.ordinal();
             } else if (x <= 4 + 4) { // 4%
-                transaction = Transaction.DELIVERY;
+                //transaction = Transaction.DELIVERY;
                 doDelivery();
                 return Transaction.DELIVERY.ordinal();
             } else if (x <= 4 + 4 + 4) { // 4%
-                transaction = Transaction.ORDER_STATUS;
+                //transaction = Transaction.ORDER_STATUS;
                 doOrderStatus();
                 return Transaction.ORDER_STATUS.ordinal();
             } else if (x <= 43 + 4 + 4 + 4) { // 43%
-                transaction = Transaction.PAYMENT;
+                //transaction = Transaction.PAYMENT;
                 doPayment();
                 return Transaction.PAYMENT.ordinal();
             } else { // 45%
-                transaction = Transaction.NEW_ORDER;
+                //transaction = Transaction.NEW_ORDER;
                 assert x > 100 - 45;
                 doNewOrder();
                 return Transaction.NEW_ORDER.ordinal();
             }
         } finally {
-            long transactionEnd = System.nanoTime();
+            /*long transactionEnd = System.nanoTime();
             System.out.println(
-                    "SamTpcc: end a stored procedure: " +
-                    " name=" + transaction.displayName +
-                    " duration=" + (transactionEnd - transactionStart)
-            );
+                    "Stored procedure[" + transaction.displayName + "]" +
+                    " time[" + (transactionEnd - transactionStart) + "]"
+            );*/
         }
     }
 }

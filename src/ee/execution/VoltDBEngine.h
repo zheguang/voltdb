@@ -46,6 +46,8 @@
 #ifndef VOLTDBENGINE_H
 #define VOLTDBENGINE_H
 
+#include "common/TimeMeasure.hpp"
+
 #include <map>
 #include <set>
 #include <string>
@@ -194,6 +196,8 @@ class __attribute__((visibility("default"))) VoltDBEngine {
                                  int64_t lastCommittedSpHandle,
                                  int64_t uniqueId,
                                  int64_t undoToken);
+        
+        void printBench();
 
         inline int getUsedParamcnt() const { return m_usedParamcnt;}
 
@@ -656,6 +660,9 @@ class __attribute__((visibility("default"))) VoltDBEngine {
         ThreadLocalPool m_tlPool;
 
         int32_t m_compactionThreshold;
+
+        timespec m_backendTime;
+        timespec m_indexTime;
 };
 
 inline void VoltDBEngine::resetReusedResultOutputBuffer(const size_t headerSize) {

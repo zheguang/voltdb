@@ -23,6 +23,7 @@
 
 package com;
 
+import org.voltdb.sysprocs.SamBenchmark;
 import org.voltdb.types.TimestampType;
 import org.voltdb.client.ClientResponse;
 import com.Clock;
@@ -164,6 +165,13 @@ public class MyTPCC
                     counterLock.unlock();
                 }
             }
+        }
+
+        try {
+            m_clientCon.execute("@SamBenchmark");
+        } catch (Exception e) {
+            System.out.println("SamBenchmark: error encountered: " + e.getMessage());
+            e.printStackTrace();
         }
 
         try

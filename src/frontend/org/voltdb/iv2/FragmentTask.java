@@ -95,9 +95,11 @@ public class FragmentTask extends TransactionTask
                 m_txnState.setBeginUndoToken(siteConnection.getLatestUndoToken());
             }
         }
-        //System.out.println("SamFrontend: start processing fragment task...");
+
+        //long startFragments = System.nanoTime();
         final FragmentResponseMessage response = processFragmentTask(siteConnection);
-        //System.out.println("SamFrontend: finish processing fragment task.");
+        //long endFragments = System.nanoTime();
+        //System.out.println("Frontend FragmentTask[" + m_txnState.m_spHandle + "] time[" + (endFragments - startFragments) + "]");
         // completion?
         response.m_sourceHSId = m_initiator.getHSId();
         m_initiator.deliver(response);
