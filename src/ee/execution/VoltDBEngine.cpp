@@ -444,6 +444,8 @@ void VoltDBEngine::clearBench() {
       bi->clearTime();
     }
   }
+  m_realIndexTime.tv_sec = 0;
+  m_realIndexTime.tv_nsec = 0;
 
   m_backendTime.tv_sec = 0;
   m_backendTime.tv_nsec = 0;
