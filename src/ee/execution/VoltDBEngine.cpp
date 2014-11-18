@@ -127,7 +127,9 @@ VoltDBEngine::VoltDBEngine(Topend *topend, LogProxy *logProxy)
       m_numResultDependencies(0),
       m_logManager(logProxy),
       m_templateSingleLongTable(NULL),
-      m_topend(topend)
+      m_topend(topend),
+      m_numBackendCalls(0),
+      m_numIndexExecutorsCalls(0)
 {
     // init the number of planfragments executed
     m_pfCount = 0;
@@ -137,10 +139,8 @@ VoltDBEngine::VoltDBEngine(Topend *topend, LogProxy *logProxy)
 
     m_backendTime.tv_sec = 0;
     m_backendTime.tv_nsec = 0;
-    m_indexTime.tv_sec = 0;
-    m_indexTime.tv_nsec = 0;
-    m_realIndexTime.tv_sec = 0;
-    m_realIndexTime.tv_nsec = 0;
+    m_indexExecutorsTime.tv_sec = 0;
+    m_indexExecutorsTime.tv_nsec = 0;
 
 #ifdef LINUX
     // We ran into an issue where memory wasn't being returned to the
@@ -331,6 +331,8 @@ int VoltDBEngine::executePlanFragments(int32_t numFragments,
                                        int64_t uniqueId,
                                        int64_t undoToken)
 {
+    m_numBackendCalls++;
+
     timespec timePointsPerPlan[2];
     clock_gettime(CLOCK_REALTIME, &timePointsPerPlan[0]);
 
@@ -383,6 +385,8 @@ int VoltDBEngine::executePlanFragments(int32_t numFragments,
 }
 
 void VoltDBEngine::printBench() {
+  timespec indexTime = {0,0};
+  int64_t numIndexCalls = 0;
   for (
       map<string, catalog::Table*>::const_iterator tableIter = m_database->tables().begin(); 
       tableIter != m_database->tables().end(); 
@@ -402,21 +406,25 @@ void VoltDBEngine::printBench() {
         fflush(stdout);
         return;
       } 
-      m_realIndexTime = TimeMeasure::sum(m_realIndexTime, bi->getTime());
+      indexTime = TimeMeasure::sum(indexTime, bi->getTime());
+      numIndexCalls += bi->getNumCalls();
     }
   }
 
-  printf("Backend[%ld][%d]: backend-time[%ld.%.9ld] index-time[%ld.%.9ld] real-index-time[%ld.%.9ld] index-time-percentage[%g] real-index-time-percentage[%g]\n",
-         m_executorContext->m_siteId,
+  printf("Backend[%d]: backend-time[%ld.%.9ld] index-executors-time[%ld.%.9ld] index-time[%ld.%.9ld] index-executors-time-percentage[%g] index-time-percentage[%g] backend-calls[%ld] index-executors-calls[%ld] index-calls[%ld]\n",
          m_executorContext->m_partitionId,
          m_backendTime.tv_sec,
          m_backendTime.tv_nsec,
-         m_indexTime.tv_sec,
-         m_indexTime.tv_nsec,
-         m_realIndexTime.tv_sec,
-         m_realIndexTime.tv_nsec,
-         TimeMeasure::percentage(m_indexTime, m_backendTime),
-         TimeMeasure::percentage(m_realIndexTime, m_backendTime));
+         m_indexExecutorsTime.tv_sec,
+         m_indexExecutorsTime.tv_nsec,
+         indexTime.tv_sec,
+         indexTime.tv_nsec,
+         TimeMeasure::percentage(m_indexExecutorsTime, m_backendTime),
+         TimeMeasure::percentage(indexTime, m_backendTime),
+         m_numBackendCalls,
+         m_numIndexExecutorsCalls,
+         numIndexCalls
+  );
   fflush(stdout);
 
 }
@@ -437,22 +445,23 @@ void VoltDBEngine::clearBench() {
     ) {
       BenchIndex* bi = dynamic_cast<BenchIndex*>(*indexIter);
       if (bi == NULL) {
-        printf("BAD BAD BAD: index seems not of type BenchIndex!");
+        printf("Error: index seems not of type BenchIndex!");
         fflush(stdout);
         return;
       } 
-      bi->clearTime();
+      bi->clearCounters();
     }
   }
-  m_realIndexTime.tv_sec = 0;
-  m_realIndexTime.tv_nsec = 0;
 
   m_backendTime.tv_sec = 0;
   m_backendTime.tv_nsec = 0;
-  m_indexTime.tv_sec = 0;
-  m_indexTime.tv_nsec = 0;
-  printf("Backend[%ld][%d]: clear time\n",
-         m_executorContext->m_siteId,
+  m_indexExecutorsTime.tv_sec = 0;
+  m_indexExecutorsTime.tv_nsec = 0;
+
+  m_numBackendCalls = 0;
+  m_numIndexExecutorsCalls = 0;
+
+  printf("Backend[%d]: clear time\n",
          m_executorContext->m_partitionId);
   fflush(stdout);
 }
@@ -561,9 +570,10 @@ int VoltDBEngine::executePlanFragment(int64_t planfragmentId,
           case PLAN_NODE_TYPE_NESTLOOPINDEX:
           case PLAN_NODE_TYPE_UPDATE:
           case PLAN_NODE_TYPE_UPSERT:
+            m_numIndexExecutorsCalls++;
             timespec endExecutor;
             clock_gettime(CLOCK_REALTIME, &endExecutor);
-            m_indexTime = TimeMeasure::sum(m_indexTime, TimeMeasure::diff(startExecutor, endExecutor));
+            m_indexExecutorsTime = TimeMeasure::sum(m_indexExecutorsTime, TimeMeasure::diff(startExecutor, endExecutor));
             break;
           default:
             break;

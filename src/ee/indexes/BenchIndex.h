@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include "common/TimeMeasure.hpp"
+#include "common/types.h"
 #include "indexes/tableindex.h"
 
 namespace voltdb {
@@ -14,7 +15,7 @@ public:
     TableIndex(wrappedIndex->m_keySchema, wrappedIndex->m_scheme)
     {
       _wrappedIndex = wrappedIndex;
-      clearTime();
+      clearCounters();
     }
 
   ~BenchIndex() {
@@ -190,18 +191,24 @@ public:
     return _time;
   }
 
-  void clearTime() {
+  int64_t getNumCalls() const {
+    return _numCalls;
+  }
+
+  void clearCounters() {
     _numStartTime = 0;
     _startTime.tv_sec = 0;
     _startTime.tv_nsec = 0;
     _time.tv_sec = 0;
     _time.tv_nsec = 0;
+    _numCalls = 0;
   }
 
 protected:
   void startTime() {
     assert (_numStartTime >= 0);
     if (_numStartTime == 0) {
+      _numCalls++;
       clock_gettime(CLOCK_REALTIME, &_startTime);
     }
     _numStartTime++;
@@ -224,9 +231,10 @@ protected:
 private:
   TableIndex* _wrappedIndex;
 
-  int _numStartTime;
+  int32_t _numStartTime;
   timespec _startTime;
   timespec _time;
+  int64_t _numCalls;
 };
 
 }

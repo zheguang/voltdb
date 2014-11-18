@@ -150,14 +150,14 @@ class __attribute__((visibility("default"))) VoltDBEngine {
           m_logManager(new StdoutLogProxy()),
           m_templateSingleLongTable(NULL),
           m_topend(NULL),
-          m_compactionThreshold(95)
+          m_compactionThreshold(95),
+          m_numBackendCalls(0),
+          m_numIndexExecutorsCalls(0)
         {
           m_backendTime.tv_sec = 0;
           m_backendTime.tv_nsec = 0;
-          m_indexTime.tv_sec = 0;
-          m_indexTime.tv_nsec = 0;
-          m_realIndexTime.tv_sec = 0;
-          m_realIndexTime.tv_nsec = 0;
+          m_indexExecutorsTime.tv_sec = 0;
+          m_indexExecutorsTime.tv_nsec = 0;
         }
 
         VoltDBEngine(Topend *topend, LogProxy *logProxy);
@@ -669,9 +669,11 @@ class __attribute__((visibility("default"))) VoltDBEngine {
 
         int32_t m_compactionThreshold;
 
+        // Bench
         timespec m_backendTime;
-        timespec m_indexTime;
-        timespec m_realIndexTime;
+        timespec m_indexExecutorsTime;
+        int64_t m_numBackendCalls;
+        int64_t m_numIndexExecutorsCalls;
 };
 
 inline void VoltDBEngine::resetReusedResultOutputBuffer(const size_t headerSize) {
