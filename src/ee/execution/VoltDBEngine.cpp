@@ -42,6 +42,7 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+#include "boost/lexical_cast.hpp"
 #include "boost/shared_array.hpp"
 #include "boost/scoped_array.hpp"
 #include "boost/foreach.hpp"
@@ -387,6 +388,7 @@ int VoltDBEngine::executePlanFragments(int32_t numFragments,
 void VoltDBEngine::printBench() {
   timespec indexTime = {0,0};
   int64_t numIndexCalls = 0;
+  map<string,IndexBench> indexBenchMap;
   for (
       map<string, catalog::Table*>::const_iterator tableIter = m_database->tables().begin(); 
       tableIter != m_database->tables().end(); 
@@ -408,10 +410,19 @@ void VoltDBEngine::printBench() {
       } 
       indexTime = TimeMeasure::sum(indexTime, bi->getTime());
       numIndexCalls += bi->getNumCalls();
+      if (indexBenchMap.find(bi->getId()) == indexBenchMap.end()) {
+        IndexBench indexBench;
+        timespec ts = {0,0};
+        indexBench._time = ts;
+        indexBench._numCalls = 0;
+        indexBenchMap[bi->getId()] = indexBench;
+      }
+      indexBenchMap[bi->getId()]._time = TimeMeasure::sum(indexBenchMap[bi->getId()]._time, bi->getTime());
+      indexBenchMap[bi->getId()]._numCalls += bi->getNumCalls();
     }
   }
 
-  printf("Backend[%d]: backend-time[%ld.%.9ld] index-executors-time[%ld.%.9ld] index-time[%ld.%.9ld] index-executors-time-percentage[%g] index-time-percentage[%g] backend-calls[%ld] index-executors-calls[%ld] index-calls[%ld]\n",
+  printf("{'backend': {'id': %d, 'backendTime': %ld.%.9ld, 'indexExecutorsTime': %ld.%.9ld, 'indexTime': %ld.%.9ld, 'backendCalls': %ld, 'indexExecutorsCalls': %ld, 'indexCalls': %ld, 'indexes': [%s]}}\n",
          m_executorContext->m_partitionId,
          m_backendTime.tv_sec,
          m_backendTime.tv_nsec,
@@ -419,14 +430,33 @@ void VoltDBEngine::printBench() {
          m_indexExecutorsTime.tv_nsec,
          indexTime.tv_sec,
          indexTime.tv_nsec,
-         TimeMeasure::percentage(m_indexExecutorsTime, m_backendTime),
-         TimeMeasure::percentage(indexTime, m_backendTime),
          m_numBackendCalls,
          m_numIndexExecutorsCalls,
-         numIndexCalls
+         numIndexCalls,
+         asString(indexBenchMap).c_str()
   );
   fflush(stdout);
+}
 
+string VoltDBEngine::asString(const map<string,IndexBench>& indexBenchMap) {
+  string result = "";
+  for (
+      map<string,IndexBench>::const_iterator indexBenchIter = indexBenchMap.begin();
+      indexBenchIter != indexBenchMap.end();
+      ++indexBenchIter
+  ) {
+    char benchBuf[128];
+    snprintf(benchBuf, 
+             sizeof(benchBuf), 
+             "{'id': %s, 'time': %ld.%.9ld, 'calls': %ld},", 
+             indexBenchIter->first.c_str(),
+             indexBenchIter->second._time.tv_sec, 
+             indexBenchIter->second._time.tv_nsec,
+             indexBenchIter->second._numCalls);
+    string benchStr(benchBuf);
+    result += benchStr;
+  }
+  return result;
 }
 
 void VoltDBEngine::clearBench() {

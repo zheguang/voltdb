@@ -120,6 +120,11 @@ const size_t PLAN_CACHE_SIZE = 1024 * 10;
 // how many initial tuples to scan before calling into java
 const int64_t LONG_OP_THRESHOLD = 10000;
 
+struct IndexBench {
+  timespec _time;
+  int64_t _numCalls;
+};
+
 /**
  * Represents an Execution Engine which holds catalog objects (i.e. table) and executes
  * plans on the objects. Every operation starts from this object.
@@ -128,6 +133,7 @@ const int64_t LONG_OP_THRESHOLD = 10000;
 // TODO(evanj): Used by JNI so must be exported. Remove when we only one .so
 class __attribute__((visibility("default"))) VoltDBEngine {
     public:
+        std::string asString(const std::map<std::string,IndexBench>& indexBenchMap);
 
         typedef std::pair<std::string, CatalogDelegate*> LabeledCDPair;
 
