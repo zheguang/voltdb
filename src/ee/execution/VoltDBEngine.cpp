@@ -404,7 +404,7 @@ void VoltDBEngine::printBench() {
     ) {
       BenchIndex* bi = dynamic_cast<BenchIndex*>(*indexIter);
       if (bi == NULL) {
-        printf("BAD BAD BAD: index seems not of type BenchIndex!");
+        printf("Bench Error: index seems not of type BenchIndex!");
         fflush(stdout);
         return;
       } 
@@ -415,6 +415,7 @@ void VoltDBEngine::printBench() {
         timespec ts = {0,0};
         indexBench._time = ts;
         indexBench._numCalls = 0;
+        indexBench._stats = bi->getIndexStats();
         indexBenchMap[bi->getId()] = indexBench;
       }
       indexBenchMap[bi->getId()]._time = TimeMeasure::sum(indexBenchMap[bi->getId()]._time, bi->getTime());
@@ -445,14 +446,18 @@ string VoltDBEngine::asString(const map<string,IndexBench>& indexBenchMap) {
       indexBenchIter != indexBenchMap.end();
       ++indexBenchIter
   ) {
-    char benchBuf[128];
+    char benchBuf[256];
     snprintf(benchBuf, 
              sizeof(benchBuf), 
-             "{'id': %s, 'time': %ld.%.9ld, 'calls': %ld},", 
+             "{'id': %s, 'time': %ld.%.9ld, 'calls': %ld, 'name': %s, 'table': %s, 'type': %s, 'sizeKB': %ld},", 
              indexBenchIter->first.c_str(),
              indexBenchIter->second._time.tv_sec, 
              indexBenchIter->second._time.tv_nsec,
-             indexBenchIter->second._numCalls);
+             indexBenchIter->second._numCalls,
+             indexBenchIter->second._stats->m_index->getName().c_str(),
+             indexBenchIter->second._stats->m_tableNameStr.c_str(),
+             indexBenchIter->second._stats->m_index->getTypeName().c_str(),
+             indexBenchIter->second._stats->m_index->getMemoryEstimate() / 1024);
     string benchStr(benchBuf);
     result += benchStr;
   }

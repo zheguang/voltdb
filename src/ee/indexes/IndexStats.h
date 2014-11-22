@@ -95,7 +95,7 @@ protected:
     virtual void populateSchema(std::vector<voltdb::ValueType> &types, std::vector<int32_t> &columnLengths,
             std::vector<bool> &allowNull, std::vector<bool> &inBytes);
 
-private:
+public:
     /**
      * Index whose stats are being collected.
      */
@@ -110,6 +110,8 @@ private:
 
     int64_t m_lastTupleCount;
     int64_t m_lastMemEstimate;
+
+    std::string m_tableNameStr;
 };
 
 }

@@ -149,6 +149,7 @@ void IndexStats::configure(
     m_indexType = ValueFactory::getStringValue(m_index->getTypeName());
     m_isUnique = static_cast<int8_t>(m_index->isUniqueIndex() ? 1 : 0);
     m_isCountable = static_cast<int8_t>(m_index->isCountableIndex() ? 1 : 0);
+    m_tableNameStr = tableName;
 }
 
 void IndexStats::rename(std::string name) {
