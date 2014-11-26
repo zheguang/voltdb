@@ -14,10 +14,11 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with VoltDB.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <numa.h>
+#include <numaif.h>
+#include <cassert>
 
 #include "ContiguousAllocator.h"
-
-#include <cassert>
 
 using namespace voltdb;
 
@@ -32,7 +33,7 @@ ContiguousAllocator::~ContiguousAllocator() {
     }
 }
 
-void *ContiguousAllocator::alloc() {
+void *ContiguousAllocator::alloc(HybridMemoryAllocator::MEMORY_NODE_TYPE memoryNodeType) {
     m_count++;
 
     // determine where in the current block the new alloc will go
@@ -41,7 +42,7 @@ void *ContiguousAllocator::alloc() {
     // if a new block is needed...
     if (blockOffset == 0) {
         //void *memory = malloc(sizeof(Buffer) + m_allocSize * m_chunkSize);
-        void *memory = m_hybridMemoryAllocator.alloc(sizeof(Buffer) + m_allocSize * m_chunkSize, HybridMemoryAllocator::DRAM);
+        void *memory = m_hybridMemoryAllocator.alloc(sizeof(Buffer) + m_allocSize * m_chunkSize, memoryNodeType);
 
         Buffer *buf = reinterpret_cast<Buffer*>(memory);
 

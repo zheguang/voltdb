@@ -32,6 +32,22 @@ namespace voltdb {
  * Note, there are few checks here when running in release mode.
  */
 class ContiguousAllocator {
+public:
+    /**
+     * @param allocSize is the size in bytes of individual allocations.
+     * @param chunkSize is the number of allocations per buffer (not bytes).
+     */
+    ContiguousAllocator(int32_t allocSize, int32_t chunkSize);
+    ~ContiguousAllocator();
+
+    void *alloc(HybridMemoryAllocator::MEMORY_NODE_TYPE memoryNodeType);
+    void *last() const;
+    void trim();
+    int64_t count() const { return m_count; }
+
+    size_t bytesAllocated() const;
+
+private:
     struct Buffer {
         Buffer *prev;
         char data[0];
@@ -43,21 +59,6 @@ class ContiguousAllocator {
     Buffer *m_tail;
     int32_t m_blockCount;
     HybridMemoryAllocator m_hybridMemoryAllocator;
-
-public:
-    /**
-     * @param allocSize is the size in bytes of individual allocations.
-     * @param chunkSize is the number of allocations per buffer (not bytes).
-     */
-    ContiguousAllocator(int32_t allocSize, int32_t chunkSize);
-    ~ContiguousAllocator();
-
-    void *alloc();
-    void *last() const;
-    void trim();
-    int64_t count() const { return m_count; }
-
-    size_t bytesAllocated() const;
 };
 
 } // namespace voltdb

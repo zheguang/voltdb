@@ -5,9 +5,9 @@
 
 using namespace voltdb;
 
-void* HybridMemoryAllocator::alloc(size_t sz, Location location) {
-  int memoryNode = 0;
-  switch (location) {
+void* HybridMemoryAllocator::alloc(size_t sz, MEMORY_NODE_TYPE memoryNodeType) {
+  int memoryNode = 1;
+  switch (memoryNodeType) {
     case DRAM:
       memoryNode = 0;
       break;

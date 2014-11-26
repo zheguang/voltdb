@@ -326,7 +326,7 @@ void CopyOnWriteContext::markTupleDirty(TableTuple tuple, bool newTuple) {
          * Don't back up a newly introduced tuple, just mark it as dirty.
          */
         if (!newTuple) {
-            m_backedUpTuples->insertTupleNonVirtualWithDeepCopy(tuple, &m_pool);
+            m_backedUpTuples->insertTupleNonVirtualWithDeepCopy(tuple, &m_pool); // TODO: m_pool should be NVM pool
         }
     } else {
         tuple.setDirtyFalse();

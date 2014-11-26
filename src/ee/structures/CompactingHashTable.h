@@ -394,7 +394,7 @@ namespace voltdb {
         if (existing && m_unique) return false;
 
         // create a new node
-        void *memory = m_allocator.alloc();
+        void *memory = m_allocator.alloc(HybridMemoryAllocator::DRAM);
         assert(memory);
         HashNode *newNode;
         // placement new
