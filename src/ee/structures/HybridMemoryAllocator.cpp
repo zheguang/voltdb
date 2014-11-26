@@ -6,14 +6,16 @@
 using namespace voltdb;
 
 void* HybridMemoryAllocator::alloc(size_t sz, Location location) {
-  int memoryNode = 1;
+  int memoryNode = 0;
   switch (location) {
     case DRAM:
-      memoryNode = 1;
+      memoryNode = 0;
       break;
     case NVM:
       memoryNode = 2;
       break;
+    default:
+      memoryNode = 0;
   }
   return numa_alloc_onnode(sz, memoryNode);
 }
