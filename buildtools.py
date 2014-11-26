@@ -265,9 +265,9 @@ def buildMakefile(CTX):
         os.system("mkdir -p %s" % (jni_targetpath))
         os.system("mkdir -p %s" % (static_targetpath))
         makefile.write(jni_objname + ": " + filename + " " + " ".join(mydeps) + "\n")
-        makefile.write("\t$(CCACHE) $(COMPILE.cpp) %s -o $@ %s\n" % (CTX.EXTRAFLAGS, filename))
+        makefile.write("\t$(CCACHE) $(COMPILE.cpp) %s -o $@ %s -lnuma\n" % (CTX.EXTRAFLAGS, filename))
         makefile.write(static_objname + ": " + filename + " " + " ".join(mydeps) + "\n")
-        makefile.write("\t$(CCACHE) $(COMPILE.cpp) %s -o $@ %s\n" % (CTX.EXTRAFLAGS, filename))
+        makefile.write("\t$(CCACHE) $(COMPILE.cpp) %s -o $@ %s -lnuma\n" % (CTX.EXTRAFLAGS, filename))
     makefile.write("\n")
 
     for filename in third_party_input_paths:
