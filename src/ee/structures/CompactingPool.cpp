@@ -30,7 +30,7 @@ CompactingPool::CompactingPool(int32_t elementSize, int32_t elementsPerBuffer) :
 void*
 CompactingPool::malloc()
 {
-    return m_allocator.alloc();
+    return m_allocator.alloc(HybridMemoryAllocator::DRAM);
 }
 
 bool
