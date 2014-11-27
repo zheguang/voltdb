@@ -18,16 +18,13 @@
 #include "storage/table.h"
 #include <sys/mman.h>
 #include <errno.h>
-#include "common/ThreadLocalPool.h"
 
 namespace voltdb {
 
 volatile int tupleBlocksAllocated = 0;
 
-TupleBlock::TupleBlock(Table *table, TBBucketPtr bucket) :
-#ifdef MEMCHECK
+TupleBlock::TupleBlock(Table *table, TBBucketPtr bucket, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) :
         m_table(table),
-#endif
         m_storage(NULL),
         m_references(0),
         m_tupleLength(table->m_tupleLength),
@@ -40,17 +37,19 @@ TupleBlock::TupleBlock(Table *table, TBBucketPtr bucket) :
         m_bucketIndex(0)
 {
 #ifdef MEMCHECK
+    throwFatalException("Shouldn't get here.");
     m_storage = new char[table->m_tableAllocationSize];
 #else
 #ifdef USE_MMAP
+    throwFatalException("Shouldn't get here.");
     m_storage = static_cast<char*>(::mmap( 0, table->m_tableAllocationSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0 ));
     if (m_storage == MAP_FAILED) {
         std::cout << strerror( errno ) << std::endl;
         throwFatalException("Failed mmap");
     }
 #else
-    //m_storage = static_cast<char*>(ThreadLocalPool::getExact(m_table->m_tableAllocationSize)->malloc());
-    m_storage = new char[table->m_tableAllocationSize];
+    //m_storage = new char[table->m_tableAllocationSize];
+    m_storage = reinterpret_cast<char*>(HybridMemory::alloc(table->m_tableAllocationSize, memoryNodeType));
 #endif
 #endif
     tupleBlocksAllocated++;
@@ -71,7 +70,8 @@ TupleBlock::~TupleBlock() {
         throwFatalException("Failed munmap");
     }
 #else
-    delete []m_storage;
+    //delete []m_storage;
+    HybridMemory::free(m_storage, m_table->m_tableAllocationSize);
 #endif
 #endif
 }

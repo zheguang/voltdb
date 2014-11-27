@@ -1,11 +1,11 @@
 #include <numa.h>
 #include <numaif.h>
 
-#include "HybridMemoryAllocator.h"
+#include "HybridMemory.h"
 
 using namespace voltdb;
 
-void* HybridMemoryAllocator::alloc(size_t sz, MEMORY_NODE_TYPE memoryNodeType) {
+void* HybridMemory::alloc(size_t sz, MEMORY_NODE_TYPE memoryNodeType) {
   int memoryNode = 1;
   switch (memoryNodeType) {
     case DRAM:
@@ -20,6 +20,6 @@ void* HybridMemoryAllocator::alloc(size_t sz, MEMORY_NODE_TYPE memoryNodeType) {
   return numa_alloc_onnode(sz, memoryNode);
 }
 
-void HybridMemoryAllocator::free(void* start, size_t sz) {
+void HybridMemory::free(void* start, size_t sz) {
   numa_free(start, sz);	
 }

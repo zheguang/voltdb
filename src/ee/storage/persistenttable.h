@@ -69,6 +69,7 @@
 #include "storage/CopyOnWriteIterator.h"
 #include "common/UndoQuantumReleaseInterest.h"
 #include "common/ThreadLocalPool.h"
+#include "structures/HybridMemory.h"
 
 class CompactionTest_BasicCompaction;
 class CompactionTest_CompactionWithCopyOnWrite;
@@ -828,7 +829,7 @@ inline TBPtr PersistentTable::findBlock(char *tuple, TBMap &blocks, int blockSiz
 }
 
 inline TBPtr PersistentTable::allocateNextBlock() {
-    TBPtr block(new (ThreadLocalPool::getExact(sizeof(TupleBlock))->malloc()) TupleBlock(this, m_blocksNotPendingSnapshotLoad[0]));
+    TBPtr block(new (ThreadLocalPool::getExact(sizeof(TupleBlock))->malloc()) TupleBlock(this, m_blocksNotPendingSnapshotLoad[0], HybridMemory::NVM));
     m_data.insert( block->address(), block);
     m_blocksNotPendingSnapshot.insert(block);
     return block;

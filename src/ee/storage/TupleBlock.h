@@ -34,6 +34,8 @@
 #include "common/tabletuple.h"
 #include <deque>
 
+#include "structures/HybridMemory.h"
+
 namespace voltdb {
 class TupleBlock;
 }
@@ -88,7 +90,7 @@ class TupleBlock {
     friend void ::intrusive_ptr_add_ref(voltdb::TupleBlock * p);
     friend void ::intrusive_ptr_release(voltdb::TupleBlock * p);
 public:
-    TupleBlock(Table *table, TBBucketPtr bucket);
+    TupleBlock(Table *table, TBBucketPtr bucket, HybridMemory::MEMORY_NODE_TYPE memoryNodeType);
 
     double loadFactor() {
         return m_activeTuples / m_tuplesPerBlock;
@@ -223,9 +225,7 @@ public:
         return m_bucket;
     }
 private:
-#ifdef MEMCHECK
     Table* m_table;
-#endif
     char*   m_storage;
     uint32_t m_references;
     uint32_t m_tupleLength;

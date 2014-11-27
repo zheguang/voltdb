@@ -20,7 +20,7 @@
 
 #include <cstdlib>
 
-#include "HybridMemoryAllocator.h"
+#include "HybridMemory.h"
 
 namespace voltdb {
 
@@ -40,7 +40,7 @@ public:
     ContiguousAllocator(int32_t allocSize, int32_t chunkSize);
     ~ContiguousAllocator();
 
-    void *alloc(HybridMemoryAllocator::MEMORY_NODE_TYPE memoryNodeType);
+    void *alloc(HybridMemory::MEMORY_NODE_TYPE memoryNodeType);
     void *last() const;
     void trim();
     int64_t count() const { return m_count; }
@@ -58,7 +58,6 @@ private:
     int32_t m_chunkSize;
     Buffer *m_tail;
     int32_t m_blockCount;
-    HybridMemoryAllocator m_hybridMemoryAllocator;
 };
 
 } // namespace voltdb
