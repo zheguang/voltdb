@@ -52,6 +52,7 @@
 #include "storage/tableiterator.h"
 #include "storage/TempTableLimits.h"
 #include "storage/TupleBlock.h"
+#include "structures/HybridMemory.h"
 
 namespace voltdb {
 
@@ -236,7 +237,7 @@ inline void TempTable::deleteAllTuplesNonVirtual(bool freeAllocatedStrings) {
 }
 
 inline TBPtr TempTable::allocateNextBlock() {
-    TBPtr block(new (ThreadLocalPool::getExact(sizeof(TupleBlock))->malloc()) TupleBlock(this, TBBucketPtr()));
+    TBPtr block(new (ThreadLocalPool::getExact(sizeof(TupleBlock))->malloc()) TupleBlock(this, TBBucketPtr(), HybridMemory::DRAM));
     m_data.push_back(block);
 
     if (m_limits) {

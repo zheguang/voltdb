@@ -5,17 +5,17 @@
 
 namespace voltdb {
 
-  class HybridMemoryAllocator {
+  class HybridMemory {
   public:
     enum MEMORY_NODE_TYPE {
       DRAM,
       NVM
     };
-    HybridMemoryAllocator() {}
-    ~HybridMemoryAllocator() {}
+    static void *alloc(size_t sz, MEMORY_NODE_TYPE memoryNodeType);
+    static void free(void* start, size_t sz);
 
-    void *alloc(size_t sz, MEMORY_NODE_TYPE memoryNodeType);
-    void free(void* start, size_t sz);
+    HybridMemory();
+    ~HybridMemory();
   };
 
 };

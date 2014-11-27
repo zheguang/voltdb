@@ -23,17 +23,17 @@
 using namespace voltdb;
 
 ContiguousAllocator::ContiguousAllocator(int32_t allocSize, int32_t chunkSize)
-: m_count(0), m_allocSize(allocSize), m_chunkSize(chunkSize), m_tail(NULL), m_blockCount(0), m_hybridMemoryAllocator() {}
+: m_count(0), m_allocSize(allocSize), m_chunkSize(chunkSize), m_tail(NULL), m_blockCount(0) {}
 
 ContiguousAllocator::~ContiguousAllocator() {
     while (m_tail) {
         Buffer *buf = m_tail->prev;
-        m_hybridMemoryAllocator.free(m_tail, sizeof(Buffer) + m_allocSize * m_chunkSize);
+        HybridMemory::free(m_tail, sizeof(Buffer) + m_allocSize * m_chunkSize);
         m_tail = buf;
     }
 }
 
-void *ContiguousAllocator::alloc(HybridMemoryAllocator::MEMORY_NODE_TYPE memoryNodeType) {
+void *ContiguousAllocator::alloc(HybridMemory::MEMORY_NODE_TYPE memoryNodeType) {
     m_count++;
 
     // determine where in the current block the new alloc will go
@@ -42,7 +42,7 @@ void *ContiguousAllocator::alloc(HybridMemoryAllocator::MEMORY_NODE_TYPE memoryN
     // if a new block is needed...
     if (blockOffset == 0) {
         //void *memory = malloc(sizeof(Buffer) + m_allocSize * m_chunkSize);
-        void *memory = m_hybridMemoryAllocator.alloc(sizeof(Buffer) + m_allocSize * m_chunkSize, memoryNodeType);
+        void *memory = HybridMemory::alloc(sizeof(Buffer) + m_allocSize * m_chunkSize, memoryNodeType);
 
         Buffer *buf = reinterpret_cast<Buffer*>(memory);
 
@@ -84,7 +84,7 @@ void ContiguousAllocator::trim() {
     // yay! kill a block
     if (blockOffset == 0) {
         Buffer *buf = m_tail->prev;
-        m_hybridMemoryAllocator.free(m_tail, sizeof(Buffer) + m_allocSize * m_chunkSize);
+        HybridMemory::free(m_tail, sizeof(Buffer) + m_allocSize * m_chunkSize);
         m_tail = buf;
         m_blockCount--;
     }
