@@ -20,6 +20,8 @@
 
 #include <cstddef>
 
+#include "structures/HybridMemory.h"
+
 namespace voltdb
 {
     class Pool;
@@ -48,6 +50,7 @@ namespace voltdb
         /// object is provided, the StringRef and the string memory will be
         /// allocated out of the ThreadLocalPool.
         static StringRef* create(std::size_t size, Pool* dataPool);
+        static StringRef* create(std::size_t size, HybridMemory::MEMORY_NODE_TYPE memoryNodeType);
 
         /// Destroy the given StringRef object and free any memory, if
         /// any, allocated from pools to store the object.
@@ -62,6 +65,7 @@ namespace voltdb
     private:
         StringRef(std::size_t size);
         StringRef(std::size_t size, Pool* dataPool);
+        StringRef(std::size_t size, HybridMemory::MEMORY_NODE_TYPE memoryNodeType);
         ~StringRef();
 
         /// Callback used via the back-pointer in order to update the
@@ -72,6 +76,7 @@ namespace voltdb
 
         std::size_t m_size;
         bool m_tempPool;
+        bool m_isHybridMemoryDram;
         char* m_stringPtr;
     };
 }

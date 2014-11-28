@@ -22,8 +22,8 @@
 
 using namespace voltdb;
 
-ContiguousAllocator::ContiguousAllocator(int32_t allocSize, int32_t chunkSize)
-: m_count(0), m_allocSize(allocSize), m_chunkSize(chunkSize), m_tail(NULL), m_blockCount(0) {}
+ContiguousAllocator::ContiguousAllocator(int32_t allocSize, int32_t chunkSize, HybridMemory::MEMORY_NODE_TYPE memoryNodeType)
+: m_count(0), m_allocSize(allocSize), m_chunkSize(chunkSize), m_tail(NULL), m_blockCount(0), m_memoryNodeType(memoryNodeType) {}
 
 ContiguousAllocator::~ContiguousAllocator() {
     while (m_tail) {
@@ -33,7 +33,7 @@ ContiguousAllocator::~ContiguousAllocator() {
     }
 }
 
-void *ContiguousAllocator::alloc(HybridMemory::MEMORY_NODE_TYPE memoryNodeType) {
+void *ContiguousAllocator::alloc() {
     m_count++;
 
     // determine where in the current block the new alloc will go
@@ -42,7 +42,7 @@ void *ContiguousAllocator::alloc(HybridMemory::MEMORY_NODE_TYPE memoryNodeType) 
     // if a new block is needed...
     if (blockOffset == 0) {
         //void *memory = malloc(sizeof(Buffer) + m_allocSize * m_chunkSize);
-        void *memory = HybridMemory::alloc(sizeof(Buffer) + m_allocSize * m_chunkSize, memoryNodeType);
+        void *memory = HybridMemory::alloc(sizeof(Buffer) + m_allocSize * m_chunkSize, m_memoryNodeType);
 
         Buffer *buf = reinterpret_cast<Buffer*>(memory);
 

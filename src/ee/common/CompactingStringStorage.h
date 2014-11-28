@@ -29,15 +29,17 @@ namespace voltdb {
         CompactingStringStorage();
         ~CompactingStringStorage();
 
-        boost::shared_ptr<CompactingStringPool> get(size_t size);
+        boost::shared_ptr<CompactingStringPool> get(size_t size, HybridMemory::MEMORY_NODE_TYPE memoryNodeType);
 
-        boost::shared_ptr<CompactingStringPool> getExact(size_t size);
+        boost::shared_ptr<CompactingStringPool> getExact(size_t size, HybridMemory::MEMORY_NODE_TYPE memoryNodeType);
 
         std::size_t getPoolAllocationSize();
 
     private:
-        boost::unordered_map<size_t,
-                             boost::shared_ptr<CompactingStringPool> > m_poolMap;
+        boost::unordered_map<size_t, boost::shared_ptr<CompactingStringPool> > *getPoolMapFrom(HybridMemory::MEMORY_NODE_TYPE memoryNodeType);
+
+        boost::unordered_map<size_t, boost::shared_ptr<CompactingStringPool> > m_dramPoolMap;
+        boost::unordered_map<size_t, boost::shared_ptr<CompactingStringPool> > m_nvmPoolMap;
     };
 }
 

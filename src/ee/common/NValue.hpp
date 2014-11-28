@@ -47,6 +47,8 @@
 #include "utf8.h"
 #include "murmur3/MurmurHash3.h"
 
+#include "structures/HybridMemory.h"
+
 namespace voltdb {
 
 /*
@@ -257,7 +259,7 @@ class NValue {
        allocated storage for a copy of the object. */
     void serializeToTupleStorageAllocateForObjects(
         void *storage, const bool isInlined, const int32_t maxLength,
-        const bool isInBytes, Pool *dataPool) const;
+        const bool isInBytes, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) const;
 
     /* Serialize the scalar this NValue represents to the storage area
        provided. If the scalar is an Object type then the object will
@@ -2607,7 +2609,7 @@ inline NValue NValue::initFromTupleStorage(const void *storage, ValueType type, 
  * allocated storage for a copy of the object.
  */
 inline void NValue::serializeToTupleStorageAllocateForObjects(void *storage, const bool isInlined,
-        const int32_t maxLength, const bool isInBytes, Pool *dataPool) const
+        const int32_t maxLength, const bool isInBytes, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) const
 {
     const ValueType type = getValueType();
 
@@ -2650,7 +2652,7 @@ inline void NValue::serializeToTupleStorageAllocateForObjects(void *storage, con
 
                 const int8_t lengthLength = getObjectLengthLength();
                 const int32_t minlength = lengthLength + objLength;
-                StringRef* sref = StringRef::create(minlength, dataPool);
+                StringRef* sref = StringRef::create(minlength, memoryNodeType);
                 char *copy = sref->get();
                 setObjectLengthToLocation(objLength, copy);
                 ::memcpy(copy + lengthLength, getObjectValue_withoutNull(), objLength);

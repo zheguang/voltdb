@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with VoltDB.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <cassert>
 
 #include "StringRef.h"
 
@@ -58,10 +59,15 @@ StringRef::create(size_t size, Pool* dataPool)
 #ifdef MEMCHECK
         retval = new StringRef(size);
 #else
-        retval = new(ThreadLocalPool::get(sizeof(StringRef))->malloc()) StringRef(size);
+        retval = new(ThreadLocalPool::get(sizeof(StringRef))->malloc()) StringRef(size, HybridMemory::NVM);
 #endif
     }
     return retval;
+}
+
+StringRef* StringRef::create(size_t size, HybridMemory::MEMORY_NODE_TYPE memoryNodeType)
+{
+  return new(ThreadLocalPool::get(sizeof(StringRef))->malloc()) StringRef(size, memoryNodeType);
 }
 
 void
@@ -79,7 +85,7 @@ StringRef::destroy(StringRef* sref)
 #endif
 }
 
-StringRef::StringRef(size_t size)
+/*StringRef::StringRef(size_t size)
 {
     m_size = size + sizeof(StringRef*);
     m_tempPool = false;
@@ -90,13 +96,23 @@ StringRef::StringRef(size_t size)
         reinterpret_cast<char*>(ThreadLocalPool::getStringPool()->get(m_size)->malloc());
 #endif
     setBackPtr();
-}
+}*/
 
 StringRef::StringRef(std::size_t size, Pool* dataPool)
 {
     m_tempPool = true;
     m_stringPtr =
         reinterpret_cast<char*>(dataPool->allocate(size + sizeof(StringRef*)));
+    setBackPtr();
+}
+
+StringRef::StringRef(std::size_t size, HybridMemory::MEMORY_NODE_TYPE memoryNodeType)
+{
+    m_size = size + sizeof(StringRef*);
+    m_tempPool = false;
+    m_isHybridMemoryDram = (memoryNodeType == HybridMemory::DRAM);
+    m_stringPtr =
+        reinterpret_cast<char*>(ThreadLocalPool::getStringPool()->get(m_size, memoryNodeType)->malloc());
     setBackPtr();
 }
 
@@ -107,7 +123,10 @@ StringRef::~StringRef()
 #ifdef MEMCHECK
         delete[] m_stringPtr;
 #else
-        ThreadLocalPool::getStringPool()->get(m_size)->free(m_stringPtr);
+        if (m_isHybridMemoryDram)
+          ThreadLocalPool::getStringPool()->get(m_size, HybridMemory::DRAM)->free(m_stringPtr);
+        else
+          ThreadLocalPool::getStringPool()->get(m_size, HybridMemory::NVM)->free(m_stringPtr);
 #endif
     }
 }
