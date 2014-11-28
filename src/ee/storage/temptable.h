@@ -180,7 +180,7 @@ inline void TempTable::insertTupleNonVirtualWithDeepCopy(TableTuple &source, Poo
     // Don't allocate space for the strings on the heap because the strings are being copied from the source
     // are owned by a PersistentTable or part of the EE string pool.
     //
-    target.copyForPersistentInsert(source, pool); // tuple in freelist must be already cleared
+    target.copyForPersistentInsert(source); // tuple in freelist must be already cleared
     target.setActiveTrue();
 }
 

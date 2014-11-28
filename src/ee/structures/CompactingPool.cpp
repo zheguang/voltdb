@@ -22,15 +22,15 @@
 using namespace voltdb;
 using namespace std;
 
-CompactingPool::CompactingPool(int32_t elementSize, int32_t elementsPerBuffer) :
-    m_size(elementSize), m_allocator(elementSize, elementsPerBuffer)
+CompactingPool::CompactingPool(int32_t elementSize, int32_t elementsPerBuffer, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) :
+    m_size(elementSize), m_allocator(elementSize, elementsPerBuffer, memoryNodeType)
 {
 }
 
 void*
 CompactingPool::malloc()
 {
-    return m_allocator.alloc(HybridMemory::DRAM); // TODO: make it an argument.
+    return m_allocator.alloc();
 }
 
 bool

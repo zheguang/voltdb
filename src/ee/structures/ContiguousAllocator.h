@@ -37,10 +37,10 @@ public:
      * @param allocSize is the size in bytes of individual allocations.
      * @param chunkSize is the number of allocations per buffer (not bytes).
      */
-    ContiguousAllocator(int32_t allocSize, int32_t chunkSize);
+    ContiguousAllocator(int32_t allocSize, int32_t chunkSize, HybridMemory::MEMORY_NODE_TYPE memoryNodeType);
     ~ContiguousAllocator();
 
-    void *alloc(HybridMemory::MEMORY_NODE_TYPE memoryNodeType);
+    void *alloc();
     void *last() const;
     void trim();
     int64_t count() const { return m_count; }
@@ -58,6 +58,7 @@ private:
     int32_t m_chunkSize;
     Buffer *m_tail;
     int32_t m_blockCount;
+    HybridMemory::MEMORY_NODE_TYPE m_memoryNodeType;
 };
 
 } // namespace voltdb

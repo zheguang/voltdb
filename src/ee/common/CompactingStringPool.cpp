@@ -23,8 +23,9 @@ using namespace voltdb;
 using namespace std;
 
 CompactingStringPool::CompactingStringPool(int32_t elementSize,
-                                           int32_t elementsPerBuf) :
-    m_pool(elementSize, elementsPerBuf)
+                                           int32_t elementsPerBuf,
+                                           HybridMemory::MEMORY_NODE_TYPE memoryNodeType) :
+    m_pool(elementSize, elementsPerBuf, memoryNodeType)
 {
 }
 

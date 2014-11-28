@@ -36,30 +36,27 @@ CompactingStringStorage::~CompactingStringStorage()
 {
 }
 
-PoolPtrType
-CompactingStringStorage::get(size_t size)
-{
+PoolPtrType CompactingStringStorage::get(size_t size, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) {
     size_t alloc_size = ThreadLocalPool::getAllocationSizeForObject(size);
     if (alloc_size == 0)
     {
         throwFatalException("Attempted to allocate an object then the 1 meg limit. Requested size was %d",
             static_cast<int32_t>(size));
     }
-    return getExact(alloc_size);
+    return getExact(alloc_size, memoryNodeType);
 }
 
-PoolPtrType
-CompactingStringStorage::getExact(size_t size)
-{
-    MapType::iterator iter = m_poolMap.find(size);
+PoolPtrType CompactingStringStorage::getExact(size_t size, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) {
+    MapType *poolMap = getPoolMapFrom(memoryNodeType);
+    MapType::iterator iter = poolMap->find(size);
     int32_t ssize = static_cast<int32_t>(size);
     PoolPtrType pool;
-    if (iter == m_poolMap.end()) {
+    if (iter == poolMap->end()) {
         // compute num_elements to be closest multiple
         // leading to a 2Meg buffer
         int32_t num_elements = (2 * 1024 * 1024 / ssize) + 1;
-        pool = PoolPtrType(new CompactingStringPool(ssize, num_elements));
-        m_poolMap.insert(pair<size_t, PoolPtrType>(size, pool));
+        pool = PoolPtrType(new CompactingStringPool(ssize, num_elements, memoryNodeType));
+        poolMap->insert(pair<size_t, PoolPtrType>(size, pool));
     }
     else
     {
@@ -68,11 +65,29 @@ CompactingStringStorage::getExact(size_t size)
     return pool;
 }
 
+MapType *CompactingStringStorage::getPoolMapFrom(HybridMemory::MEMORY_NODE_TYPE memoryNodeType) {
+  switch (memoryNodeType) {
+    case HybridMemory::DRAM:
+      return &m_dramPoolMap;
+    case HybridMemory::NVM:
+      return &m_nvmPoolMap;
+    default:
+      throwFatalException("Unsupported memory ndoe type.");
+      return NULL;
+  };
+}
+
 size_t CompactingStringStorage::getPoolAllocationSize()
 {
     size_t total = 0;
-    for (MapType::iterator iter = m_poolMap.begin();
-         iter != m_poolMap.end();
+    for (MapType::iterator iter = m_dramPoolMap.begin();
+         iter != m_dramPoolMap.end();
+         ++iter)
+    {
+        total += iter->second->getBytesAllocated();
+    }
+    for (MapType::iterator iter = m_nvmPoolMap.begin();
+         iter != m_nvmPoolMap.end();
          ++iter)
     {
         total += iter->second->getBytesAllocated();

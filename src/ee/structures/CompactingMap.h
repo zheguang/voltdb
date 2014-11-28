@@ -194,7 +194,7 @@ template<typename Key, typename Data, typename Compare, bool hasRank>
 CompactingMap<Key, Data, Compare, hasRank>::CompactingMap(bool unique, Compare comper)
     : m_count(0),
       m_root(&NIL),
-      m_allocator(static_cast<int>(sizeof(TreeNode) - (hasRank ? 0 : sizeof(NodeCount))), static_cast<int>(10000)),
+      m_allocator(static_cast<int>(sizeof(TreeNode) - (hasRank ? 0 : sizeof(NodeCount))), static_cast<int>(10000), HybridMemory::DRAM),
       m_unique(unique),
       m_comper(comper)
   {
@@ -259,7 +259,7 @@ bool CompactingMap<Key, Data, Compare, hasRank>::insert(std::pair<Key, Data> val
         }
 
         // create a new node
-        void *memory = m_allocator.alloc(HybridMemory::DRAM);
+        void *memory = m_allocator.alloc();
         assert(memory);
         // placement new
         TreeNode *z = new(memory) TreeNode();
@@ -281,7 +281,7 @@ bool CompactingMap<Key, Data, Compare, hasRank>::insert(std::pair<Key, Data> val
     }
     else {
         // create a new node as root
-        void *memory = m_allocator.alloc(HybridMemory::DRAM);
+        void *memory = m_allocator.alloc();
         assert(memory);
         // placement new
         TreeNode *z = new(memory) TreeNode();

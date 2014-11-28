@@ -504,7 +504,8 @@ struct GenericPersistentKey : public GenericKey<keySize>
             // The NULL argument means use the persistent memory pool for the varchar
             // allocation rather than any particular COW context's pool.
             // XXX: Could this ever somehow interact badly with a COW context?
-            keyTuple.setNValueAllocateForObjectCopies(ii, indexedValue, NULL); // TODO: pass in DRAM pool
+            //keyTuple.setNValueAllocateForObjectCopies(ii, indexedValue, NULL);
+            keyTuple.setNValueAllocateForObjectCopies(ii, indexedValue, HybridMemory::DRAM);
         }
     }
 

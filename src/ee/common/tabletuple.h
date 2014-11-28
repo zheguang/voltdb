@@ -52,6 +52,7 @@
 #include "common/ValuePeeker.hpp"
 #include "common/FatalException.hpp"
 #include "common/ExportSerializeIo.h"
+#include "structures/HybridMemory.h"
 
 #include <cassert>
 #include <ostream>
@@ -227,8 +228,7 @@ public:
      * to provide NULL for stringPool in which case the strings will
      * be allocated on the heap.
      */
-    void setNValueAllocateForObjectCopies(const int idx, voltdb::NValue value,
-                                             Pool *dataPool);
+    void setNValueAllocateForObjectCopies(const int idx, voltdb::NValue value, HybridMemory::MEMORY_NODE_TYPE memoryNodeType);
 
     /** How long is a tuple? */
     inline int tupleLength() const {
@@ -287,7 +287,7 @@ public:
     std::string debugNoHeader() const;
 
     /** Copy values from one tuple into another (uses memcpy) */
-    void copyForPersistentInsert(const TableTuple &source, Pool *pool = NULL);
+    void copyForPersistentInsert(const TableTuple &source);
     // The vector "output" arguments detail the non-inline object memory management
     // required of the upcoming release or undo.
     void copyForPersistentUpdate(const TableTuple &source,
@@ -500,9 +500,7 @@ inline void TableTuple::setNValues(int beginIdx, TableTuple lhs, int begin, int 
 }
 
 /* Copy strictly by value from slimvalue into this tuple */
-inline void TableTuple::setNValueAllocateForObjectCopies(const int idx,
-                                                            voltdb::NValue value,
-                                                            Pool *dataPool)
+inline void TableTuple::setNValueAllocateForObjectCopies(const int idx, voltdb::NValue value, HybridMemory::MEMORY_NODE_TYPE memoryNodeType)
 {
     assert(m_schema);
     assert(m_data);
@@ -515,13 +513,13 @@ inline void TableTuple::setNValueAllocateForObjectCopies(const int idx,
     const int32_t columnLength = columnInfo->length;
 
     value.serializeToTupleStorageAllocateForObjects(dataPtr, isInlined,
-                                                    columnLength, isInBytes, dataPool);
+                                                    columnLength, isInBytes, memoryNodeType);
 }
 
 /*
  * With a persistent insert the copy should do an allocation for all uninlinable strings
  */
-inline void TableTuple::copyForPersistentInsert(const voltdb::TableTuple &source, Pool *pool) {
+inline void TableTuple::copyForPersistentInsert(const voltdb::TableTuple &source) {
     assert(m_schema);
     assert(source.m_schema);
     assert(source.m_data);
@@ -550,7 +548,7 @@ inline void TableTuple::copyForPersistentInsert(const voltdb::TableTuple &source
                     m_schema->getUninlinedObjectColumnInfoIndex(ii);
             setNValueAllocateForObjectCopies(uinlineableObjectColumnIndex,
                     source.getNValue(uinlineableObjectColumnIndex),
-                    pool);
+                    HybridMemory::NVM);
         }
         m_data[0] = source.m_data[0];
     }
@@ -593,7 +591,7 @@ inline void TableTuple::copyForPersistentUpdate(const TableTuple &source,
                     oldObjects.push_back(*mPtr);
                     // TODO: Here, it's known that the column is an object type, and yet
                     // setNValueAllocateForObjectCopies is called to figure this all out again.
-                    setNValueAllocateForObjectCopies(ii, source.getNValue(ii), NULL);
+                    setNValueAllocateForObjectCopies(ii, source.getNValue(ii), HybridMemory::NVM);
                     // Yes, uses the same old pointer as two statements ago to get a new value. Neat.
                     newObjects.push_back(*mPtr);
                 }
@@ -617,7 +615,7 @@ inline void TableTuple::copyForPersistentUpdate(const TableTuple &source,
                 // 2) do the same wholesale tuple memcpy as in the no-objects "else" clause, below,
                 // 3) replace the object pointer at each "changed object pointer offset"
                 //    with a pointer to an object copy of its new referent.
-                setNValueAllocateForObjectCopies(ii, source.getNValue(ii), NULL);
+                setNValueAllocateForObjectCopies(ii, source.getNValue(ii), HybridMemory::NVM);
             }
         }
         // This obscure assignment is propagating the tuple flags rather than leaving it to the caller.
