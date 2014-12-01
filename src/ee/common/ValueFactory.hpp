@@ -51,13 +51,13 @@ public:
     /// Constructs a value copied into long-lived pooled memory (or the heap)
     /// that will require an explicit NValue::free.
     static inline NValue getStringValue(const char *value) {
-        return NValue::getAllocatedValue(VALUE_TYPE_VARCHAR, value, (size_t)(value ? strlen(value) : 0), NULL);
+        return NValue::getAllocatedValue(VALUE_TYPE_VARCHAR, value, (size_t)(value ? strlen(value) : 0), HybridMemory::NVM);
     }
 
     /// Constructs a value copied into long-lived pooled memory (or the heap)
     /// that will require an explicit NValue::free.
     static inline NValue getStringValue(const std::string value) {
-        return NValue::getAllocatedValue(VALUE_TYPE_VARCHAR, value.c_str(), value.length(), NULL);
+        return NValue::getAllocatedValue(VALUE_TYPE_VARCHAR, value.c_str(), value.length(), HybridMemory::NVM);
     }
 
     static inline NValue getNullStringValue() {
@@ -78,7 +78,7 @@ public:
     /// that will require an explicit NValue::free.
     /// Assumes raw byte input
     static inline NValue getBinaryValue(const unsigned char* rawBuf, int32_t rawLength) {
-        return NValue::getAllocatedValue(VALUE_TYPE_VARBINARY, reinterpret_cast<const char*>(rawBuf), (size_t)rawLength, NULL);
+        return NValue::getAllocatedValue(VALUE_TYPE_VARBINARY, reinterpret_cast<const char*>(rawBuf), (size_t)rawLength, HybridMemory::NVM);
     }
 
     static inline NValue getNullBinaryValue() {

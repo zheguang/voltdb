@@ -303,6 +303,7 @@ public:
     int compare(const TableTuple &other) const;
 
     void deserializeFrom(voltdb::SerializeInput &tupleIn, Pool *stringPool);
+    void deserializeFrom(voltdb::SerializeInput &tupleIn, HybridMemory::MEMORY_NODE_TYPE memoryNodeType);
     void serializeTo(voltdb::SerializeOutput &output);
     void serializeToExport(voltdb::ExportSerializeOutput &io,
                           int colOffset, uint8_t *nullArray);
@@ -668,6 +669,32 @@ inline void TableTuple::deserializeFrom(voltdb::SerializeInput &tupleIn, Pool *d
          */
         char *dataPtr = getWritableDataPtr(columnInfo);
         NValue::deserializeFrom(tupleIn, dataPool, dataPtr, columnInfo->getVoltType(),
+                columnInfo->inlined, static_cast<int32_t>(columnInfo->length), columnInfo->inBytes);
+    }
+}
+
+inline void TableTuple::deserializeFrom(voltdb::SerializeInput &tupleIn, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) {
+    assert(m_schema);
+    assert(m_data);
+
+    tupleIn.readInt();
+    for (int j = 0; j < m_schema->columnCount(); ++j) {
+        const TupleSchema::ColumnInfo *columnInfo = m_schema->getColumnInfo(j);
+
+        /**
+         * Hack hack. deserializeFrom is only called when we serialize
+         * and deserialize tables. The serialization format for
+         * Strings/Objects in a serialized table happens to have the
+         * same in memory representation as the Strings/Objects in a
+         * tabletuple. The goal here is to wrap the serialized
+         * representation of the value in an NValue and then serialize
+         * that into the tuple from the NValue. This makes it possible
+         * to push more value specific functionality out of
+         * TableTuple. The memory allocation will be performed when
+         * serializing to tuple storage.
+         */
+        char *dataPtr = getWritableDataPtr(columnInfo);
+        NValue::deserializeFrom(tupleIn, memoryNodeType, dataPtr, columnInfo->getVoltType(),
                 columnInfo->inlined, static_cast<int32_t>(columnInfo->length), columnInfo->inBytes);
     }
 }

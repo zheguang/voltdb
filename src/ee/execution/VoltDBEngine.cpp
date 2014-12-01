@@ -1168,7 +1168,7 @@ VoltDBEngine::loadTable(int32_t tableId,
     }
 
     try {
-        table->loadTuplesFrom(serializeIn, NULL, returnUniqueViolations ? &m_resultOutput : NULL);
+        table->loadTuplesFrom(serializeIn, HybridMemory::NVM, returnUniqueViolations ? &m_resultOutput : NULL);
     } catch (const SerializableEEException &e) {
         throwFatalException("%s", e.message().c_str());
     }
@@ -1776,7 +1776,7 @@ void VoltDBEngine::processRecoveryMessage(RecoveryProtoMsg *message) {
                 "Attempted to process recovery message for tableId %d but the table could not be found", tableId);
     }
     PersistentTable *table = dynamic_cast<PersistentTable*>(found);
-    table->processRecoveryMessage(message, NULL);
+    table->processRecoveryMessage(message, HybridMemory::NVM);
 }
 
 int64_t

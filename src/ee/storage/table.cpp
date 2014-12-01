@@ -387,6 +387,48 @@ bool Table::equals(voltdb::Table *other) {
 }
 
 void Table::loadTuplesFromNoHeader(SerializeInput &serialize_io,
+                                   HybridMemory::MEMORY_NODE_TYPE memoryNodeType,
+                                   ReferenceSerializeOutput *uniqueViolationOutput) {
+    int tupleCount = serialize_io.readInt();
+    assert(tupleCount >= 0);
+
+    TableTuple target(m_schema);
+
+    //Reserve space for a length prefix for rows that violate unique constraints
+    //If there is no output supplied it will just throw
+    size_t lengthPosition = 0;
+    int32_t serializedTupleCount = 0;
+    size_t tupleCountPosition = 0;
+    if (uniqueViolationOutput != NULL) {
+        lengthPosition = uniqueViolationOutput->reserveBytes(4);
+    }
+
+    for (int i = 0; i < tupleCount; ++i) {
+        nextFreeTuple(&target);
+        target.setActiveTrue();
+        target.setDirtyFalse();
+        target.setPendingDeleteFalse();
+        target.setPendingDeleteOnUndoReleaseFalse();
+
+        target.deserializeFrom(serialize_io, memoryNodeType);
+
+        processLoadedTuple(target, uniqueViolationOutput, serializedTupleCount, tupleCountPosition);
+    }
+
+    //If unique constraints are being handled, write the length/size of constraints that occured
+    if (uniqueViolationOutput != NULL) {
+        if (serializedTupleCount == 0) {
+            uniqueViolationOutput->writeIntAt(lengthPosition, 0);
+        } else {
+            uniqueViolationOutput->writeIntAt(lengthPosition,
+                                              static_cast<int32_t>(uniqueViolationOutput->position() - lengthPosition - sizeof(int32_t)));
+            uniqueViolationOutput->writeIntAt(tupleCountPosition,
+                                              serializedTupleCount);
+        }
+    }
+}
+
+void Table::loadTuplesFromNoHeader(SerializeInput &serialize_io,
                                    Pool *stringPool,
                                    ReferenceSerializeOutput *uniqueViolationOutput) {
     int tupleCount = serialize_io.readInt();
@@ -426,6 +468,68 @@ void Table::loadTuplesFromNoHeader(SerializeInput &serialize_io,
                                               serializedTupleCount);
         }
     }
+}
+
+void Table::loadTuplesFrom(SerializeInput &serialize_io,
+                           HybridMemory::MEMORY_NODE_TYPE memoryNodeType,
+                           ReferenceSerializeOutput *uniqueViolationOutput) {
+    /*
+     * directly receives a VoltTable buffer.
+     * [00 01]   [02 03]   [04 .. 0x]
+     * rowstart  colcount  colcount * 1 byte (column types)
+     *
+     * [0x+1 .. 0y]
+     * colcount * strings (column names)
+     *
+     * [0y+1 0y+2 0y+3 0y+4]
+     * rowcount
+     *
+     * [0y+5 .. end]
+     * rowdata
+     */
+
+    // todo: just skip ahead to this position
+    serialize_io.readInt(); // rowstart
+
+    serialize_io.readByte();
+
+    int16_t colcount = serialize_io.readShort();
+    assert(colcount >= 0);
+
+    // Store the following information so that we can provide them to the user
+    // on failure
+    ValueType types[colcount];
+    boost::scoped_array<std::string> names(new std::string[colcount]);
+
+    // skip the column types
+    for (int i = 0; i < colcount; ++i) {
+        types[i] = (ValueType) serialize_io.readEnumInSingleByte();
+    }
+
+    // skip the column names
+    for (int i = 0; i < colcount; ++i) {
+        names[i] = serialize_io.readTextString();
+    }
+
+    // Check if the column count matches what the temp table is expecting
+    if (colcount != m_schema->columnCount()) {
+        std::stringstream message(std::stringstream::in
+                                  | std::stringstream::out);
+        message << "Column count mismatch. Expecting "
+                << m_schema->columnCount()
+                << ", but " << colcount << " given" << std::endl;
+        message << "Expecting the following columns:" << std::endl;
+        message << debug() << std::endl;
+        message << "The following columns are given:" << std::endl;
+        for (int i = 0; i < colcount; i++) {
+            message << "column " << i << ": " << names[i]
+                    << ", type = " << getTypeName(types[i]) << std::endl;
+        }
+        throw SerializableEEException(VOLT_EE_EXCEPTION_TYPE_EEEXCEPTION,
+                                      message.str().c_str());
+    }
+
+    loadTuplesFromNoHeader(serialize_io, memoryNodeType, uniqueViolationOutput);
 }
 
 void Table::loadTuplesFrom(SerializeInput &serialize_io,

@@ -56,11 +56,12 @@ StringRef::create(size_t size, Pool* dataPool)
     }
     else
     {
-#ifdef MEMCHECK
+/*#ifdef MEMCHECK
         retval = new StringRef(size);
 #else
         retval = new(ThreadLocalPool::get(sizeof(StringRef))->malloc()) StringRef(size, HybridMemory::NVM);
-#endif
+#endif*/
+      throwFatalException("Shouldn't dataPool be null.");
     }
     return retval;
 }

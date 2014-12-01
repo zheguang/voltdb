@@ -275,7 +275,10 @@ class Table {
      * Used for recovery where the schema is not sent.
      */
     void loadTuplesFromNoHeader(SerializeInput &serialize_in,
-                                Pool *stringPool = NULL,
+                                Pool *stringPool,
+                                ReferenceSerializeOutput *uniqueViolationOutput = NULL);
+    void loadTuplesFromNoHeader(SerializeInput &serialize_in,
+                                HybridMemory::MEMORY_NODE_TYPE memoryNodeType,
                                 ReferenceSerializeOutput *uniqueViolationOutput = NULL);
 
     /**
@@ -283,7 +286,10 @@ class Table {
      * Used for initial data loading and receiving dependencies.
      */
     void loadTuplesFrom(SerializeInput &serialize_in,
-                        Pool *stringPool = NULL,
+                        Pool *stringPool,
+                        ReferenceSerializeOutput *uniqueViolationOutput = NULL);
+    void loadTuplesFrom(SerializeInput &serialize_in,
+                        HybridMemory::MEMORY_NODE_TYPE memoryNodeType,
                         ReferenceSerializeOutput *uniqueViolationOutput = NULL);
 
 
