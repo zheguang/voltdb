@@ -6,7 +6,7 @@
 using namespace voltdb;
 
 void* HybridMemory::alloc(size_t sz, MEMORY_NODE_TYPE memoryNodeType) {
-  int memoryNode = 1;
+  int memoryNode = 0;
   switch (memoryNodeType) {
     case DRAM:
       memoryNode = 0;

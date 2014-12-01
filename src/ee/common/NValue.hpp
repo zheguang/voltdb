@@ -278,6 +278,10 @@ class NValue {
         SerializeInput &input, Pool *dataPool, char *storage,
         const ValueType type, bool isInlined, int32_t maxLength, bool isInBytes);
 
+    static void deserializeFrom(
+        SerializeInput &input, HybridMemory::MEMORY_NODE_TYPE memoryNodeType, char *storage,
+        const ValueType type, bool isInlined, int32_t maxLength, bool isInBytes);
+
         // TODO: no callers use the first form; Should combine these
         // eliminate the potential NValue copy.
 
@@ -2193,12 +2197,32 @@ class NValue {
         return retval;
     }
 
+    static NValue getAllocatedValue(ValueType type, const char* value, size_t size, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) {
+        NValue retval(type);
+        char* storage = retval.allocateValueStorage((int32_t)size, memoryNodeType);
+        ::memcpy(storage, value, (int32_t)size);
+        return retval;
+    }
+
     char* allocateValueStorage(int32_t length, Pool* stringPool)
     {
         // This unsets the NValue's null tag and returns the length of the length.
         const int8_t lengthLength = setObjectLength(length);
         const int32_t minLength = length + lengthLength;
         StringRef* sref = StringRef::create(minLength, stringPool);
+        char* storage = sref->get();
+        setObjectLengthToLocation(length, storage);
+        storage += lengthLength;
+        setObjectValue(sref);
+        return storage;
+    }
+
+    char* allocateValueStorage(int32_t length, HybridMemory::MEMORY_NODE_TYPE memoryNodeType)
+    {
+        // This unsets the NValue's null tag and returns the length of the length.
+        const int8_t lengthLength = setObjectLength(length);
+        const int32_t minLength = length + lengthLength;
+        StringRef* sref = StringRef::create(minLength, memoryNodeType);
         char* storage = sref->get();
         setObjectLengthToLocation(length, storage);
         storage += lengthLength;
@@ -2740,7 +2764,7 @@ inline void NValue::serializeToTupleStorage(void *storage, const bool isInlined,
  * Object types as necessary using the provided data pool or the
  * heap. This is used to deserialize tables.
  */
-inline void NValue::deserializeFrom(SerializeInput &input, Pool *dataPool, char *storage,
+inline void NValue::deserializeFrom(SerializeInput &input, Pool* dataPool, char *storage,
         const ValueType type, bool isInlined, int32_t maxLength, bool isInBytes) {
 
     switch (type) {
@@ -2786,6 +2810,75 @@ inline void NValue::deserializeFrom(SerializeInput &input, Pool *dataPool, char 
 
             const int32_t minlength = lengthLength + length;
             StringRef* sref = StringRef::create(minlength, dataPool);
+            char* copy = sref->get();
+            setObjectLengthToLocation( length, copy);
+            ::memcpy(copy + lengthLength, data, length);
+            *reinterpret_cast<StringRef**>(storage) = sref;
+        }
+        break;
+    }
+    case VALUE_TYPE_DECIMAL: {
+        int64_t *longStorage = reinterpret_cast<int64_t*>(storage);
+        //Reverse order for Java BigDecimal BigEndian
+        longStorage[1] = input.readLong();
+        longStorage[0] = input.readLong();
+        break;
+    }
+    default:
+        char message[128];
+        snprintf(message, 128, "NValue::deserializeFrom() unrecognized type '%s'",
+                getTypeName(type).c_str());
+        throw SerializableEEException(VOLT_EE_EXCEPTION_TYPE_EEEXCEPTION,
+                message);
+    }
+}
+
+inline void NValue::deserializeFrom(SerializeInput &input, HybridMemory::MEMORY_NODE_TYPE memoryNodeType, char *storage,
+        const ValueType type, bool isInlined, int32_t maxLength, bool isInBytes) {
+
+    switch (type) {
+    case VALUE_TYPE_BIGINT:
+    case VALUE_TYPE_TIMESTAMP:
+        *reinterpret_cast<int64_t*>(storage) = input.readLong();
+        break;
+    case VALUE_TYPE_TINYINT:
+        *reinterpret_cast<int8_t*>(storage) = input.readByte();
+        break;
+    case VALUE_TYPE_SMALLINT:
+        *reinterpret_cast<int16_t*>(storage) = input.readShort();
+        break;
+    case VALUE_TYPE_INTEGER:
+        *reinterpret_cast<int32_t*>(storage) = input.readInt();
+        break;
+    case VALUE_TYPE_DOUBLE:
+        *reinterpret_cast<double* >(storage) = input.readDouble();
+        break;
+    case VALUE_TYPE_VARCHAR:
+    case VALUE_TYPE_VARBINARY:
+    {
+        const int32_t length = input.readInt();
+
+        const int8_t lengthLength = getAppropriateObjectLengthLength(length);
+        // the NULL SQL string is a NULL C pointer
+        if (isInlined) {
+            setObjectLengthToLocation(length, storage);
+            if (length == OBJECTLENGTH_NULL) {
+                break;
+            }
+            const char *data = reinterpret_cast<const char*>(input.getRawPointer(length));
+            checkTooNarrowVarcharAndVarbinary(type, data, length, maxLength, isInBytes);
+
+            ::memcpy( storage + lengthLength, data, length);
+        } else {
+            if (length == OBJECTLENGTH_NULL) {
+                *reinterpret_cast<void**>(storage) = NULL;
+                return;
+            }
+            const char *data = reinterpret_cast<const char*>(input.getRawPointer(length));
+            checkTooNarrowVarcharAndVarbinary(type, data, length, maxLength, isInBytes);
+
+            const int32_t minlength = lengthLength + length;
+            StringRef* sref = StringRef::create(minlength, memoryNodeType);
             char* copy = sref->get();
             setObjectLengthToLocation( length, copy);
             ::memcpy(copy + lengthLength, data, length);
