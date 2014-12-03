@@ -253,7 +253,8 @@ namespace voltdb {
     m_dataEq(dataEq)
     {
         // allocate the hash table and bzero it (bzero is crucial)
-        void *memory = mmap(NULL, sizeof(HashNode*) * TABLE_SIZES[m_sizeIndex], PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+        //void *memory = mmap(NULL, sizeof(HashNode*) * TABLE_SIZES[m_sizeIndex], PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+        void *memory = HybridMemory::alloc(sizeof(HashNode*) * TABLE_SIZES[m_sizeIndex], HybridMemory::DRAM);
         assert(memory);
         m_buckets = reinterpret_cast<HashNode**>(memory);
         memset(m_buckets, 0, sizeof(HashNode*) * TABLE_SIZES[m_sizeIndex]);
@@ -276,7 +277,8 @@ namespace voltdb {
         }
 
         // delete the hashtable
-        munmap(m_buckets, sizeof(HashNode*) * TABLE_SIZES[m_sizeIndex]);
+        //munmap(m_buckets, sizeof(HashNode*) * TABLE_SIZES[m_sizeIndex]);
+        HybridMemory::free(m_buckets, sizeof(HashNode*) * TABLE_SIZES[m_sizeIndex]);
 
         // when the allocator gets cleaned up, it will
         // free the memory used for nodes
