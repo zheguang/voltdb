@@ -615,7 +615,8 @@ namespace voltdb {
         //std::cout.flush();
 
         // create new double size buffer
-        void *memory = mmap(NULL, sizeof(HashNode*) * TABLE_SIZES[newSizeIndex], PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+        //void *memory = mmap(NULL, sizeof(HashNode*) * TABLE_SIZES[newSizeIndex], PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+        void *memory = HybridMemory::alloc(sizeof(HashNode*) * TABLE_SIZES[newSizeIndex], HybridMemory::DRAM);
         assert(memory);
         HashNode **newBuckets = reinterpret_cast<HashNode**>(memory);
         memset(newBuckets, 0, TABLE_SIZES[newSizeIndex] * sizeof(HashNode*));
@@ -633,7 +634,8 @@ namespace voltdb {
         }
 
         // swap the table buffers
-        munmap(m_buckets, TABLE_SIZES[m_sizeIndex] * sizeof(HashNode*));
+        //munmap(m_buckets, TABLE_SIZES[m_sizeIndex] * sizeof(HashNode*));
+        HybridMemory::free(m_buckets, TABLE_SIZES[m_sizeIndex] * sizeof(HashNode*));
         m_buckets = newBuckets;
         m_sizeIndex = newSizeIndex;
     }

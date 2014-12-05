@@ -110,6 +110,7 @@ class TableIndexPicker
         if (m_inlinesOrColumnsOnly) {
             return getInstanceForKeyType<GenericKey<KeySize> >();
         }
+        fprintf(stderr, "Producing a GenericPersistentKey[%ld] index for %s: \n", KeySize, m_scheme.name.c_str());
         return getInstanceForKeyType<GenericPersistentKey<KeySize> >();
     }
 
@@ -223,7 +224,8 @@ TableIndex *TableIndexFactory::getWrappedInstance(const TableIndexScheme &scheme
     const TupleSchema *tupleSchema = scheme.tupleSchema;
     assert(tupleSchema);
     bool isIntsOnly = true;
-    bool isInlinesOrColumnsOnly = true;
+    //bool isInlinesOrColumnsOnly = true;
+    bool isInlinesOrColumnsOnly = false;
     std::vector<ValueType> keyColumnTypes;
     std::vector<int32_t> keyColumnLengths;
     std::vector<bool> keyColumnInBytes;

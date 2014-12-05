@@ -486,11 +486,11 @@ struct GenericPersistentKey : public GenericKey<keySize>
         assert(tuple);
         // Assume that there are indexed expressions.
         // Columns-only indexes don't use GenericPersistentKey
-        assert(indexed_expressions.size() > 0);
+        //assert(indexed_expressions.size() > 0);
         TableTuple keyTuple(keySchema);
         keyTuple.moveNoHeader(reinterpret_cast<void*>(this->data));
         const int columnCount = keySchema->columnCount();
-        for (int ii = 0; ii < columnCount; ++ii) {
+        /*for (int ii = 0; ii < columnCount; ++ii) {
             AbstractExpression* ae = indexed_expressions[ii];
             NValue indexedValue;
             try {
@@ -506,6 +506,10 @@ struct GenericPersistentKey : public GenericKey<keySize>
             // XXX: Could this ever somehow interact badly with a COW context?
             //keyTuple.setNValueAllocateForObjectCopies(ii, indexedValue, NULL);
             keyTuple.setNValueAllocateForObjectCopies(ii, indexedValue, HybridMemory::DRAM);
+        }*/
+        for (int ii = 0; ii < columnCount; ++ii) {
+            //keyTuple.setNValue(ii, tuple->getNValue(notUsedIndices[ii]));
+            keyTuple.setNValueAllocateForObjectCopies(ii, tuple->getNValue(notUsedIndices[ii]), HybridMemory::DRAM);
         }
     }
 

@@ -215,6 +215,7 @@ public:
     }
 
     void setNValue(const int idx, voltdb::NValue value);
+    void setNValueDeepCopy(const int idx, voltdb::NValue value, HybridMemory::MEMORY_NODE_TYPE memoryNodeType);
     /*
      * Copies range of NValues from one tuple to another.
      */
@@ -488,6 +489,19 @@ inline void TableTuple::setNValue(const int idx, voltdb::NValue value) {
     char *dataPtr = getWritableDataPtr(columnInfo);
     const int32_t columnLength = columnInfo->length;
     value.serializeToTupleStorage(dataPtr, isInlined, columnLength, isInBytes);
+}
+
+inline void TableTuple::setNValueDeepCopy(const int idx, voltdb::NValue value, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) {
+    assert(m_schema);
+    assert(m_data);
+
+    const TupleSchema::ColumnInfo *columnInfo = m_schema->getColumnInfo(idx);
+    value = value.castAs(columnInfo->getVoltType());
+    const bool isInlined = columnInfo->inlined;
+    const bool isInBytes = columnInfo->inBytes;
+    char *dataPtr = getWritableDataPtr(columnInfo);
+    const int32_t columnLength = columnInfo->length;
+    value.serializeToTupleStorageDeepCopy(dataPtr, isInlined, columnLength, isInBytes, memoryNodeType);
 }
 
 /** Multi column version. */
