@@ -19,6 +19,7 @@
 #include <cassert>
 
 #include "ContiguousAllocator.h"
+#include "common/FatalException.hpp"
 
 using namespace voltdb;
 
@@ -43,6 +44,7 @@ void *ContiguousAllocator::alloc() {
     if (blockOffset == 0) {
         //void *memory = malloc(sizeof(Buffer) + m_allocSize * m_chunkSize);
         void *memory = HybridMemory::alloc(sizeof(Buffer) + m_allocSize * m_chunkSize, m_memoryNodeType);
+        HybridMemory::assertAddress(memory, m_memoryNodeType);
 
         Buffer *buf = reinterpret_cast<Buffer*>(memory);
 

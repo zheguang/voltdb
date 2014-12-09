@@ -13,9 +13,13 @@ namespace voltdb {
     };
     static void *alloc(size_t sz, MEMORY_NODE_TYPE memoryNodeType);
     static void free(void* start, size_t sz);
+    static void assertAddress(void* start, MEMORY_NODE_TYPE memoryNodeType);
 
-    HybridMemory();
-    ~HybridMemory();
+  private:
+      HybridMemory();
+      ~HybridMemory();
+
+      static int memoryNodeOf(MEMORY_NODE_TYPE memoryNodeType);
   };
 
 };
