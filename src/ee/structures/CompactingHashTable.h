@@ -398,6 +398,7 @@ namespace voltdb {
         // create a new node
         void *memory = m_allocator.alloc();
         assert(memory);
+        HybridMemory::assertAddress(memory, HybridMemory::DRAM);
         HashNode *newNode;
         // placement new
         if (m_unique) {
@@ -407,6 +408,7 @@ namespace voltdb {
             newNode = new(memory) HashNode();
             newNode->nextWithKey = NULL;
         }
+        HybridMemory::assertAddress(newNode, HybridMemory::DRAM);
 
         newNode->hash = hash;
         newNode->key = key;
