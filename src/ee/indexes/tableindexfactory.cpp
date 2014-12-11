@@ -108,6 +108,7 @@ class TableIndexPicker
         // That's exactly what the GenericPersistentKey subtype of GenericKey does. This incurs extra overhead
         // for object copying and freeing, so is only enabled as needed.
         if (m_inlinesOrColumnsOnly) {
+            fprintf(stderr, "Producing a GenericKey[%ld] index for %s: \n", KeySize, m_scheme.name.c_str());
             return getInstanceForKeyType<GenericKey<KeySize> >();
         }
         fprintf(stderr, "Producing a GenericPersistentKey[%ld] index for %s: \n", KeySize, m_scheme.name.c_str());
@@ -224,8 +225,8 @@ TableIndex *TableIndexFactory::getWrappedInstance(const TableIndexScheme &scheme
     const TupleSchema *tupleSchema = scheme.tupleSchema;
     assert(tupleSchema);
     bool isIntsOnly = true;
-    //bool isInlinesOrColumnsOnly = true;
-    bool isInlinesOrColumnsOnly = false;
+    bool isInlinesOrColumnsOnly = true;
+    //bool isInlinesOrColumnsOnly = false; // False to force index to use GenericPersistenceKey.
     std::vector<ValueType> keyColumnTypes;
     std::vector<int32_t> keyColumnLengths;
     std::vector<bool> keyColumnInBytes;
