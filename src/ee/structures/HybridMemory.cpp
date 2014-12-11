@@ -13,7 +13,7 @@ void* HybridMemory::alloc(size_t sz, MEMORY_NODE_TYPE memoryNodeType) {
   void* result = numa_alloc_onnode(sz, memoryNodeOf(memoryNodeType));
   memset(result, 0, sz);
   // TODO: remove
-  assertAddress(result, memoryNodeType);
+  //assertAddress(result, memoryNodeType);
   return result;
 }
 
