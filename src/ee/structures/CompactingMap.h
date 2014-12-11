@@ -261,10 +261,9 @@ bool CompactingMap<Key, Data, Compare, hasRank>::insert(std::pair<Key, Data> val
         // create a new node
         void *memory = m_allocator.alloc();
         assert(memory);
-        HybridMemory::assertAddress(memory, HybridMemory::DRAM);
         // placement new
         TreeNode *z = new(memory) TreeNode();
-        HybridMemory::assertAddress(z, HybridMemory::DRAM);
+        //HybridMemory::assertAddress(z, HybridMemory::DRAM);
         z->key = value.first;
         z->value = value.second;
         z->left = z->right = &NIL;
@@ -285,10 +284,10 @@ bool CompactingMap<Key, Data, Compare, hasRank>::insert(std::pair<Key, Data> val
         // create a new node as root
         void *memory = m_allocator.alloc();
         assert(memory);
-        HybridMemory::assertAddress(memory, HybridMemory::DRAM);
+        //HybridMemory::assertAddress(memory, HybridMemory::DRAM);
         // placement new
         TreeNode *z = new(memory) TreeNode();
-        HybridMemory::assertAddress(z, HybridMemory::DRAM);
+        //HybridMemory::assertAddress(z, HybridMemory::DRAM);
         // placement new
         z->key = value.first;
         z->value = value.second;
