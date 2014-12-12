@@ -74,16 +74,16 @@ StringRef* StringRef::create(size_t size, HybridMemory::MEMORY_NODE_TYPE memoryN
 void
 StringRef::destroy(StringRef* sref)
 {
-#ifdef MEMCHECK
+/*#ifdef MEMCHECK
     delete sref;
-#else
+#else*/
     bool temp_pool = sref->m_tempPool;
     sref->~StringRef();
     if (!temp_pool)
     {
         ThreadLocalPool::get(sizeof(StringRef))->free(sref);
     }
-#endif
+/*#endif*/
 }
 
 /*StringRef::StringRef(size_t size)
@@ -114,6 +114,9 @@ StringRef::StringRef(std::size_t size, HybridMemory::MEMORY_NODE_TYPE memoryNode
     m_isHybridMemoryDram = (memoryNodeType == HybridMemory::DRAM);
     m_stringPtr =
         reinterpret_cast<char*>(ThreadLocalPool::getStringPool()->get(m_size, memoryNodeType)->malloc());
+#ifdef HYBRID_MEMORY_CHECK
+    HybridMemory::assertAddress(m_stringPtr, memoryNodeType);
+#endif
     setBackPtr();
 }
 
@@ -121,14 +124,14 @@ StringRef::~StringRef()
 {
     if (!m_tempPool)
     {
-#ifdef MEMCHECK
+/*#ifdef MEMCHECK
         delete[] m_stringPtr;
-#else
+#else*/
         if (m_isHybridMemoryDram)
           ThreadLocalPool::getStringPool()->get(m_size, HybridMemory::DRAM)->free(m_stringPtr);
         else
           ThreadLocalPool::getStringPool()->get(m_size, HybridMemory::NVM)->free(m_stringPtr);
-#endif
+/*#endif*/
     }
 }
 

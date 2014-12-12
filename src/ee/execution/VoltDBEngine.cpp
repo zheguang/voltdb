@@ -227,7 +227,23 @@ VoltDBEngine::initialize(int32_t clusterIndex,
                                             hostname,
                                             hostId);
 
+    printHybridMemoryBuildInfo();
+
     return true;
+}
+
+void VoltDBEngine::printHybridMemoryBuildInfo() {
+#ifdef HYBRID_MEMORY_CHECK
+  fprintf(stderr, "Enabled hybrid memory check. ");
+#else
+  fprintf(stderr, "Disabled hybrid memory check. ");
+#endif
+
+#ifdef STRING_KEY_COPY
+  fprintf(stderr, "Enabled string key copy.\n");
+#else
+  fprintf(stderr, "Disabled string key copy.\n");
+#endif
 }
 
 VoltDBEngine::~VoltDBEngine() {

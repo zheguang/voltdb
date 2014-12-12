@@ -107,7 +107,12 @@ class TableIndexPicker
         // then the GenericKey will have to reference and maintain its own persistent non-inline storage.
         // That's exactly what the GenericPersistentKey subtype of GenericKey does. This incurs extra overhead
         // for object copying and freeing, so is only enabled as needed.
-        if (m_inlinesOrColumnsOnly) {
+#ifdef STRING_KEY_COPY
+        bool stringKeyCopy = true;
+#else
+        bool stringKeyCopy = false;
+#endif
+        if ((! stringKeyCopy) && m_inlinesOrColumnsOnly) {
             fprintf(stderr, "Producing a GenericKey[%ld] index for %s: \n", KeySize, m_scheme.name.c_str());
             return getInstanceForKeyType<GenericKey<KeySize> >();
         }

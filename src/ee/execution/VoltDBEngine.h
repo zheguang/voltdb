@@ -215,6 +215,8 @@ class __attribute__((visibility("default"))) VoltDBEngine {
 
         void clearBench();
 
+        void printHybridMemoryBuildInfo();
+
         inline int getUsedParamcnt() const { return m_usedParamcnt;}
 
         /** index of the batch piece being executed */

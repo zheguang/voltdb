@@ -263,7 +263,9 @@ bool CompactingMap<Key, Data, Compare, hasRank>::insert(std::pair<Key, Data> val
         assert(memory);
         // placement new
         TreeNode *z = new(memory) TreeNode();
-        //HybridMemory::assertAddress(z, HybridMemory::DRAM);
+#ifdef HYBRID_MEMORY_CHECK
+        HybridMemory::assertAddress(z, HybridMemory::DRAM);
+#endif
         z->key = value.first;
         z->value = value.second;
         z->left = z->right = &NIL;
