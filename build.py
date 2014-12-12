@@ -115,6 +115,16 @@ if CTX.COVERAGE:
     CTX.CPPFLAGS += " -ftest-coverage -fprofile-arcs"
     CTX.OUTPUT_PREFIX += "-coverage"
 
+###############################################################################
+# Sam's hybrid memory
+###############################################################################
+
+if CTX.STRING_KEY_COPY:
+    CTX.CPPFLAGS += " -DSTRING_KEY_COPY"
+
+if CTX.HYBRID_MEMORY_CHECK:
+    CTX.CPPFLAGS += " -DHYBRID_MEMORY_CHECK"
+
 CTX.OUTPUT_PREFIX += "/"
 
 ###############################################################################
