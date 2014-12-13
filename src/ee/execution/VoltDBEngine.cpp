@@ -629,10 +629,10 @@ int VoltDBEngine::executePlanFragment(int64_t planfragmentId,
         PlanNodeType type = executor->m_abstractNode->getPlanNodeType();
         switch (type) {
           case PLAN_NODE_TYPE_INDEXSCAN:
-          /*case PLAN_NODE_TYPE_INDEXCOUNT:
+          case PLAN_NODE_TYPE_INDEXCOUNT:
           case PLAN_NODE_TYPE_NESTLOOPINDEX:
           case PLAN_NODE_TYPE_UPDATE:
-          case PLAN_NODE_TYPE_UPSERT:*/
+          case PLAN_NODE_TYPE_UPSERT:
             m_numIndexExecutorsCalls++;
             timespec endExecutor;
             clock_gettime(CLOCK_REALTIME, &endExecutor);
