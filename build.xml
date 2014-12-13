@@ -48,6 +48,14 @@
 <!-- sam's hybrid memory build setting -->
 <envdefault prop="string_key_copy" var="STRING_KEY_COPY" default="" />
 <envdefault prop="hybrid_memory_check" var="HYBRID_MEMORY_CHECK" default="" />
+<envdefault prop="temptable_in_dram" var="TEMPTABLE_IN_DRAM" default="" />
+<envdefault prop="temppool_in_dram" var="TEMPPOOL_IN_DRAM" default="" />
+
+<envdefault 
+  prop="hybrid_memory_build_args" 
+  var="HYBRID_MEMORY_BUILD_ARGS" 
+  default="${string_key_copy} ${hybrid_memory_check} ${temptable_in_dram} ${temppool_in_dram}" 
+/>
 
 <!-- allow env.VOLTPRO to override "voltpro" property -->
 <condition property="voltpro" value="${env.VOLTPRO}">
@@ -1149,7 +1157,7 @@ NATIVE EE STUFF
     <exec dir='.' executable='python' failonerror='true'>
         <env key="TEST_DIR" value="${build.testobjects.dir}" />
         <env key="EETESTSUITE" value="${eetestsuite}"/>
-        <arg line="build.py ${build} test ${string_key_copy} ${hybrid_memory_check}" />
+        <arg line="build.py ${build} test ${hybrid_memory_build_args}" />
     </exec>
 </target>
 
@@ -1158,14 +1166,14 @@ NATIVE EE STUFF
     <exec dir='.' executable='python' failonerror='true'>
         <env key="TEST_DIR" value="${build.testobjects.dir}" />
         <env key="EETESTSUITE" value="${eetestsuite}"/>
-        <arg line="build.py ${build} build ${string_key_copy} ${hybrid_memory_check}" />
+        <arg line="build.py ${build} build ${hybrid_memory_build_args}" />
     </exec>
 </target>
 
 <target name='voltdbipc' depends="ee"
     description="Build the IPC client.">
     <exec dir='.' executable='python' failonerror='true'>
-        <arg line="build.py ${build} voltdbipc ${string_key_copy} ${hybrid_memory_check}" />
+        <arg line="build.py ${build} voltdbipc ${hybrid_memory_build_args}" />
     </exec>
 </target>
 
@@ -1173,7 +1181,7 @@ NATIVE EE STUFF
     description="Build C++ JNI library and copy it to production folder.">
     <exec dir='.' executable='python' failonerror='true'>
         <env key="EESKIPBUILDMAKEFILE" value="true" />
-        <arg line="build.py ${build} ${string_key_copy} ${hybrid_memory_check}" />
+        <arg line="build.py ${build} ${hybrid_memory_build_args}" />
     </exec>
     <copy todir='voltdb'>
         <fileset dir="${build.dir}/nativelibs">
@@ -1203,14 +1211,14 @@ NATIVE EE STUFF
     description="Just make the makefile for the C++ JNI library.">
     <exec dir='.' executable='python' failonerror='true'>
         <env key="EEONLYBUILDMAKEFILE" value="true"/>
-        <arg line="build.py ${build} ${string_key_copy} ${hybrid_memory_check}" />
+        <arg line="build.py ${build} ${hybrid_memory_build_args}" />
     </exec>
 </target>
 
 <target name='recompile_ee_nodepends'
     description="Build C++ JNI library and copy it to production folder.">
     <exec dir='.' executable='python' failonerror='true'>
-        <arg line="build.py ${build} ${string_key_copy} ${hybrid_memory_check}" />
+        <arg line="build.py ${build} ${hybrid_memory_build_args}" />
     </exec>
     <copy todir='voltdb'>
         <fileset dir="${build.dir}/nativelibs">
@@ -1222,14 +1230,14 @@ NATIVE EE STUFF
 <target name='ee_profile' depends="catalog, jnicompile"
     description="Build C++ JNI lib dl-ing perf tools and copy it to production folder.">
     <exec dir='.' executable='python' failonerror='true'>
-        <arg line="build.py ${build} profile ${string_key_copy} ${hybrid_memory_check}" />
+        <arg line="build.py ${build} profile ${hybrid_memory_build_args}" />
     </exec>
 </target>
 
 <target name='execplanfrag' depends="ee"
         description="Create test program that loads catalog and tables and executes a plan fragment.">
     <exec dir='.' executable='python' failonerror='true'>
-        <arg line="build.py EXECPLANFRAG ${build} ${string_key_copy} ${hybrid_memory_check}" />
+        <arg line="build.py EXECPLANFRAG ${build} ${hybrid_memory_build_args}" />
     </exec>
 </target>
 
@@ -1637,7 +1645,7 @@ TEST CASES
   <!-- Generate instrumented objects -->
   <!-- Whether any work needs doing is left to the C++ makefile -->
   <exec dir='.' executable='python' failonerror='true'>
-    <arg line="build.py ${build} coverage ${string_key_copy} ${hybrid_memory_check}" />
+    <arg line="build.py ${build} coverage ${hybrid_memory_build_args}" />
   </exec>
   <mkdir dir="${lcov.dir}" />
   <!-- Reset all counters -->
@@ -1698,7 +1706,7 @@ TEST CASES
     description="Run C++ unit tests from the coverage directory">
     <exec dir='.' executable='python' failonerror='true'>
         <env key="TEST_DIR" value="${build.dir}-coverage/testobjects" />
-        <arg line="build.py ${build} test coverage ${string_key_copy} ${hybrid_memory_check} " />
+        <arg line="build.py ${build} test coverage ${hybrid_memory_build_args}" />
     </exec>
 </target>
 

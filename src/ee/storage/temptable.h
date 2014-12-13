@@ -237,7 +237,11 @@ inline void TempTable::deleteAllTuplesNonVirtual(bool freeAllocatedStrings) {
 }
 
 inline TBPtr TempTable::allocateNextBlock() {
+#ifdef TEMPTABLE_IN_DRAM
     TBPtr block(new (ThreadLocalPool::getExact(sizeof(TupleBlock))->malloc()) TupleBlock(this, TBBucketPtr(), HybridMemory::DRAM));
+#else
+    TBPtr block(new (ThreadLocalPool::getExact(sizeof(TupleBlock))->malloc()) TupleBlock(this, TBBucketPtr(), HybridMemory::NVM));
+#endif
     m_data.push_back(block);
 
     if (m_limits) {

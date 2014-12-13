@@ -125,6 +125,12 @@ if CTX.STRING_KEY_COPY:
 if CTX.HYBRID_MEMORY_CHECK:
     CTX.CPPFLAGS += " -DHYBRID_MEMORY_CHECK"
 
+if CTX.TEMPTABLE_IN_DRAM:
+    CTX.CPPFLAGS += " -DTEMPTABLE_IN_DRAM"
+
+if CTX.TEMPPOOL_IN_DRAM:
+    CTX.CPPFLAGS += " -DTEMPPOOL_IN_DRAM"
+
 CTX.OUTPUT_PREFIX += "/"
 
 ###############################################################################

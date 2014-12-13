@@ -240,9 +240,21 @@ void VoltDBEngine::printHybridMemoryBuildInfo() {
 #endif
 
 #ifdef STRING_KEY_COPY
-  fprintf(stderr, "Enabled string key copy.\n");
+  fprintf(stderr, "Enabled string key copy.");
 #else
-  fprintf(stderr, "Disabled string key copy.\n");
+  fprintf(stderr, "Disabled string key copy.");
+#endif
+
+#ifdef TEMPTABLE_IN_DRAM
+  fprintf(stderr, "Enabled temptable in dram.");
+#else
+  fprintf(stderr, "Disabled temptable in dram.");
+#endif
+
+#ifdef TEMPPOOL_IN_DRAM
+  fprintf(stderr, "Enabled temp pool in dram.\n");
+#else
+  fprintf(stderr, "Disabled temp pool in dram.\n");
 #endif
 }
 
