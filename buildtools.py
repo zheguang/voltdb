@@ -30,6 +30,8 @@ class BuildContext:
         self.CXX = "g++"
         self.STRING_KEY_COPY = False
         self.HYBRID_MEMORY_CHECK = False
+        self.TEMPTABLE_IN_DRAM = False
+        self.TEMPPOOL_IN_DRAM = False
         for arg in [x.strip().upper() for x in args]:
             if arg in ["DEBUG", "RELEASE", "MEMCHECK", "MEMCHECK_NOFREELIST"]:
                 self.LEVEL = arg
@@ -43,6 +45,10 @@ class BuildContext:
                 self.STRING_KEY_COPY = True
             if arg in ["HYBRID_MEMORY_CHECK"]:
                 self.HYBRID_MEMORY_CHECK = True
+            if arg in ["TEMPTABLE_IN_DRAM"]:
+                self.TEMPTABLE_IN_DRAM = True
+            if arg in ["TEMPPOOL_IN_DRAM"]:
+                self.TEMPPOOL_IN_DRAM = True
         # Exec build.local if available, a python script provided with this
         # BuildContext object as the update-able symbol BUILD.  These example
         # build.local lines force the use of clang instead of gcc/g++.

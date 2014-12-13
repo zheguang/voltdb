@@ -89,7 +89,11 @@ public:
 #else
         char *storage = new char[m_allocationSize];
 #endif*/
+#ifdef TEMPPOOL_IN_DRAM
+        char *storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, HybridMemory::DRAM));
+#else
         char *storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, HybridMemory::NVM));
+#endif
         m_chunks.push_back(Chunk(m_allocationSize, storage));
     }
 
@@ -112,7 +116,11 @@ public:
 #else
         char *storage = new char[m_allocationSize];
 #endif*/
+#ifdef TEMPPOOL_IN_DRAM
+        char *storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, HybridMemory::DRAM));
+#else
         char *storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, HybridMemory::NVM));
+#endif
         m_chunks.push_back(Chunk(allocationSize, storage));
     }
 
@@ -167,7 +175,11 @@ public:
 #else
                 char *storage = new char[size];
 #endif*/
+#ifdef TEMPPOOL_IN_DRAM
+                char* storage = static_cast<char*>(HybridMemory::alloc(nexthigher(size), HybridMemory::DRAM));
+#else
                 char* storage = static_cast<char*>(HybridMemory::alloc(nexthigher(size), HybridMemory::NVM));
+#endif
                 m_oversizeChunks.push_back(Chunk(nexthigher(size), storage));
                 Chunk &newChunk = m_oversizeChunks.back();
                 newChunk.m_offset = size;
@@ -200,7 +212,11 @@ public:
 #else
                 char *storage = new char[m_allocationSize];
 #endif*/
+#ifdef TEMPPOOL_IN_DRAM
+                char* storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, HybridMemory::DRAM));
+#else
                 char* storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, HybridMemory::NVM));
+#endif
                 m_chunks.push_back(Chunk(m_allocationSize, storage));
                 Chunk &newChunk = m_chunks.back();
                 newChunk.m_offset = size;
