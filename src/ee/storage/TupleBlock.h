@@ -246,7 +246,7 @@ private:
 
     TBBucketPtr m_bucket;
     int m_bucketIndex;
-
+    HybridMemory::MEMORY_NODE_TYPE m_memoryNodeType;
 };
 
 /**

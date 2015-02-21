@@ -225,17 +225,17 @@ def buildMakefile(CTX):
 
     makefile.write("# main jnilib target\n")
     makefile.write("nativelibs/libvoltdb-%s.$(JNIEXT): " % version + " ".join(jni_objects) + "\n")
-    makefile.write("\t$(LINK.cpp) $(JNILIBFLAGS) -o $@ $^ -lnuma\n")
+    makefile.write("\t$(LINK.cpp) $(JNILIBFLAGS) -o $@ $^ -lvmem -lxmem -lnuma\n")
     makefile.write("\n")
 
     makefile.write("# voltdb instance that loads the jvm from C++\n")
     makefile.write("prod/voltrun: $(SRC)/voltrun.cpp " + " ".join(static_objects) + "\n")
-    makefile.write("\t$(LINK.cpp) $(JNIBINFLAGS) -o $@ $^ -lnuma\n")
+    makefile.write("\t$(LINK.cpp) $(JNIBINFLAGS) -o $@ $^ -lvmem -lxmem -lnuma\n")
     makefile.write("\n")
 
     makefile.write("# voltdb execution engine that accepts work on a tcp socket (vs. jni)\n")
     makefile.write("prod/voltdbipc: $(SRC)/voltdbipc.cpp " + " objects/volt.a\n")
-    makefile.write("\t$(LINK.cpp) -o $@ $^ %s -lnuma\n" % (CTX.LASTLDFLAGS))
+    makefile.write("\t$(LINK.cpp) -o $@ $^ %s -lvmem -lxmem -lnuma\n" % (CTX.LASTLDFLAGS))
     makefile.write("\n")
 
 
@@ -277,9 +277,9 @@ def buildMakefile(CTX):
         os.system("mkdir -p %s" % (jni_targetpath))
         os.system("mkdir -p %s" % (static_targetpath))
         makefile.write(jni_objname + ": " + filename + " " + " ".join(mydeps) + "\n")
-        makefile.write("\t$(CCACHE) $(COMPILE.cpp) %s -o $@ %s -lnuma\n" % (CTX.EXTRAFLAGS, filename))
+        makefile.write("\t$(CCACHE) $(COMPILE.cpp) %s -o $@ %s -lvmem -lxmem -lnuma\n" % (CTX.EXTRAFLAGS, filename))
         makefile.write(static_objname + ": " + filename + " " + " ".join(mydeps) + "\n")
-        makefile.write("\t$(CCACHE) $(COMPILE.cpp) %s -o $@ %s -lnuma\n" % (CTX.EXTRAFLAGS, filename))
+        makefile.write("\t$(CCACHE) $(COMPILE.cpp) %s -o $@ %s -lvmem -lxmem -lnuma\n" % (CTX.EXTRAFLAGS, filename))
     makefile.write("\n")
 
     for filename in third_party_input_paths:

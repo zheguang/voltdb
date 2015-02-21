@@ -10,16 +10,21 @@
 using namespace voltdb;
 
 void* HybridMemory::alloc(size_t sz, MEMORY_NODE_TYPE memoryNodeType) {
-  void* result = numa_alloc_onnode(sz, memoryNodeOf(memoryNodeType));
+  /*void* result = numa_alloc_onnode(sz, memoryNodeOf(memoryNodeType));
   memset(result, 0, sz);
 #ifdef HYBRID_MEMORY_CHECK
   assertAddress(result, memoryNodeType);
 #endif
+  return result;*/
+  void* result = xmalloc(xmemClassifierOf(memoryNodeType), sz);
+  if (!result) {
+    throwFatalException("Cannot allocate using xmalloc.");
+  }
   return result;
 }
 
-void HybridMemory::free(void* start, size_t sz) {
-  numa_free(start, sz); 
+void HybridMemory::free(void* start, size_t sz, MEMORY_NODE_TYPE memoryNodeType) {
+  xfree(xmemClassifierOf(memoryNodeType), start);
 }
 
 void HybridMemory::assertAddress(void* start, MEMORY_NODE_TYPE memoryNodeType) {
@@ -37,6 +42,21 @@ void HybridMemory::assertAddress(void* start, MEMORY_NODE_TYPE memoryNodeType) {
   if (status[0] != memoryNode) {
     throwFatalException("Address error: not on the expected memory node. Expected: %d, actual: %d. Poiter: %p. Page: %p\n.", memoryNode, status[0], start, page[0]);
   }
+}
+
+xmem_classifier_t HybridMemory::xmemClassifierOf(MEMORY_NODE_TYPE memoryNodeType) {
+  xmem_classifier_t classifier;
+  switch (memoryNodeType) {
+    case DRAM:
+      classifier = XMEM_CLASSIFIER(0, XMEM_T_NONE, XMEM_P_NONE);
+      break;
+    case NVM:
+      classifier = XMEM_CLASSIFIER(2, XMEM_T_NONE, XMEM_P_NONE);
+      break;
+    default:
+      throwFatalException("Non supported memory node type");
+  }
+  return classifier;
 }
 
 int HybridMemory::memoryNodeOf(MEMORY_NODE_TYPE memoryNodeType) {

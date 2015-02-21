@@ -29,7 +29,7 @@ ContiguousAllocator::ContiguousAllocator(int32_t allocSize, int32_t chunkSize, H
 ContiguousAllocator::~ContiguousAllocator() {
     while (m_tail) {
         Buffer *buf = m_tail->prev;
-        HybridMemory::free(m_tail, sizeof(Buffer) + m_allocSize * m_chunkSize);
+        HybridMemory::free(m_tail, sizeof(Buffer) + m_allocSize * m_chunkSize, m_memoryNodeType);
         m_tail = buf;
     }
 }
@@ -85,7 +85,7 @@ void ContiguousAllocator::trim() {
     // yay! kill a block
     if (blockOffset == 0) {
         Buffer *buf = m_tail->prev;
-        HybridMemory::free(m_tail, sizeof(Buffer) + m_allocSize * m_chunkSize);
+        HybridMemory::free(m_tail, sizeof(Buffer) + m_allocSize * m_chunkSize, m_memoryNodeType);
         m_tail = buf;
         m_blockCount--;
     }
