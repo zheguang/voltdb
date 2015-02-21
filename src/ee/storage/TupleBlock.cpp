@@ -34,7 +34,8 @@ TupleBlock::TupleBlock(Table *table, TBBucketPtr bucket, HybridMemory::MEMORY_NO
         m_lastCompactionOffset(0),
         m_tuplesPerBlockDivNumBuckets(m_tuplesPerBlock / static_cast<double>(TUPLE_BLOCK_NUM_BUCKETS)),
         m_bucket(bucket),
-        m_bucketIndex(0)
+        m_bucketIndex(0),
+        m_memoryNodeType(memoryNodeType)
 {
 /*#ifdef MEMCHECK
     m_storage = new char[table->m_tableAllocationSize];
@@ -71,7 +72,7 @@ TupleBlock::~TupleBlock() {
     //delete []m_storage;
 #endif
 #endif*/
-    HybridMemory::free(m_storage, m_table->m_tableAllocationSize);
+    HybridMemory::free(m_storage, m_table->m_tableAllocationSize, m_memoryNodeType);
 }
 
 std::pair<int, int> TupleBlock::merge(Table *table, TBPtr source, TupleMovementListener *listener) {

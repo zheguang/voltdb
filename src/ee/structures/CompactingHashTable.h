@@ -278,7 +278,7 @@ namespace voltdb {
 
         // delete the hashtable
         //munmap(m_buckets, sizeof(HashNode*) * TABLE_SIZES[m_sizeIndex]);
-        HybridMemory::free(m_buckets, sizeof(HashNode*) * TABLE_SIZES[m_sizeIndex]);
+        HybridMemory::free(m_buckets, sizeof(HashNode*) * TABLE_SIZES[m_sizeIndex], HybridMemory::DRAM);
 
         // when the allocator gets cleaned up, it will
         // free the memory used for nodes
@@ -641,7 +641,7 @@ namespace voltdb {
 
         // swap the table buffers
         //munmap(m_buckets, TABLE_SIZES[m_sizeIndex] * sizeof(HashNode*));
-        HybridMemory::free(m_buckets, TABLE_SIZES[m_sizeIndex] * sizeof(HashNode*));
+        HybridMemory::free(m_buckets, TABLE_SIZES[m_sizeIndex] * sizeof(HashNode*), HybridMemory::DRAM);
         m_buckets = newBuckets;
         m_sizeIndex = newSizeIndex;
     }

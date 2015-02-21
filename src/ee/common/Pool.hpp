@@ -90,8 +90,10 @@ public:
         char *storage = new char[m_allocationSize];
 #endif*/
 #ifdef TEMPPOOL_IN_DRAM
+        m_memoryNodeType = HybridMemory::DRAM;
         char *storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, HybridMemory::DRAM));
 #else
+        m_memoryNodeType = HybridMemory::NVM;
         char *storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, HybridMemory::NVM));
 #endif
         m_chunks.push_back(Chunk(m_allocationSize, storage));
@@ -117,8 +119,10 @@ public:
         char *storage = new char[m_allocationSize];
 #endif*/
 #ifdef TEMPPOOL_IN_DRAM
+        m_memoryNodeType = HybridMemory::DRAM;
         char *storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, HybridMemory::DRAM));
 #else
+        m_memoryNodeType = HybridMemory::NVM;
         char *storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, HybridMemory::NVM));
 #endif
         m_chunks.push_back(Chunk(allocationSize, storage));
@@ -134,7 +138,7 @@ public:
 #else
             delete [] m_chunks[ii].m_chunkData;
 #endif*/
-            HybridMemory::free(m_chunks[ii].m_chunkData, m_chunks[ii].m_size);
+            HybridMemory::free(m_chunks[ii].m_chunkData, m_chunks[ii].m_size, m_memoryNodeType);
         }
         for (std::size_t ii = 0; ii < m_oversizeChunks.size(); ii++) {
 /*#ifdef USE_MMAP
@@ -145,7 +149,7 @@ public:
 #else
             delete [] m_oversizeChunks[ii].m_chunkData;
 #endif*/
-            HybridMemory::free(m_oversizeChunks[ii].m_chunkData, m_oversizeChunks[ii].m_size);
+            HybridMemory::free(m_oversizeChunks[ii].m_chunkData, m_oversizeChunks[ii].m_size, m_memoryNodeType);
         }
     }
 
@@ -259,7 +263,7 @@ public:
 #else
             delete [] m_oversizeChunks[ii].m_chunkData;
 #endif*/
-            HybridMemory::free(m_oversizeChunks[ii].m_chunkData, m_oversizeChunks[ii].m_size);
+            HybridMemory::free(m_oversizeChunks[ii].m_chunkData, m_oversizeChunks[ii].m_size, m_memoryNodeType);
         }
         m_oversizeChunks.clear();
 
@@ -282,7 +286,7 @@ public:
 #else
                 delete []m_chunks[ii].m_chunkData;
 #endif*/
-                HybridMemory::free(m_chunks[ii].m_chunkData, m_chunks[ii].m_size);
+                HybridMemory::free(m_chunks[ii].m_chunkData, m_chunks[ii].m_size, m_memoryNodeType);
             }
             m_chunks.resize(m_maxChunkCount);
         }
@@ -316,6 +320,8 @@ private:
     // No implicit copies
     Pool(const Pool&);
     Pool& operator=(const Pool&);
+    
+    HybridMemory::MEMORY_NODE_TYPE m_memoryNodeType;
 };
 #else
 /**

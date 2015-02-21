@@ -52,6 +52,7 @@
  * @{
 */
 
+#include <libxmem.h>
 #include <string>
 #include <vector>
 #include <signal.h>
@@ -202,6 +203,8 @@ SHAREDLIB_JNIEXPORT jlong JNICALL Java_org_voltdb_jni_ExecutionEngine_nativeCrea
     // be invalid in the previous stack frames (after the return of the
     // last ee native call.)
 
+    xmem_init();
+
     jobject java_ee = env->NewGlobalRef(obj);
     if (java_ee == NULL) {
         assert(!"Failed to allocate global reference to java EE.");
@@ -242,6 +245,8 @@ SHAREDLIB_JNIEXPORT jint JNICALL Java_org_voltdb_jni_ExecutionEngine_nativeDestr
     updateJNILogProxy(engine); //JNIEnv pointer can change between calls, must be updated
     delete engine;
     delete topend;
+
+    xmem_destroy();
     return org_voltdb_jni_ExecutionEngine_ERRORCODE_SUCCESS;
 }
 
