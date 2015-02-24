@@ -181,6 +181,16 @@ void setupSigHandler(void) {
 #endif
 }
 
+SHAREDLIB_JNIEXPORT jint JNICALL Java_org_voltdb_jni_ExecutionEngine_nativeXmemInit(JNIEnv *env, jobject obj) {
+    xmem_init();
+    return org_voltdb_jni_ExecutionEngine_ERRORCODE_SUCCESS;
+}
+
+SHAREDLIB_JNIEXPORT jint JNICALL Java_org_voltdb_jni_ExecutionEngine_nativeXmemDestroy(JNIEnv *env, jobject obj) {
+    xmem_destroy();
+    return org_voltdb_jni_ExecutionEngine_ERRORCODE_SUCCESS;
+}
+
 ////////////////////////////////////////////////////////////////////////////
 // Create / Destroy
 ////////////////////////////////////////////////////////////////////////////
@@ -202,8 +212,6 @@ SHAREDLIB_JNIEXPORT jlong JNICALL Java_org_voltdb_jni_ExecutionEngine_nativeCrea
     // second java->ee call may generate a new local reference that would
     // be invalid in the previous stack frames (after the return of the
     // last ee native call.)
-
-    xmem_init();
 
     jobject java_ee = env->NewGlobalRef(obj);
     if (java_ee == NULL) {
@@ -246,7 +254,6 @@ SHAREDLIB_JNIEXPORT jint JNICALL Java_org_voltdb_jni_ExecutionEngine_nativeDestr
     delete engine;
     delete topend;
 
-    xmem_destroy();
     return org_voltdb_jni_ExecutionEngine_ERRORCODE_SUCCESS;
 }
 
