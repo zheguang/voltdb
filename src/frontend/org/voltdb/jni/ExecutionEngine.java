@@ -590,6 +590,10 @@ public abstract class ExecutionEngine implements FastDeserializer.Deserializatio
 
     protected native byte[] nextDependencyTest(int dependencyId);
 
+    protected native int nativeXmemInit();
+
+    protected native int nativeXmemDestroy();
+
     /**
      * Just creates a new VoltDBEngine object and returns it to Java.
      * Never fail to destroy() for the VoltDBEngine* once you call this method

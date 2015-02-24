@@ -127,6 +127,9 @@ public class ExecutionEngineJNI extends ExecutionEngine {
         //exceptionBuffer.order(ByteOrder.nativeOrder());
         LOG.trace("Creating Execution Engine on clusterIndex=" + clusterIndex
                 + ", site_id = " + siteId + "...");
+
+        nativeXmemInit();
+
         /*
          * (Ning): The reason I'm testing if we're running in Sun's JVM is that
          * EE needs this info in order to decide whether it's safe to install
@@ -204,6 +207,7 @@ public class ExecutionEngineJNI extends ExecutionEngine {
     public void release() throws EEException {
         LOG.trace("Releasing Execution Engine... " + pointer);
         if (pointer != 0L) {
+            nativeXmemDestroy();
             final int errorCode = nativeDestroy(pointer);
             pointer = 0L;
             checkErrorCode(errorCode);

@@ -100,6 +100,8 @@ public class Site implements Runnable, SiteProcedureConnection, SiteSnapshotConn
     // Set to false trigger shutdown.
     volatile boolean m_shouldContinue = true;
 
+    volatile boolean m_xmemInitCalled = false;
+
     // HSId of this site's initiator.
     final long m_siteId;
 
