@@ -9,8 +9,9 @@ namespace voltdb {
   class HybridMemory {
   public:
     enum MEMORY_NODE_TYPE {
-      DRAM,
-      NVM
+      DRAM = 0,
+      DRAM_SECONDARY_PRIORITY,
+      NVM,
     };
 
     static void *alloc(size_t sz, MEMORY_NODE_TYPE memoryNodeType);
