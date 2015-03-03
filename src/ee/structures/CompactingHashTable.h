@@ -278,7 +278,7 @@ namespace voltdb {
 
         // delete the hashtable
         //munmap(m_buckets, sizeof(HashNode*) * TABLE_SIZES[m_sizeIndex]);
-        HybridMemory::free(m_buckets, sizeof(HashNode*) * TABLE_SIZES[m_sizeIndex], HybridMemory::DRAM);
+        HybridMemory::free(m_buckets, sizeof(HashNode*) * TABLE_SIZES[m_sizeIndex], HybridMemory::DRAM_SECONDARY_PRIORITY);
 
         // when the allocator gets cleaned up, it will
         // free the memory used for nodes
@@ -399,7 +399,7 @@ namespace voltdb {
         void *memory = m_allocator.alloc();
         assert(memory);
 #ifdef HYBRID_MEMORY_CHECK
-        HybridMemory::assertAddress(memory, HybridMemory::DRAM);
+        HybridMemory::assertAddress(memory, HybridMemory::DRAM_SECONDARY_PRIORITY);
 #endif
         HashNode *newNode;
         // placement new
@@ -411,7 +411,7 @@ namespace voltdb {
             newNode->nextWithKey = NULL;
         }
 #ifdef HYBRID_MEMORY_CHECK
-        HybridMemory::assertAddress(newNode, HybridMemory::DRAM);
+        HybridMemory::assertAddress(newNode, HybridMemory::DRAM_SECONDARY_PRIORITY);
 #endif
 
         newNode->hash = hash;
@@ -622,7 +622,7 @@ namespace voltdb {
 
         // create new double size buffer
         //void *memory = mmap(NULL, sizeof(HashNode*) * TABLE_SIZES[newSizeIndex], PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
-        void *memory = HybridMemory::alloc(sizeof(HashNode*) * TABLE_SIZES[newSizeIndex], HybridMemory::DRAM);
+        void *memory = HybridMemory::alloc(sizeof(HashNode*) * TABLE_SIZES[newSizeIndex], HybridMemory::DRAM_SECONDARY_PRIORITY);
         assert(memory);
         HashNode **newBuckets = reinterpret_cast<HashNode**>(memory);
         memset(newBuckets, 0, TABLE_SIZES[newSizeIndex] * sizeof(HashNode*));
@@ -641,7 +641,7 @@ namespace voltdb {
 
         // swap the table buffers
         //munmap(m_buckets, TABLE_SIZES[m_sizeIndex] * sizeof(HashNode*));
-        HybridMemory::free(m_buckets, TABLE_SIZES[m_sizeIndex] * sizeof(HashNode*), HybridMemory::DRAM);
+        HybridMemory::free(m_buckets, TABLE_SIZES[m_sizeIndex] * sizeof(HashNode*), HybridMemory::DRAM_SECONDARY_PRIORITY);
         m_buckets = newBuckets;
         m_sizeIndex = newSizeIndex;
     }
