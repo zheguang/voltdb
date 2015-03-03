@@ -50,6 +50,9 @@ xmem_classifier_t HybridMemory::xmemClassifierOf(MEMORY_NODE_TYPE memoryNodeType
     case DRAM:
       classifier = XMEM_CLASSIFIER(0, XMEM_T_NONE, XMEM_P_NONE);
       break;
+    case DRAM_SECONDARY_PRIORITY:
+      classifier = XMEM_CLASSIFIER(1, XMEM_T_NONE, XMEM_P_NONE);
+      break;
     case NVM:
       classifier = XMEM_CLASSIFIER(2, XMEM_T_NONE, XMEM_P_NONE);
       break;
