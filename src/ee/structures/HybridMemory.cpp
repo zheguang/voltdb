@@ -79,7 +79,7 @@ HybridMemory::MEMORY_NODE_TYPE HybridMemory::tablePriorityOf(const std::string& 
   } else {
     priority = DRAM_SECONDARY_PRIORITY;
   }
-  VOLT_INFO("Got table priority of (%s) as (%d).\n", name.c_str(), priority);
+  //fprintf(stderr, "Got table priority of (%s) as (%d).\n", name.c_str(), priority);
   return priority;
 }
 
@@ -90,7 +90,7 @@ HybridMemory::MEMORY_NODE_TYPE HybridMemory::indexPriorityOf(const std::string& 
   } else {
     priority = DRAM;
   }
-  VOLT_INFO("Got index priority of (%s) as (%d).\n", name.c_str(), priority);
+  //fprintf(stderr, "Got index priority of (%s) as (%d).\n", name.c_str(), priority);
   return priority;
 }
 
