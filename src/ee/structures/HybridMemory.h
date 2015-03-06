@@ -3,6 +3,8 @@
 
 #include <cstdlib>
 #include <libxmem.h>
+#include <cstddef>
+#include <string>
 
 namespace voltdb {
 
@@ -11,12 +13,17 @@ namespace voltdb {
     enum MEMORY_NODE_TYPE {
       DRAM = 0,
       DRAM_SECONDARY_PRIORITY,
+      DRAM_THIRD_PRIORITY,
+      DRAM_FOURTH_PRIORITY,
       NVM,
     };
 
     static void *alloc(size_t sz, MEMORY_NODE_TYPE memoryNodeType);
     static void free(void* start, size_t sz, MEMORY_NODE_TYPE memoryNodeType);
     static void assertAddress(void* start, MEMORY_NODE_TYPE memoryNodeType);
+
+    static MEMORY_NODE_TYPE indexPriorityOf(const std::string& name);
+    static MEMORY_NODE_TYPE tablePriorityOf(const std::string& name);
 
   private:
       HybridMemory();
