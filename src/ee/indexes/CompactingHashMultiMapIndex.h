@@ -186,7 +186,7 @@ class CompactingHashMultiMapIndex : public TableIndex
 public:
     CompactingHashMultiMapIndex(const TupleSchema *keySchema, const TableIndexScheme &scheme) :
         TableIndex(keySchema, scheme),
-        m_entries(false, KeyHasher(keySchema), KeyEqualityChecker(keySchema)),
+        m_entries(scheme.name, false, KeyHasher(keySchema), KeyEqualityChecker(keySchema)),
         m_match(getTupleSchema()),
         m_eq(keySchema)
     {}

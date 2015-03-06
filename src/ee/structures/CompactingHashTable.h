@@ -29,6 +29,7 @@
 #include <sys/mman.h>
 #include <boost/functional/hash.hpp>
 #include <stdint.h>
+#include <string>
 
 namespace voltdb {
 
@@ -117,6 +118,7 @@ namespace voltdb {
         uint64_t m_count;                 // number of items in the hash
         uint64_t m_uniqueCount;           // number of unique keys
         int m_sizeIndex;                  // current bucket count (from array)
+        std::string m_indexName;
         ContiguousAllocator m_allocator;  // allocator supporting compaction
         Hasher m_hasher;                  // instance of the hashing function
         KeyEqChecker m_keyEq;             // instance of the key eq checker
@@ -154,7 +156,7 @@ namespace voltdb {
         };
 
         /** Constructor allows passing in instances for the hasher and eq checkers */
-        CompactingHashTable(bool unique, Hasher hasher = Hasher(), KeyEqChecker keyEq = KeyEqChecker(), DataEqChecker dataEq = DataEqChecker());
+        CompactingHashTable(const std::string& indexName, bool unique, Hasher hasher = Hasher(), KeyEqChecker keyEq = KeyEqChecker(), DataEqChecker dataEq = DataEqChecker());
         ~CompactingHashTable();
 
         /** simple find */
@@ -242,19 +244,23 @@ namespace voltdb {
     ///////////////////////////////////////////
 
     template<class K, class T, class H, class EK, class ET>
-    CompactingHashTable<K, T, H, EK, ET>::CompactingHashTable(bool unique, Hasher hasher, KeyEqChecker keyEq, DataEqChecker dataEq)
+    CompactingHashTable<K, T, H, EK, ET>::CompactingHashTable(const std::string& indexName, bool unique, Hasher hasher, KeyEqChecker keyEq, DataEqChecker dataEq)
     : m_unique(unique),
     m_count(0),
     m_uniqueCount(0),
     m_sizeIndex(BUCKET_INITIAL_INDEX),
-    m_allocator((int32_t)(unique ? sizeof(HashNodeSmall) : sizeof(HashNode)), ALLOCATOR_CHUNK_SIZE, HybridMemory::DRAM_SECONDARY_PRIORITY),
+    m_indexName(indexName),
+    //m_allocator((int32_t)(unique ? sizeof(HashNodeSmall) : sizeof(HashNode)), ALLOCATOR_CHUNK_SIZE, HybridMemory::DRAM_SECONDARY_PRIORITY),
+    m_allocator((int32_t)(unique ? sizeof(HashNodeSmall) : sizeof(HashNode)), ALLOCATOR_CHUNK_SIZE, HybridMemory::indexPriorityOf(indexName)),
     m_hasher(hasher),
     m_keyEq(keyEq),
     m_dataEq(dataEq)
     {
+       m_indexName = indexName;
         // allocate the hash table and bzero it (bzero is crucial)
         //void *memory = mmap(NULL, sizeof(HashNode*) * TABLE_SIZES[m_sizeIndex], PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
-        void *memory = HybridMemory::alloc(sizeof(HashNode*) * TABLE_SIZES[m_sizeIndex], HybridMemory::DRAM_SECONDARY_PRIORITY);
+        //void *memory = HybridMemory::alloc(sizeof(HashNode*) * TABLE_SIZES[m_sizeIndex], HybridMemory::DRAM_SECONDARY_PRIORITY);
+        void *memory = HybridMemory::alloc(sizeof(HashNode*) * TABLE_SIZES[m_sizeIndex], HybridMemory::indexPriorityOf(indexName));
         assert(memory);
         m_buckets = reinterpret_cast<HashNode**>(memory);
         memset(m_buckets, 0, sizeof(HashNode*) * TABLE_SIZES[m_sizeIndex]);
@@ -278,7 +284,7 @@ namespace voltdb {
 
         // delete the hashtable
         //munmap(m_buckets, sizeof(HashNode*) * TABLE_SIZES[m_sizeIndex]);
-        HybridMemory::free(m_buckets, sizeof(HashNode*) * TABLE_SIZES[m_sizeIndex], HybridMemory::DRAM_SECONDARY_PRIORITY);
+        HybridMemory::free(m_buckets, sizeof(HashNode*) * TABLE_SIZES[m_sizeIndex], HybridMemory::indexPriorityOf(m_indexName));
 
         // when the allocator gets cleaned up, it will
         // free the memory used for nodes
@@ -398,9 +404,6 @@ namespace voltdb {
         // create a new node
         void *memory = m_allocator.alloc();
         assert(memory);
-#ifdef HYBRID_MEMORY_CHECK
-        HybridMemory::assertAddress(memory, HybridMemory::DRAM_SECONDARY_PRIORITY);
-#endif
         HashNode *newNode;
         // placement new
         if (m_unique) {
@@ -410,9 +413,6 @@ namespace voltdb {
             newNode = new(memory) HashNode();
             newNode->nextWithKey = NULL;
         }
-#ifdef HYBRID_MEMORY_CHECK
-        HybridMemory::assertAddress(newNode, HybridMemory::DRAM_SECONDARY_PRIORITY);
-#endif
 
         newNode->hash = hash;
         newNode->key = key;
@@ -622,7 +622,7 @@ namespace voltdb {
 
         // create new double size buffer
         //void *memory = mmap(NULL, sizeof(HashNode*) * TABLE_SIZES[newSizeIndex], PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
-        void *memory = HybridMemory::alloc(sizeof(HashNode*) * TABLE_SIZES[newSizeIndex], HybridMemory::DRAM_SECONDARY_PRIORITY);
+        void *memory = HybridMemory::alloc(sizeof(HashNode*) * TABLE_SIZES[newSizeIndex], HybridMemory::indexPriorityOf(m_indexName));
         assert(memory);
         HashNode **newBuckets = reinterpret_cast<HashNode**>(memory);
         memset(newBuckets, 0, TABLE_SIZES[newSizeIndex] * sizeof(HashNode*));
@@ -641,7 +641,7 @@ namespace voltdb {
 
         // swap the table buffers
         //munmap(m_buckets, TABLE_SIZES[m_sizeIndex] * sizeof(HashNode*));
-        HybridMemory::free(m_buckets, TABLE_SIZES[m_sizeIndex] * sizeof(HashNode*), HybridMemory::DRAM_SECONDARY_PRIORITY);
+        HybridMemory::free(m_buckets, TABLE_SIZES[m_sizeIndex] * sizeof(HashNode*), HybridMemory::indexPriorityOf(m_indexName));
         m_buckets = newBuckets;
         m_sizeIndex = newSizeIndex;
     }

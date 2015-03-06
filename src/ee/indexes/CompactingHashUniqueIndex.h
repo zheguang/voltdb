@@ -189,7 +189,7 @@ class CompactingHashUniqueIndex : public TableIndex
 public:
     CompactingHashUniqueIndex(const TupleSchema *keySchema, const TableIndexScheme &scheme) :
         TableIndex(keySchema, scheme),
-        m_entries(true, KeyHasher(keySchema), KeyEqualityChecker(keySchema)),
+        m_entries(scheme.name, true, KeyHasher(keySchema), KeyEqualityChecker(keySchema)),
         m_match(getTupleSchema()),
         m_eq(keySchema)
     {}

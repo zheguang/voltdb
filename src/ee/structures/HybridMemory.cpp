@@ -3,6 +3,7 @@
 
 #include "HybridMemory.h"
 #include "common/FatalException.hpp"
+#include "common/debuglog.h"
 
 #define PAGE_SIZE (1 << 12)
 #define PAGE_MASK ~(PAGE_SIZE - 1)
@@ -53,14 +54,46 @@ xmem_classifier_t HybridMemory::xmemClassifierOf(MEMORY_NODE_TYPE memoryNodeType
     case DRAM_SECONDARY_PRIORITY:
       classifier = XMEM_CLASSIFIER(1, XMEM_T_NONE, XMEM_P_NONE);
       break;
-    case NVM:
+    case DRAM_THIRD_PRIORITY:
       classifier = XMEM_CLASSIFIER(2, XMEM_T_NONE, XMEM_P_NONE);
+      break;
+    case DRAM_FOURTH_PRIORITY:
+      classifier = XMEM_CLASSIFIER(3, XMEM_T_NONE, XMEM_P_NONE);
+      break;
+    case NVM:
+      classifier = XMEM_CLASSIFIER(4, XMEM_T_NONE, XMEM_P_NONE);
       break;
     default:
       throwFatalException("Non supported memory node type");
   }
   return classifier;
 }
+
+
+HybridMemory::MEMORY_NODE_TYPE HybridMemory::tablePriorityOf(const std::string& name) {
+  MEMORY_NODE_TYPE priority;
+  if (name.compare("CUSTOMER_NAME") == 0) {
+    priority = NVM;
+  } else if (name.compare("STOCK") == 0) {
+    priority = DRAM_FOURTH_PRIORITY;
+  } else {
+    priority = DRAM_SECONDARY_PRIORITY;
+  }
+  VOLT_INFO("Got table priority of (%s) as (%d).\n", name.c_str(), priority);
+  return priority;
+}
+
+HybridMemory::MEMORY_NODE_TYPE HybridMemory::indexPriorityOf(const std::string& name) {
+  MEMORY_NODE_TYPE priority;
+  if (name.compare("IDX_CUSTOMER_NAME_TREE") == 0) {
+    priority = DRAM_THIRD_PRIORITY;
+  } else {
+    priority = DRAM;
+  }
+  VOLT_INFO("Got index priority of (%s) as (%d).\n", name.c_str(), priority);
+  return priority;
+}
+
 
 int HybridMemory::memoryNodeOf(MEMORY_NODE_TYPE memoryNodeType) {
   int memoryNode = 0;
@@ -76,4 +109,3 @@ int HybridMemory::memoryNodeOf(MEMORY_NODE_TYPE memoryNodeType) {
   }
   return memoryNode;
 }
-

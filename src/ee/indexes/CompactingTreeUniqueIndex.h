@@ -337,7 +337,7 @@ class CompactingTreeUniqueIndex : public TableIndex
 public:
     CompactingTreeUniqueIndex(const TupleSchema *keySchema, const TableIndexScheme &scheme) :
         TableIndex(keySchema, scheme),
-        m_entries(true, KeyComparator(keySchema)),
+        m_entries(scheme.name, true, KeyComparator(keySchema)),
         m_forward(true),
         m_match(getTupleSchema()),
         m_cmp(keySchema)

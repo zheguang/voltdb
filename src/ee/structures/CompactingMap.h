@@ -24,6 +24,7 @@
 #include <limits>
 #include <cassert>
 #include "ContiguousAllocator.h"
+#include <string>
 
 typedef u_int32_t NodeCount;
 
@@ -85,6 +86,7 @@ protected:
 
     int64_t m_count;
     TreeNode *m_root;
+    std::string m_indexName;
     ContiguousAllocator m_allocator;
     bool m_unique;
 
@@ -120,7 +122,7 @@ public:
         }
     };
 
-    CompactingMap(bool unique, Compare comper);
+    CompactingMap(const std::string& indexName, bool unique, Compare comper);
     ~CompactingMap();
 
     bool insert(std::pair<Key, Data> value);
@@ -191,10 +193,11 @@ protected:
 };
 
 template<typename Key, typename Data, typename Compare, bool hasRank>
-CompactingMap<Key, Data, Compare, hasRank>::CompactingMap(bool unique, Compare comper)
+CompactingMap<Key, Data, Compare, hasRank>::CompactingMap(const std::string& indexName, bool unique, Compare comper)
     : m_count(0),
       m_root(&NIL),
-      m_allocator(static_cast<int>(sizeof(TreeNode) - (hasRank ? 0 : sizeof(NodeCount))), static_cast<int>(10000), HybridMemory::DRAM),
+      m_indexName(indexName),
+      m_allocator(static_cast<int>(sizeof(TreeNode) - (hasRank ? 0 : sizeof(NodeCount))), static_cast<int>(10000), HybridMemory::indexPriorityOf(indexName)),
       m_unique(unique),
       m_comper(comper)
   {
@@ -263,9 +266,6 @@ bool CompactingMap<Key, Data, Compare, hasRank>::insert(std::pair<Key, Data> val
         assert(memory);
         // placement new
         TreeNode *z = new(memory) TreeNode();
-#ifdef HYBRID_MEMORY_CHECK
-        HybridMemory::assertAddress(z, HybridMemory::DRAM);
-#endif
         z->key = value.first;
         z->value = value.second;
         z->left = z->right = &NIL;
