@@ -76,8 +76,8 @@ namespace voltdb
 
         std::size_t m_size;
         bool m_tempPool;
-        bool m_isHybridMemoryDram;
         char* m_stringPtr;
+        HybridMemory::MEMORY_NODE_TYPE m_memoryNodeType;
     };
 }
 

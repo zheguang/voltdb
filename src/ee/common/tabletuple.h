@@ -288,11 +288,11 @@ public:
     std::string debugNoHeader() const;
 
     /** Copy values from one tuple into another (uses memcpy) */
-    void copyForPersistentInsert(const TableTuple &source);
+    void copyForPersistentInsert(const TableTuple &source, const HybridMemory::MEMORY_NODE_TYPE& priority);
     // The vector "output" arguments detail the non-inline object memory management
     // required of the upcoming release or undo.
     void copyForPersistentUpdate(const TableTuple &source,
-                                 std::vector<char*> &oldObjects, std::vector<char*> &newObjects);
+                                 std::vector<char*> &oldObjects, std::vector<char*> &newObjects, const HybridMemory::MEMORY_NODE_TYPE& priority);
     void copy(const TableTuple &source);
 
     /** this does set NULL in addition to clear string count.*/
@@ -534,7 +534,7 @@ inline void TableTuple::setNValueAllocateForObjectCopies(const int idx, voltdb::
 /*
  * With a persistent insert the copy should do an allocation for all uninlinable strings
  */
-inline void TableTuple::copyForPersistentInsert(const voltdb::TableTuple &source) {
+inline void TableTuple::copyForPersistentInsert(const voltdb::TableTuple &source, const HybridMemory::MEMORY_NODE_TYPE& priority) {
     assert(m_schema);
     assert(source.m_schema);
     assert(source.m_data);
@@ -563,7 +563,7 @@ inline void TableTuple::copyForPersistentInsert(const voltdb::TableTuple &source
                     m_schema->getUninlinedObjectColumnInfoIndex(ii);
             setNValueAllocateForObjectCopies(uinlineableObjectColumnIndex,
                     source.getNValue(uinlineableObjectColumnIndex),
-                    HybridMemory::NVM);
+                    priority);
         }
         m_data[0] = source.m_data[0];
     }
@@ -574,7 +574,8 @@ inline void TableTuple::copyForPersistentInsert(const voltdb::TableTuple &source
  * a string if the source and destination pointers are different.
  */
 inline void TableTuple::copyForPersistentUpdate(const TableTuple &source,
-                                                std::vector<char*> &oldObjects, std::vector<char*> &newObjects)
+                                                std::vector<char*> &oldObjects, std::vector<char*> &newObjects,
+                                                const HybridMemory::MEMORY_NODE_TYPE& priority)
 {
     assert(m_schema);
     assert(m_schema == source.m_schema);
@@ -606,7 +607,7 @@ inline void TableTuple::copyForPersistentUpdate(const TableTuple &source,
                     oldObjects.push_back(*mPtr);
                     // TODO: Here, it's known that the column is an object type, and yet
                     // setNValueAllocateForObjectCopies is called to figure this all out again.
-                    setNValueAllocateForObjectCopies(ii, source.getNValue(ii), HybridMemory::NVM);
+                    setNValueAllocateForObjectCopies(ii, source.getNValue(ii), priority);
                     // Yes, uses the same old pointer as two statements ago to get a new value. Neat.
                     newObjects.push_back(*mPtr);
                 }
@@ -630,7 +631,7 @@ inline void TableTuple::copyForPersistentUpdate(const TableTuple &source,
                 // 2) do the same wholesale tuple memcpy as in the no-objects "else" clause, below,
                 // 3) replace the object pointer at each "changed object pointer offset"
                 //    with a pointer to an object copy of its new referent.
-                setNValueAllocateForObjectCopies(ii, source.getNValue(ii), HybridMemory::NVM);
+                setNValueAllocateForObjectCopies(ii, source.getNValue(ii), priority);
             }
         }
         // This obscure assignment is propagating the tuple flags rather than leaving it to the caller.

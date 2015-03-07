@@ -352,7 +352,7 @@ void PersistentTable::insertPersistentTuple(TableTuple &source, bool fallible)
     //
     // Then copy the source into the target
     //
-    target.copyForPersistentInsert(source); // tuple in freelist must be already cleared
+    target.copyForPersistentInsert(source, HybridMemory::tablePriorityOf(name())); // tuple in freelist must be already cleared
 
     try {
         insertTupleCommon(source, target, fallible);
@@ -552,7 +552,7 @@ bool PersistentTable::updateTupleWithSpecificIndexes(TableTuple &targetTupleToUp
     std::vector<char*> newObjects;
 
     // this is the actual write of the new values
-    targetTupleToUpdate.copyForPersistentUpdate(sourceTupleWithNewValues, oldObjects, newObjects);
+    targetTupleToUpdate.copyForPersistentUpdate(sourceTupleWithNewValues, oldObjects, newObjects, HybridMemory::tablePriorityOf(name()));
 
     if (uq) {
         /*
