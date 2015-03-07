@@ -26,8 +26,11 @@ namespace voltdb {
 
     class CompactingStringStorage {
     public:
-        CompactingStringStorage();
-        ~CompactingStringStorage();
+        CompactingStringStorage():
+          m_poolsMap()
+          {}
+
+        ~CompactingStringStorage() {}
 
         boost::shared_ptr<CompactingStringPool> get(size_t size, HybridMemory::MEMORY_NODE_TYPE memoryNodeType);
 
@@ -38,8 +41,13 @@ namespace voltdb {
     private:
         boost::unordered_map<size_t, boost::shared_ptr<CompactingStringPool> > *getPoolMapFrom(HybridMemory::MEMORY_NODE_TYPE memoryNodeType);
 
-        boost::unordered_map<size_t, boost::shared_ptr<CompactingStringPool> > m_dramPoolMap;
-        boost::unordered_map<size_t, boost::shared_ptr<CompactingStringPool> > m_nvmPoolMap;
+      //DRAM = 0,
+      //DRAM_SECONDARY_PRIORITY,
+      //DRAM_THIRD_PRIORITY,
+      //DRAM_FOURTH_PRIORITY,
+      //DRAM_FIFITH_PRIORITY,
+      //NVM,
+        boost::unordered_map<HybridMemory::MEMORY_NODE_TYPE,boost::unordered_map<size_t, boost::shared_ptr<CompactingStringPool> > > m_poolsMap;
     };
 }
 

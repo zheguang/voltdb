@@ -27,14 +27,7 @@ using boost::shared_ptr;
 
 typedef boost::shared_ptr<CompactingStringPool> PoolPtrType;
 typedef boost::unordered_map<size_t, PoolPtrType> MapType;
-
-CompactingStringStorage::CompactingStringStorage()
-{
-}
-
-CompactingStringStorage::~CompactingStringStorage()
-{
-}
+typedef boost::unordered_map<HybridMemory::MEMORY_NODE_TYPE,MapType> MapsType;
 
 PoolPtrType CompactingStringStorage::get(size_t size, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) {
     size_t alloc_size = ThreadLocalPool::getAllocationSizeForObject(size);
@@ -66,31 +59,19 @@ PoolPtrType CompactingStringStorage::getExact(size_t size, HybridMemory::MEMORY_
 }
 
 MapType *CompactingStringStorage::getPoolMapFrom(HybridMemory::MEMORY_NODE_TYPE memoryNodeType) {
-  switch (memoryNodeType) {
-    case HybridMemory::DRAM:
-      return &m_dramPoolMap;
-    case HybridMemory::NVM:
-      return &m_nvmPoolMap;
-    default:
-      throwFatalException("Unsupported memory ndoe type.");
-      return NULL;
-  };
+  if (m_poolsMap.find(memoryNodeType) == m_poolsMap.end()) {
+    m_poolsMap[memoryNodeType] = MapType();
+  }
+  return &m_poolsMap[memoryNodeType];
 }
 
 size_t CompactingStringStorage::getPoolAllocationSize()
 {
     size_t total = 0;
-    for (MapType::iterator iter = m_dramPoolMap.begin();
-         iter != m_dramPoolMap.end();
-         ++iter)
-    {
-        total += iter->second->getBytesAllocated();
-    }
-    for (MapType::iterator iter = m_nvmPoolMap.begin();
-         iter != m_nvmPoolMap.end();
-         ++iter)
-    {
-        total += iter->second->getBytesAllocated();
+    for (MapsType::iterator mapsIter = m_poolsMap.begin(); mapsIter != m_poolsMap.end(); ++mapsIter) {
+      for (MapType::iterator iter = mapsIter->second.begin(); iter != mapsIter->second.end(); ++iter) {
+          total += iter->second->getBytesAllocated();
+      }
     }
     return total;
 }
