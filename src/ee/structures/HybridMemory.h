@@ -15,6 +15,7 @@ namespace voltdb {
       DRAM_SECONDARY_PRIORITY,
       DRAM_THIRD_PRIORITY,
       DRAM_FOURTH_PRIORITY,
+      DRAM_FIFITH_PRIORITY,
       NVM,
     };
 
@@ -24,6 +25,7 @@ namespace voltdb {
 
     static MEMORY_NODE_TYPE indexPriorityOf(const std::string& name);
     static MEMORY_NODE_TYPE tablePriorityOf(const std::string& name);
+    static MEMORY_NODE_TYPE otherPriorityOf(const std::string& name);
 
   private:
       HybridMemory();

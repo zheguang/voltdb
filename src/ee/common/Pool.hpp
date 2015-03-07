@@ -93,8 +93,8 @@ public:
         m_memoryNodeType = HybridMemory::DRAM;
         char *storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, HybridMemory::DRAM));
 #else
-        m_memoryNodeType = HybridMemory::NVM;
-        char *storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, HybridMemory::NVM));
+        m_memoryNodeType = HybridMemory::otherPriorityOf("tempPool");
+        char *storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, m_memoryNodeType));
 #endif
         m_chunks.push_back(Chunk(m_allocationSize, storage));
     }
@@ -122,8 +122,8 @@ public:
         m_memoryNodeType = HybridMemory::DRAM;
         char *storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, HybridMemory::DRAM));
 #else
-        m_memoryNodeType = HybridMemory::NVM;
-        char *storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, HybridMemory::NVM));
+        m_memoryNodeType = HybridMemory::otherPriorityOf("tempPool");
+        char *storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, m_memoryNodeType));
 #endif
         m_chunks.push_back(Chunk(allocationSize, storage));
     }
@@ -182,7 +182,7 @@ public:
 #ifdef TEMPPOOL_IN_DRAM
                 char* storage = static_cast<char*>(HybridMemory::alloc(nexthigher(size), HybridMemory::DRAM));
 #else
-                char* storage = static_cast<char*>(HybridMemory::alloc(nexthigher(size), HybridMemory::NVM));
+                char* storage = static_cast<char*>(HybridMemory::alloc(nexthigher(size), m_memoryNodeType));
 #endif
                 m_oversizeChunks.push_back(Chunk(nexthigher(size), storage));
                 Chunk &newChunk = m_oversizeChunks.back();
@@ -219,7 +219,7 @@ public:
 #ifdef TEMPPOOL_IN_DRAM
                 char* storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, HybridMemory::DRAM));
 #else
-                char* storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, HybridMemory::NVM));
+                char* storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, m_memoryNodeType));
 #endif
                 m_chunks.push_back(Chunk(m_allocationSize, storage));
                 Chunk &newChunk = m_chunks.back();

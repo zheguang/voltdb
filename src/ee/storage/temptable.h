@@ -180,7 +180,7 @@ inline void TempTable::insertTupleNonVirtualWithDeepCopy(TableTuple &source, Poo
     // Don't allocate space for the strings on the heap because the strings are being copied from the source
     // are owned by a PersistentTable or part of the EE string pool.
     //
-    target.copyForPersistentInsert(source); // tuple in freelist must be already cleared
+    target.copyForPersistentInsert(source, HybridMemory::otherPriorityOf("tempTable")); // tuple in freelist must be already cleared
     target.setActiveTrue();
 }
 
@@ -240,7 +240,7 @@ inline TBPtr TempTable::allocateNextBlock() {
 #ifdef TEMPTABLE_IN_DRAM
     TBPtr block(new (ThreadLocalPool::getExact(sizeof(TupleBlock))->malloc()) TupleBlock(this, TBBucketPtr(), HybridMemory::DRAM));
 #else
-    TBPtr block(new (ThreadLocalPool::getExact(sizeof(TupleBlock))->malloc()) TupleBlock(this, TBBucketPtr(), HybridMemory::NVM));
+    TBPtr block(new (ThreadLocalPool::getExact(sizeof(TupleBlock))->malloc()) TupleBlock(this, TBBucketPtr(), HybridMemory::otherPriorityOf("tempTable")));
 #endif
     m_data.push_back(block);
 

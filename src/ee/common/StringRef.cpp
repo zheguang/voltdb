@@ -109,9 +109,9 @@ StringRef::StringRef(std::size_t size, Pool* dataPool)
 
 StringRef::StringRef(std::size_t size, HybridMemory::MEMORY_NODE_TYPE memoryNodeType)
 {
+    m_memoryNodeType = memoryNodeType;
     m_size = size + sizeof(StringRef*);
     m_tempPool = false;
-    m_isHybridMemoryDram = (memoryNodeType == HybridMemory::DRAM);
     m_stringPtr =
         reinterpret_cast<char*>(ThreadLocalPool::getStringPool()->get(m_size, memoryNodeType)->malloc());
 #ifdef HYBRID_MEMORY_CHECK
@@ -127,10 +127,7 @@ StringRef::~StringRef()
 /*#ifdef MEMCHECK
         delete[] m_stringPtr;
 #else*/
-        if (m_isHybridMemoryDram)
-          ThreadLocalPool::getStringPool()->get(m_size, HybridMemory::DRAM)->free(m_stringPtr);
-        else
-          ThreadLocalPool::getStringPool()->get(m_size, HybridMemory::NVM)->free(m_stringPtr);
+      ThreadLocalPool::getStringPool()->get(m_size, m_memoryNodeType)->free(m_stringPtr);
 /*#endif*/
     }
 }

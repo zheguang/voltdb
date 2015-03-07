@@ -94,6 +94,23 @@ HybridMemory::MEMORY_NODE_TYPE HybridMemory::indexPriorityOf(const std::string& 
   return priority;
 }
 
+HybridMemory::MEMORY_NODE_TYPE HybridMemory::otherPriorityOf(const std::string& name) {
+  MEMORY_NODE_TYPE priority;
+  if (name.compare("tempTable") == 0) {
+    priority = DRAM_FIFITH_PRIORITY;
+  } else if (name.compare("tempPool") == 0) {
+    priority = DRAM_FIFITH_PRIORITY;
+  } else if (name.compare("stringValue") == 0) {
+    priority = DRAM_FIFITH_PRIORITY;
+  } else if (name.compare("binaryValue") == 0) {
+    priority = DRAM_FIFITH_PRIORITY;
+  } else {
+    throwFatalException("unsupported priority type: %s\n", name.c_str());
+  }
+  //fprintf(stderr, "Got index priority of (%s) as (%d).\n", name.c_str(), priority);
+  return priority;
+}
+
 
 int HybridMemory::memoryNodeOf(MEMORY_NODE_TYPE memoryNodeType) {
   int memoryNode = 0;
