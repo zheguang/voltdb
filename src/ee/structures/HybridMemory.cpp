@@ -60,8 +60,11 @@ xmem_classifier_t HybridMemory::xmemClassifierOf(MEMORY_NODE_TYPE memoryNodeType
     case DRAM_FOURTH_PRIORITY:
       classifier = XMEM_CLASSIFIER(3, XMEM_T_NONE, XMEM_P_NONE);
       break;
-    case NVM:
+    case DRAM_FIFITH_PRIORITY:
       classifier = XMEM_CLASSIFIER(4, XMEM_T_NONE, XMEM_P_NONE);
+      break;
+    case NVM:
+      classifier = XMEM_CLASSIFIER(5, XMEM_T_NONE, XMEM_P_NONE);
       break;
     default:
       throwFatalException("Non supported memory node type");
