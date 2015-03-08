@@ -11,14 +11,11 @@
 
 using namespace voltdb;
 
-using std::malloc;
-using std::free;
-
 void* HybridMemory::alloc(size_t sz, MEMORY_NODE_TYPE memoryNodeType) {
   void* result;
   switch (memoryNodeType) {
     case OS_HEAP:
-      result = malloc(sz);
+      result = std::malloc(sz);
       if (!result) {
         throwFatalException("Cannot allocate using malloc.");
       }
@@ -35,7 +32,7 @@ void* HybridMemory::alloc(size_t sz, MEMORY_NODE_TYPE memoryNodeType) {
 void HybridMemory::free(void* start, size_t sz, MEMORY_NODE_TYPE memoryNodeType) {
   switch (memoryNodeType) {
     case OS_HEAP:
-      free(start);
+      std::free(start);
       break;
     default:
       xfree(xmemClassifierOf(memoryNodeType), start);
