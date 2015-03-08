@@ -1,5 +1,6 @@
 #include <numa.h>
 #include <numaif.h>
+#include <cstdlib>
 
 #include "HybridMemory.h"
 #include "common/FatalException.hpp"
@@ -10,22 +11,35 @@
 
 using namespace voltdb;
 
+using std::malloc;
+using std::free;
+
 void* HybridMemory::alloc(size_t sz, MEMORY_NODE_TYPE memoryNodeType) {
-  /*void* result = numa_alloc_onnode(sz, memoryNodeOf(memoryNodeType));
-  memset(result, 0, sz);
-#ifdef HYBRID_MEMORY_CHECK
-  assertAddress(result, memoryNodeType);
-#endif
-  return result;*/
-  void* result = xmalloc(xmemClassifierOf(memoryNodeType), sz);
-  if (!result) {
-    throwFatalException("Cannot allocate using xmalloc.");
+  void* result;
+  switch (memoryNodeType) {
+    case OS_HEAP:
+      result = malloc(sz);
+      if (!result) {
+        throwFatalException("Cannot allocate using malloc.");
+      }
+      break;
+    default:
+      result = xmalloc(xmemClassifierOf(memoryNodeType), sz);
+      if (!result) {
+        throwFatalException("Cannot allocate using xmalloc.");
+      }
   }
   return result;
 }
 
 void HybridMemory::free(void* start, size_t sz, MEMORY_NODE_TYPE memoryNodeType) {
-  xfree(xmemClassifierOf(memoryNodeType), start);
+  switch (memoryNodeType) {
+    case OS_HEAP:
+      free(start);
+      break;
+    default:
+      xfree(xmemClassifierOf(memoryNodeType), start);
+  }
 }
 
 void HybridMemory::assertAddress(void* start, MEMORY_NODE_TYPE memoryNodeType) {
@@ -100,13 +114,13 @@ HybridMemory::MEMORY_NODE_TYPE HybridMemory::indexPriorityOf(const std::string& 
 HybridMemory::MEMORY_NODE_TYPE HybridMemory::otherPriorityOf(const std::string& name) {
   MEMORY_NODE_TYPE priority;
   if (name.compare("tempTable") == 0) {
-    priority = DRAM_FIFITH_PRIORITY;
+    priority = OS_HEAP;
   } else if (name.compare("tempPool") == 0) {
-    priority = DRAM_FIFITH_PRIORITY;
+    priority = OS_HEAP;
   } else if (name.compare("stringValue") == 0) {
-    priority = DRAM_FIFITH_PRIORITY;
+    priority = OS_HEAP;
   } else if (name.compare("binaryValue") == 0) {
-    priority = DRAM_FIFITH_PRIORITY;
+    priority = OS_HEAP;
   } else {
     throwFatalException("unsupported priority type: %s\n", name.c_str());
   }

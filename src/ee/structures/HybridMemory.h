@@ -17,6 +17,7 @@ namespace voltdb {
       DRAM_FOURTH_PRIORITY,
       DRAM_FIFITH_PRIORITY,
       NVM,
+      OS_HEAP,
     };
 
     static void *alloc(size_t sz, MEMORY_NODE_TYPE memoryNodeType);
