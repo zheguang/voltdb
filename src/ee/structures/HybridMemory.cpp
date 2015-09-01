@@ -21,7 +21,7 @@ void* HybridMemory::alloc(size_t sz, MEMORY_NODE_TYPE memoryNodeType) {
       }
       break;
     default:
-      result = xmalloc(xmemClassifierOf(memoryNodeType), sz);
+      result = xmalloc(xmemTagOf(memoryNodeType), sz);
       if (!result) {
         throwFatalException("Cannot allocate using xmalloc.");
       }
@@ -35,7 +35,7 @@ void HybridMemory::free(void* start, size_t sz, MEMORY_NODE_TYPE memoryNodeType)
       std::free(start);
       break;
     default:
-      xfree(xmemClassifierOf(memoryNodeType), start);
+      xfree(start);
   }
 }
 
@@ -56,7 +56,34 @@ void HybridMemory::assertAddress(void* start, MEMORY_NODE_TYPE memoryNodeType) {
   }
 }
 
-xmem_classifier_t HybridMemory::xmemClassifierOf(MEMORY_NODE_TYPE memoryNodeType) {
+int HybridMemory::xmemTagOf(MEMORY_NODE_TYPE memoryNodeType) {
+  int tag;
+  switch (memoryNodeType) {
+    case DRAM:
+      tag = XMEM_AUTO(0);
+      break;
+    case DRAM_SECONDARY_PRIORITY:
+      tag = XMEM_AUTO(1);
+      break;
+    case DRAM_THIRD_PRIORITY:
+      tag = XMEM_AUTO(2);
+      break;
+    case DRAM_FOURTH_PRIORITY:
+      tag = XMEM_AUTO(3);
+      break;
+    case DRAM_FIFITH_PRIORITY:
+      tag = XMEM_AUTO(4);
+      break;
+    case NVM:
+      tag = XMEM_AUTO(5);
+      break;
+    default:
+      throwFatalException("Non supported memory node type");
+  }
+  return tag;
+}
+
+/*xmem_classifier_t HybridMemory::xmemClassifierOf(MEMORY_NODE_TYPE memoryNodeType) {
   xmem_classifier_t classifier;
   switch (memoryNodeType) {
     case DRAM:
@@ -81,7 +108,7 @@ xmem_classifier_t HybridMemory::xmemClassifierOf(MEMORY_NODE_TYPE memoryNodeType
       throwFatalException("Non supported memory node type");
   }
   return classifier;
-}
+}*/
 
 
 HybridMemory::MEMORY_NODE_TYPE HybridMemory::tablePriorityOf(const std::string& name) {

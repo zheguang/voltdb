@@ -33,7 +33,8 @@ namespace voltdb {
       ~HybridMemory();
 
       static int memoryNodeOf(MEMORY_NODE_TYPE memoryNodeType);
-      static xmem_classifier_t xmemClassifierOf(MEMORY_NODE_TYPE memoryNodeType);
+      //static xmem_classifier_t xmemClassifierOf(MEMORY_NODE_TYPE memoryNodeType);
+      static int xmemTagOf(MEMORY_NODE_TYPE memoryNodeType);
   };
 
 };

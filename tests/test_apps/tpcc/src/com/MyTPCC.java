@@ -71,6 +71,7 @@ public class MyTPCC
     {
         try {
             m_clientCon.execute("@SamBenchmark", SamBenchmark.Command.CLEAR.toString());
+            m_clientCon.drain();
         } catch (Exception e) {
             System.out.println("SamBenchmark: error encountered: " + e.getMessage());
             e.printStackTrace();
@@ -174,13 +175,6 @@ public class MyTPCC
             }
         }
 
-        try {
-            m_clientCon.execute("@SamBenchmark", SamBenchmark.Command.PRINT.toString());
-        } catch (Exception e) {
-            System.out.println("SamBenchmark: error encountered: " + e.getMessage());
-            e.printStackTrace();
-        }
-
         try
         {
             m_clientCon.drain();
@@ -193,6 +187,14 @@ public class MyTPCC
 
         long elapsedTimeMillis = System.currentTimeMillis() - startTime;
         float elapsedTimeSec = elapsedTimeMillis / 1000F;
+
+        try {
+            m_clientCon.execute("@SamBenchmark", SamBenchmark.Command.PRINT.toString());
+            m_clientCon.drain();
+        } catch (Exception e) {
+            System.out.println("SamBenchmark: error encountered: " + e.getMessage());
+            e.printStackTrace();
+        }
 
         System.out.println("============================== BENCHMARK RESULTS ==============================");
         System.out.printf("Time: %d ms\n", elapsedTimeMillis);
