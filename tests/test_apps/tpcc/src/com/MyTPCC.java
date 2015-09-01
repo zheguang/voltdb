@@ -71,6 +71,7 @@ public class MyTPCC
     {
         try {
             m_clientCon.execute("@SamBenchmark", SamBenchmark.Command.CLEAR.toString());
+            m_clientCon.execute("@SamBenchmark", SamBenchmark.Command.START_MEMTORSPECT.toString());
             m_clientCon.drain();
         } catch (Exception e) {
             System.out.println("SamBenchmark: error encountered: " + e.getMessage());
@@ -189,6 +190,7 @@ public class MyTPCC
         float elapsedTimeSec = elapsedTimeMillis / 1000F;
 
         try {
+            m_clientCon.execute("@SamBenchmark", SamBenchmark.Command.STOP_MEMTROSPECT.toString());
             m_clientCon.execute("@SamBenchmark", SamBenchmark.Command.PRINT.toString());
             m_clientCon.drain();
         } catch (Exception e) {

@@ -37,6 +37,12 @@ public class SamBenchmark extends VoltSystemProcedure {
             case CLEAR:
                 context.getSiteProcedureConnection().clearBench();
                 break;
+            case START_MEMTORSPECT:
+                context.getSiteProcedureConnection().startMemtrospect();
+                break;
+            case STOP_MEMTROSPECT:
+                context.getSiteProcedureConnection().stopMemtrospect();
+                break;
             default:
                 throw new RuntimeException("Unsupported command: " + command);
         }
@@ -44,7 +50,9 @@ public class SamBenchmark extends VoltSystemProcedure {
 
     public static enum Command {
         PRINT("print"),
-        CLEAR("clear");
+        CLEAR("clear"),
+        START_MEMTORSPECT("start_memtrospect"),
+        STOP_MEMTROSPECT("stop_memtrospect");
 
         private final String commandText;
 
@@ -62,6 +70,10 @@ public class SamBenchmark extends VoltSystemProcedure {
                 return PRINT;
             } else if (commandText.equalsIgnoreCase(CLEAR.toString())) {
                 return CLEAR;
+            } else if (commandText.equalsIgnoreCase(START_MEMTORSPECT.toString())) {
+                return START_MEMTORSPECT;
+            } else if (commandText.equalsIgnoreCase(STOP_MEMTROSPECT.toString())) {
+                return STOP_MEMTROSPECT;
             } else {
                 throw new RuntimeException("Unsupported command type.");
             }

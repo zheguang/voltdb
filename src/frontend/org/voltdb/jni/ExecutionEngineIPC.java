@@ -918,6 +918,16 @@ public class ExecutionEngineIPC extends ExecutionEngine {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
+    @Override
+    public void startMemtrospect() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void stopMemtrospect() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
 
     @Override
     public byte[] loadTable(final int tableId, final VoltTable table, final long spHandle,

@@ -907,6 +907,16 @@ public class Site implements Runnable, SiteProcedureConnection, SiteSnapshotConn
     }
 
     @Override
+    public void startMemtrospect() {
+        m_ee.startMemtrospect();
+    }
+
+    @Override
+    public void stopMemtrospect() {
+        m_ee.stopMemtrospect();
+    }
+
+    @Override
     public void tick()
     {
         long time = System.currentTimeMillis();

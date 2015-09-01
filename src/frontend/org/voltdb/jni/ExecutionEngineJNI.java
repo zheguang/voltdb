@@ -396,7 +396,7 @@ public class ExecutionEngineJNI extends ExecutionEngine {
         //Clear is destructive, do it before the native call
         deserializer.clear();
         final int errorCode = nativeLoadTable(pointer, tableId, serialized_table,
-                                              txnId, lastCommittedTxnId, returnUniqueViolations, undoToken);
+                txnId, lastCommittedTxnId, returnUniqueViolations, undoToken);
         checkErrorCode(errorCode);
 
         try {
@@ -484,6 +484,16 @@ public class ExecutionEngineJNI extends ExecutionEngine {
     @Override
     public void clearBench() {
         nativeClearBench(pointer);
+    }
+
+    @Override
+    public void startMemtrospect() {
+        nativeStartMemtrospect(pointer);
+    }
+
+    @Override
+    public void stopMemtrospect() {
+        nativeStopMemtrospect(pointer);
     }
 
     @Override

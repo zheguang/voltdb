@@ -1299,6 +1299,16 @@ implements Runnable, SiteProcedureConnection, SiteSnapshotConnection
     }
 
     @Override
+    public void startMemtrospect() {
+        ee.startMemtrospect();
+    }
+
+    @Override
+    public void stopMemtrospect() {
+        ee.stopMemtrospect();
+    }
+
+    @Override
     public void quiesce()
     {
         ee.quiesce(lastCommittedTxnId);

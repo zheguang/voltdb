@@ -529,6 +529,26 @@ void VoltDBEngine::clearBench() {
   fflush(stdout);
 }
 
+void __attribute__ ((noinline)) MEMTROSPECT_ON()
+{
+  asm volatile("nop");
+  printf("MEMTROSPECT ON\n");
+}
+
+void __attribute__ ((noinline)) MEMTROSPECT_OFF()
+{
+  asm volatile("nop");
+  printf("MEMTROSPECT OFF\n");
+}
+
+void VoltDBEngine::startMemtrospect() {
+  MEMTROSPECT_ON();
+}
+
+void VoltDBEngine::stopMemtrospect() {
+  MEMTROSPECT_OFF();
+}
+
 int VoltDBEngine::executePlanFragment(int64_t planfragmentId,
                                       int64_t inputDependencyId,
                                       const NValueArray &params,

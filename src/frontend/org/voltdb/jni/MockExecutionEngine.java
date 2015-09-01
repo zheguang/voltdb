@@ -166,6 +166,14 @@ public class MockExecutionEngine extends ExecutionEngine {
     }
 
     @Override
+    public void startMemtrospect() {
+    }
+
+    @Override
+    public void stopMemtrospect() {
+    }
+
+    @Override
     public boolean undoUndoToken(final long undoToken) {
         return false;
     }

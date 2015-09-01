@@ -215,6 +215,10 @@ class __attribute__((visibility("default"))) VoltDBEngine {
 
         void clearBench();
 
+        void startMemtrospect();
+
+        void stopMemtrospect();
+
         void printHybridMemoryBuildInfo();
 
         inline int getUsedParamcnt() const { return m_usedParamcnt;}

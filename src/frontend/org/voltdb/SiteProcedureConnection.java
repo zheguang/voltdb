@@ -164,6 +164,10 @@ public interface SiteProcedureConnection {
 
     public void clearBench();
 
+    void startMemtrospect();
+
+    void stopMemtrospect();
+
     public void tick();
 
     public void quiesce();

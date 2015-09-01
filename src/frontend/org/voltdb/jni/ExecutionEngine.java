@@ -521,6 +521,10 @@ public abstract class ExecutionEngine implements FastDeserializer.Deserializatio
 
     public abstract void clearBench();
 
+    public abstract void startMemtrospect();
+
+    public abstract void stopMemtrospect();
+
     /**
      * Release all undo actions up to and including the specified undo token
      * @param undoToken The undo token.
@@ -742,6 +746,10 @@ public abstract class ExecutionEngine implements FastDeserializer.Deserializatio
     protected native int nativePrintBench(long pointer);
 
     protected native int nativeClearBench(long pointer);
+
+    protected native int nativeStartMemtrospect(long pointer);
+
+    protected native int nativeStopMemtrospect(long pointer);
 
     /**
      * Use the EE's hashinator to compute the partition to which the
