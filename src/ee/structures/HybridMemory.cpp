@@ -112,7 +112,7 @@ int HybridMemory::xmemTagOf(MEMORY_NODE_TYPE memoryNodeType) {
 
 
 HybridMemory::MEMORY_NODE_TYPE HybridMemory::tablePriorityOf(const std::string& name) {
-  MEMORY_NODE_TYPE priority;
+  /*MEMORY_NODE_TYPE priority;
   if (name.compare("CUSTOMER_NAME") == 0) {
     priority = NVM;
   } else if (name.compare("STOCK") == 0) {
@@ -121,15 +121,18 @@ HybridMemory::MEMORY_NODE_TYPE HybridMemory::tablePriorityOf(const std::string& 
     priority = DRAM_SECONDARY_PRIORITY;
   }
   //fprintf(stderr, "Got table priority of (%s) as (%d).\n", name.c_str(), priority);
-  return priority;
+  return priority;*/
+  return DRAM_FOURTH_PRIORITY;
 }
 
 HybridMemory::MEMORY_NODE_TYPE HybridMemory::indexPriorityOf(const std::string& name) {
   MEMORY_NODE_TYPE priority;
-  if (name.compare("IDX_CUSTOMER_NAME_TREE") == 0) {
+  if (name.find("TREE") != std::string::npos) {
+    priority = DRAM_SECONDARY_PRIORITY;
+  } else if (name.find("HASH") != std::string::npos) {
     priority = DRAM_THIRD_PRIORITY;
   } else {
-    priority = DRAM;
+    throwFatalException("Unexpected index type: %s\n", name.c_str());
   }
   //fprintf(stderr, "Got index priority of (%s) as (%d).\n", name.c_str(), priority);
   return priority;
