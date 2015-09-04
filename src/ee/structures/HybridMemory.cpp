@@ -122,7 +122,7 @@ HybridMemory::MEMORY_NODE_TYPE HybridMemory::tablePriorityOf(const std::string& 
   }
   //fprintf(stderr, "Got table priority of (%s) as (%d).\n", name.c_str(), priority);
   return priority;*/
-  return DRAM_FOURTH_PRIORITY;
+  return DRAM_FIFITH_PRIORITY;
 }
 
 HybridMemory::MEMORY_NODE_TYPE HybridMemory::indexPriorityOf(const std::string& name) {
@@ -132,7 +132,8 @@ HybridMemory::MEMORY_NODE_TYPE HybridMemory::indexPriorityOf(const std::string& 
   } else if (name.find("HASH") != std::string::npos) {
     priority = DRAM_THIRD_PRIORITY;
   } else {
-    throwFatalException("Unexpected index type: %s\n", name.c_str());
+    priority = DRAM_FOURTH_PRIORITY;
+    fprintf(stderr, "Got index priority of (%s) as (%d).\n", name.c_str(), priority);
   }
   //fprintf(stderr, "Got index priority of (%s) as (%d).\n", name.c_str(), priority);
   return priority;
