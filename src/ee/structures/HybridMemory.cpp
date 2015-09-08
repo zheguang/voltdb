@@ -122,21 +122,26 @@ HybridMemory::MEMORY_NODE_TYPE HybridMemory::tablePriorityOf(const std::string& 
   }
   //fprintf(stderr, "Got table priority of (%s) as (%d).\n", name.c_str(), priority);
   return priority;*/
-  return DRAM_FIFITH_PRIORITY;
+  if (dbObjectMemMap.find(name) == map::end) {
+    dbObjectMemMap[name] = DRAM_FIFITH_PRIORITY;
+  }
+  return dbObjectMemMap[name];
 }
 
 HybridMemory::MEMORY_NODE_TYPE HybridMemory::indexPriorityOf(const std::string& name) {
-  MEMORY_NODE_TYPE priority;
-  if (name.find("TREE") != std::string::npos) {
-    priority = DRAM_SECONDARY_PRIORITY;
-  } else if (name.find("HASH") != std::string::npos) {
-    priority = DRAM_THIRD_PRIORITY;
-  } else {
-    priority = DRAM_FOURTH_PRIORITY;
-    fprintf(stderr, "Got index priority of (%s) as (%d).\n", name.c_str(), priority);
+  if (dbObjectMemMap.find(name) == map::end) {
+    MEMORY_NODE_TYPE priority;
+    if (name.find("TREE") != std::string::npos) {
+      priority = DRAM_SECONDARY_PRIORITY;
+    } else if (name.find("HASH") != std::string::npos) {
+      priority = DRAM_THIRD_PRIORITY;
+    } else {
+      priority = DRAM_FOURTH_PRIORITY;
+      fprintf(stderr, "Got index priority of (%s) as (%d).\n", name.c_str(), priority);
+    }
+    dbObjectMemMap[name] = priority;
   }
-  //fprintf(stderr, "Got index priority of (%s) as (%d).\n", name.c_str(), priority);
-  return priority;
+  return dbObjectMemMap[name];
 }
 
 HybridMemory::MEMORY_NODE_TYPE HybridMemory::otherPriorityOf(const std::string& name) {
