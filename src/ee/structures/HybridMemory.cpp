@@ -122,14 +122,14 @@ HybridMemory::MEMORY_NODE_TYPE HybridMemory::tablePriorityOf(const std::string& 
   }
   //fprintf(stderr, "Got table priority of (%s) as (%d).\n", name.c_str(), priority);
   return priority;*/
-  if (dbObjectMemMap.find(name) == map::end) {
+  if (dbObjectMemMap.find(name) == dbObjectMemMap.end()) {
     dbObjectMemMap[name] = DRAM_FIFITH_PRIORITY;
   }
   return dbObjectMemMap[name];
 }
 
 HybridMemory::MEMORY_NODE_TYPE HybridMemory::indexPriorityOf(const std::string& name) {
-  if (dbObjectMemMap.find(name) == map::end) {
+  if (dbObjectMemMap.find(name) == dbObjectMemMap.end()) {
     MEMORY_NODE_TYPE priority;
     if (name.find("TREE") != std::string::npos) {
       priority = DRAM_SECONDARY_PRIORITY;
