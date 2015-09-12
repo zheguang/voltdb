@@ -1,6 +1,8 @@
 #include <numa.h>
 #include <numaif.h>
 #include <cstdlib>
+#include <map>
+#include <string>
 
 #include "HybridMemory.h"
 #include "common/FatalException.hpp"
@@ -9,7 +11,12 @@
 #define PAGE_SIZE (1 << 12)
 #define PAGE_MASK ~(PAGE_SIZE - 1)
 
+using std::map;
+using std::string;
+
 using namespace voltdb;
+
+map<string,HybridMemory::MEMORY_NODE_TYPE> dbObjectMemMap;
 
 void* HybridMemory::alloc(size_t sz, MEMORY_NODE_TYPE memoryNodeType) {
   void* result;

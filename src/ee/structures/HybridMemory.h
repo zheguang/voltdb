@@ -5,7 +5,6 @@
 #include <libxmem.h>
 #include <cstddef>
 #include <string>
-#include <map>
 
 namespace voltdb {
 
@@ -20,8 +19,6 @@ namespace voltdb {
       NVM,
       OS_HEAP,
     };
-
-    static std::map<std::string,MEMORY_NODE_TYPE> dbObjectMemMap;
 
     static void *alloc(size_t sz, MEMORY_NODE_TYPE memoryNodeType);
     static void free(void* start, size_t sz, MEMORY_NODE_TYPE memoryNodeType);
