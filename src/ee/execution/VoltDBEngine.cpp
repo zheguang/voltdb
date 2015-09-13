@@ -414,7 +414,7 @@ int VoltDBEngine::executePlanFragments(int32_t numFragments,
 }
 
 void VoltDBEngine::printBench() {
-  timespec indexTime = {0,0};
+  /*timespec indexTime = {0,0};
   int64_t numIndexCalls = 0;
   map<string,IndexBench> indexBenchMap;
   for (
@@ -463,7 +463,13 @@ void VoltDBEngine::printBench() {
          m_numIndexExecutorsCalls,
          numIndexCalls,
          asString(indexBenchMap).c_str()
+  );*/
+
+  printf("{'backend': {'partition': %d, 'xmemTags': '%s'}}\n",
+      m_executorContext->m_partitionId,
+      HybridMemory::getXmemTagsString().c_str()
   );
+
   fflush(stdout);
 }
 

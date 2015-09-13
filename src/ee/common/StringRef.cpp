@@ -66,9 +66,9 @@ StringRef::create(size_t size, Pool* dataPool)
     return retval;
 }
 
-StringRef* StringRef::create(size_t size, HybridMemory::MEMORY_NODE_TYPE memoryNodeType)
+StringRef* StringRef::create(size_t size, const tag_t& tag)
 {
-  return new(ThreadLocalPool::get(sizeof(StringRef))->malloc()) StringRef(size, memoryNodeType);
+  return new(ThreadLocalPool::get(sizeof(StringRef))->malloc()) StringRef(size, tag);
 }
 
 void
@@ -107,16 +107,13 @@ StringRef::StringRef(std::size_t size, Pool* dataPool)
     setBackPtr();
 }
 
-StringRef::StringRef(std::size_t size, HybridMemory::MEMORY_NODE_TYPE memoryNodeType)
+StringRef::StringRef(std::size_t size, const tag_t& tag)
 {
-    m_memoryNodeType = memoryNodeType;
+    m_tag = tag;
     m_size = size + sizeof(StringRef*);
     m_tempPool = false;
     m_stringPtr =
-        reinterpret_cast<char*>(ThreadLocalPool::getStringPool()->get(m_size, memoryNodeType)->malloc());
-#ifdef HYBRID_MEMORY_CHECK
-    HybridMemory::assertAddress(m_stringPtr, memoryNodeType);
-#endif
+        reinterpret_cast<char*>(ThreadLocalPool::getStringPool()->get(m_size, tag)->malloc());
     setBackPtr();
 }
 
@@ -127,7 +124,7 @@ StringRef::~StringRef()
 /*#ifdef MEMCHECK
         delete[] m_stringPtr;
 #else*/
-      ThreadLocalPool::getStringPool()->get(m_size, m_memoryNodeType)->free(m_stringPtr);
+      ThreadLocalPool::getStringPool()->get(m_size, m_tag)->free(m_stringPtr);
 /*#endif*/
     }
 }

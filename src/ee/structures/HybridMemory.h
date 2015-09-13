@@ -8,33 +8,26 @@
 
 namespace voltdb {
 
+  typedef int tag_t;
+  const tag_t OS_HEAP = -1;
+
   class HybridMemory {
   public:
-    enum MEMORY_NODE_TYPE {
-      DRAM = 0,
-      DRAM_SECONDARY_PRIORITY,
-      DRAM_THIRD_PRIORITY,
-      DRAM_FOURTH_PRIORITY,
-      DRAM_FIFITH_PRIORITY,
-      NVM,
-      OS_HEAP,
-    };
 
-    static void *alloc(size_t sz, MEMORY_NODE_TYPE memoryNodeType);
-    static void free(void* start, size_t sz, MEMORY_NODE_TYPE memoryNodeType);
-    static void assertAddress(void* start, MEMORY_NODE_TYPE memoryNodeType);
+    static void *alloc(size_t sz, const tag_t& tag);
+    static void free(void* start, const tag_t& tag);
 
-    static MEMORY_NODE_TYPE indexPriorityOf(const std::string& name);
-    static MEMORY_NODE_TYPE tablePriorityOf(const std::string& name);
-    static MEMORY_NODE_TYPE otherPriorityOf(const std::string& name);
+    static tag_t indexPriorityOf(const std::string& name);
+    static tag_t tablePriorityOf(const std::string& name);
+    static tag_t otherPriorityOf(const std::string& name);
+
+    static std::string getXmemTagsString();
 
   private:
       HybridMemory();
       ~HybridMemory();
 
-      static int memoryNodeOf(MEMORY_NODE_TYPE memoryNodeType);
-      //static xmem_classifier_t xmemClassifierOf(MEMORY_NODE_TYPE memoryNodeType);
-      static int xmemTagOf(MEMORY_NODE_TYPE memoryNodeType);
+      static int xmemTagOf(const std::string& name);
   };
 
 };

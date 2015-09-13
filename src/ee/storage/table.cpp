@@ -387,7 +387,7 @@ bool Table::equals(voltdb::Table *other) {
 }
 
 void Table::loadTuplesFromNoHeader(SerializeInput &serialize_io,
-                                   HybridMemory::MEMORY_NODE_TYPE memoryNodeType,
+                                   const tag_t& tag,
                                    ReferenceSerializeOutput *uniqueViolationOutput) {
     int tupleCount = serialize_io.readInt();
     assert(tupleCount >= 0);
@@ -410,7 +410,7 @@ void Table::loadTuplesFromNoHeader(SerializeInput &serialize_io,
         target.setPendingDeleteFalse();
         target.setPendingDeleteOnUndoReleaseFalse();
 
-        target.deserializeFrom(serialize_io, memoryNodeType);
+        target.deserializeFrom(serialize_io, tag);
 
         processLoadedTuple(target, uniqueViolationOutput, serializedTupleCount, tupleCountPosition);
     }
@@ -471,7 +471,7 @@ void Table::loadTuplesFromNoHeader(SerializeInput &serialize_io,
 }
 
 void Table::loadTuplesFrom(SerializeInput &serialize_io,
-                           HybridMemory::MEMORY_NODE_TYPE memoryNodeType,
+                           const tag_t& tag,
                            ReferenceSerializeOutput *uniqueViolationOutput) {
     /*
      * directly receives a VoltTable buffer.
@@ -529,7 +529,7 @@ void Table::loadTuplesFrom(SerializeInput &serialize_io,
                                       message.str().c_str());
     }
 
-    loadTuplesFromNoHeader(serialize_io, memoryNodeType, uniqueViolationOutput);
+    loadTuplesFromNoHeader(serialize_io, tag, uniqueViolationOutput);
 }
 
 void Table::loadTuplesFrom(SerializeInput &serialize_io,

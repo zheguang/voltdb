@@ -1124,7 +1124,7 @@ int64_t PersistentTable::streamMore(TupleOutputStreamProcessor &outputStreams,
 /**
  * Process the updates from a recovery message
  */
-void PersistentTable::processRecoveryMessage(RecoveryProtoMsg* message, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) {
+void PersistentTable::processRecoveryMessage(RecoveryProtoMsg* message, const tag_t& tag) {
     switch (message->msgType()) {
     case RECOVERY_MSG_TYPE_SCAN_TUPLES: {
         if (isPersistentTableEmpty()) {
@@ -1133,7 +1133,7 @@ void PersistentTable::processRecoveryMessage(RecoveryProtoMsg* message, HybridMe
                 index->ensureCapacity(tupleCount);
             }
         }
-        loadTuplesFromNoHeader(*message->stream(), memoryNodeType);
+        loadTuplesFromNoHeader(*message->stream(), tag);
         break;
     }
     default:

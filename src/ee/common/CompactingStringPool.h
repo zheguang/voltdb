@@ -27,7 +27,7 @@ namespace voltdb
     class CompactingStringPool
     {
     public:
-        CompactingStringPool(int32_t elementSize, int32_t elementsPerBuf, HybridMemory::MEMORY_NODE_TYPE memoryNodeType);
+        CompactingStringPool(int32_t elementSize, int32_t elementsPerBuf, const tag_t& tag);
 
         void* malloc();
         void free(void* element);

@@ -259,7 +259,7 @@ class NValue {
        allocated storage for a copy of the object. */
     void serializeToTupleStorageAllocateForObjects(
         void *storage, const bool isInlined, const int32_t maxLength,
-        const bool isInBytes, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) const;
+        const bool isInBytes, const tag_t& tag) const;
 
     /* Serialize the scalar this NValue represents to the storage area
        provided. If the scalar is an Object type then the object will
@@ -269,7 +269,7 @@ class NValue {
     void serializeToTupleStorage(
         void *storage, const bool isInlined, const int32_t maxLength, const bool isInBytes) const;
     void serializeToTupleStorageDeepCopy(
-        void *storage, const bool isInlined, const int32_t maxLength, const bool isInBytes, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) const;
+        void *storage, const bool isInlined, const int32_t maxLength, const bool isInBytes, const tag_t& tag) const;
 
     /* Deserialize a scalar value of the specified type from the
        SerializeInput directly into the tuple storage area
@@ -281,7 +281,7 @@ class NValue {
         const ValueType type, bool isInlined, int32_t maxLength, bool isInBytes);
 
     static void deserializeFrom(
-        SerializeInput &input, HybridMemory::MEMORY_NODE_TYPE memoryNodeType, char *storage,
+        SerializeInput &input, const tag_t& tag, char *storage,
         const ValueType type, bool isInlined, int32_t maxLength, bool isInBytes);
 
         // TODO: no callers use the first form; Should combine these
@@ -2199,9 +2199,9 @@ class NValue {
         return retval;
     }
 
-    static NValue getAllocatedValue(ValueType type, const char* value, size_t size, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) {
+    static NValue getAllocatedValue(ValueType type, const char* value, size_t size, const tag_t& tag) {
         NValue retval(type);
-        char* storage = retval.allocateValueStorage((int32_t)size, memoryNodeType);
+        char* storage = retval.allocateValueStorage((int32_t)size, tag);
         ::memcpy(storage, value, (int32_t)size);
         return retval;
     }
@@ -2219,12 +2219,12 @@ class NValue {
         return storage;
     }
 
-    char* allocateValueStorage(int32_t length, HybridMemory::MEMORY_NODE_TYPE memoryNodeType)
+    char* allocateValueStorage(int32_t length, const tag_t& tag)
     {
         // This unsets the NValue's null tag and returns the length of the length.
         const int8_t lengthLength = setObjectLength(length);
         const int32_t minLength = length + lengthLength;
-        StringRef* sref = StringRef::create(minLength, memoryNodeType);
+        StringRef* sref = StringRef::create(minLength, tag);
         char* storage = sref->get();
         setObjectLengthToLocation(length, storage);
         storage += lengthLength;
@@ -2635,7 +2635,7 @@ inline NValue NValue::initFromTupleStorage(const void *storage, ValueType type, 
  * allocated storage for a copy of the object.
  */
 inline void NValue::serializeToTupleStorageAllocateForObjects(void *storage, const bool isInlined,
-        const int32_t maxLength, const bool isInBytes, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) const
+        const int32_t maxLength, const bool isInBytes, const tag_t& tag) const
 {
     const ValueType type = getValueType();
 
@@ -2678,7 +2678,7 @@ inline void NValue::serializeToTupleStorageAllocateForObjects(void *storage, con
 
                 const int8_t lengthLength = getObjectLengthLength();
                 const int32_t minlength = lengthLength + objLength;
-                StringRef* sref = StringRef::create(minlength, memoryNodeType);
+                StringRef* sref = StringRef::create(minlength, tag);
                 char *copy = sref->get();
                 setObjectLengthToLocation(objLength, copy);
                 ::memcpy(copy + lengthLength, getObjectValue_withoutNull(), objLength);
@@ -2759,7 +2759,7 @@ inline void NValue::serializeToTupleStorage(void *storage, const bool isInlined,
 }
 
 inline void NValue::serializeToTupleStorageDeepCopy(void *storage, const bool isInlined,
-        const int32_t maxLength, const bool isInBytes, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) const
+        const int32_t maxLength, const bool isInBytes, const tag_t& tag) const
 {
     const ValueType type = getValueType();
     switch (type) {
@@ -2815,7 +2815,7 @@ inline void NValue::serializeToTupleStorageDeepCopy(void *storage, const bool is
 
                 const int8_t lengthLength = getObjectLengthLength();
                 const int32_t minlength = lengthLength + objLength;
-                StringRef* sref = StringRef::create(minlength, memoryNodeType);
+                StringRef* sref = StringRef::create(minlength, tag);
                 char *copy = sref->get();
                 setObjectLengthToLocation(objLength, copy);
                 ::memcpy(copy + lengthLength, getObjectValue_withoutNull(), objLength);
@@ -2909,7 +2909,7 @@ inline void NValue::deserializeFrom(SerializeInput &input, Pool* dataPool, char 
     }
 }
 
-inline void NValue::deserializeFrom(SerializeInput &input, HybridMemory::MEMORY_NODE_TYPE memoryNodeType, char *storage,
+inline void NValue::deserializeFrom(SerializeInput &input, const tag_t& tag, char *storage,
         const ValueType type, bool isInlined, int32_t maxLength, bool isInBytes) {
 
     switch (type) {
@@ -2954,7 +2954,7 @@ inline void NValue::deserializeFrom(SerializeInput &input, HybridMemory::MEMORY_
             checkTooNarrowVarcharAndVarbinary(type, data, length, maxLength, isInBytes);
 
             const int32_t minlength = lengthLength + length;
-            StringRef* sref = StringRef::create(minlength, memoryNodeType);
+            StringRef* sref = StringRef::create(minlength, tag);
             char* copy = sref->get();
             setObjectLengthToLocation( length, copy);
             ::memcpy(copy + lengthLength, data, length);

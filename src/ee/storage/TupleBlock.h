@@ -90,7 +90,7 @@ class TupleBlock {
     friend void ::intrusive_ptr_add_ref(voltdb::TupleBlock * p);
     friend void ::intrusive_ptr_release(voltdb::TupleBlock * p);
 public:
-    TupleBlock(Table *table, TBBucketPtr bucket, HybridMemory::MEMORY_NODE_TYPE memoryNodeType);
+    TupleBlock(Table *table, TBBucketPtr bucket, const tag_t& tag);
 
     double loadFactor() {
         return m_activeTuples / m_tuplesPerBlock;
@@ -246,7 +246,7 @@ private:
 
     TBBucketPtr m_bucket;
     int m_bucketIndex;
-    HybridMemory::MEMORY_NODE_TYPE m_memoryNodeType;
+    tag_t m_tag;
 };
 
 /**

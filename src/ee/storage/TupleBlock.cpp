@@ -23,7 +23,7 @@ namespace voltdb {
 
 volatile int tupleBlocksAllocated = 0;
 
-TupleBlock::TupleBlock(Table *table, TBBucketPtr bucket, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) :
+TupleBlock::TupleBlock(Table *table, TBBucketPtr bucket, const tag_t& tag) :
         m_table(table),
         m_storage(NULL),
         m_references(0),
@@ -35,7 +35,7 @@ TupleBlock::TupleBlock(Table *table, TBBucketPtr bucket, HybridMemory::MEMORY_NO
         m_tuplesPerBlockDivNumBuckets(m_tuplesPerBlock / static_cast<double>(TUPLE_BLOCK_NUM_BUCKETS)),
         m_bucket(bucket),
         m_bucketIndex(0),
-        m_memoryNodeType(memoryNodeType)
+        m_tag(tag)
 {
 /*#ifdef MEMCHECK
     m_storage = new char[table->m_tableAllocationSize];
@@ -50,7 +50,7 @@ TupleBlock::TupleBlock(Table *table, TBBucketPtr bucket, HybridMemory::MEMORY_NO
     //m_storage = new char[table->m_tableAllocationSize];
 #endif
 #endif*/
-    m_storage = static_cast<char*>(HybridMemory::alloc(table->m_tableAllocationSize, memoryNodeType));
+    m_storage = static_cast<char*>(HybridMemory::alloc(table->m_tableAllocationSize, m_tag));
     tupleBlocksAllocated++;
 }
 
@@ -72,7 +72,7 @@ TupleBlock::~TupleBlock() {
     //delete []m_storage;
 #endif
 #endif*/
-    HybridMemory::free(m_storage, m_table->m_tableAllocationSize, m_memoryNodeType);
+    HybridMemory::free(m_storage, m_tag);
 }
 
 std::pair<int, int> TupleBlock::merge(Table *table, TBPtr source, TupleMovementListener *listener) {

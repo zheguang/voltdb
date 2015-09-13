@@ -118,7 +118,7 @@ namespace voltdb {
         uint64_t m_count;                 // number of items in the hash
         uint64_t m_uniqueCount;           // number of unique keys
         int m_sizeIndex;                  // current bucket count (from array)
-        std::string m_indexName;
+        tag_t m_tag;
         ContiguousAllocator m_allocator;  // allocator supporting compaction
         Hasher m_hasher;                  // instance of the hashing function
         KeyEqChecker m_keyEq;             // instance of the key eq checker
@@ -249,18 +249,17 @@ namespace voltdb {
     m_count(0),
     m_uniqueCount(0),
     m_sizeIndex(BUCKET_INITIAL_INDEX),
-    m_indexName(indexName),
+    m_tag(HybridMemory::indexPriorityOf(indexName)),
     //m_allocator((int32_t)(unique ? sizeof(HashNodeSmall) : sizeof(HashNode)), ALLOCATOR_CHUNK_SIZE, HybridMemory::DRAM_SECONDARY_PRIORITY),
     m_allocator((int32_t)(unique ? sizeof(HashNodeSmall) : sizeof(HashNode)), ALLOCATOR_CHUNK_SIZE, HybridMemory::indexPriorityOf(indexName)),
     m_hasher(hasher),
     m_keyEq(keyEq),
     m_dataEq(dataEq)
     {
-       m_indexName = indexName;
         // allocate the hash table and bzero it (bzero is crucial)
         //void *memory = mmap(NULL, sizeof(HashNode*) * TABLE_SIZES[m_sizeIndex], PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
         //void *memory = HybridMemory::alloc(sizeof(HashNode*) * TABLE_SIZES[m_sizeIndex], HybridMemory::DRAM_SECONDARY_PRIORITY);
-        void *memory = HybridMemory::alloc(sizeof(HashNode*) * TABLE_SIZES[m_sizeIndex], HybridMemory::indexPriorityOf(indexName));
+        void *memory = HybridMemory::alloc(sizeof(HashNode*) * TABLE_SIZES[m_sizeIndex], m_tag);
         assert(memory);
         m_buckets = reinterpret_cast<HashNode**>(memory);
         memset(m_buckets, 0, sizeof(HashNode*) * TABLE_SIZES[m_sizeIndex]);
@@ -284,7 +283,7 @@ namespace voltdb {
 
         // delete the hashtable
         //munmap(m_buckets, sizeof(HashNode*) * TABLE_SIZES[m_sizeIndex]);
-        HybridMemory::free(m_buckets, sizeof(HashNode*) * TABLE_SIZES[m_sizeIndex], HybridMemory::indexPriorityOf(m_indexName));
+        HybridMemory::free(m_buckets, m_tag);
 
         // when the allocator gets cleaned up, it will
         // free the memory used for nodes
@@ -622,7 +621,7 @@ namespace voltdb {
 
         // create new double size buffer
         //void *memory = mmap(NULL, sizeof(HashNode*) * TABLE_SIZES[newSizeIndex], PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
-        void *memory = HybridMemory::alloc(sizeof(HashNode*) * TABLE_SIZES[newSizeIndex], HybridMemory::indexPriorityOf(m_indexName));
+        void *memory = HybridMemory::alloc(sizeof(HashNode*) * TABLE_SIZES[newSizeIndex], m_tag);
         assert(memory);
         HashNode **newBuckets = reinterpret_cast<HashNode**>(memory);
         memset(newBuckets, 0, TABLE_SIZES[newSizeIndex] * sizeof(HashNode*));
@@ -641,7 +640,7 @@ namespace voltdb {
 
         // swap the table buffers
         //munmap(m_buckets, TABLE_SIZES[m_sizeIndex] * sizeof(HashNode*));
-        HybridMemory::free(m_buckets, TABLE_SIZES[m_sizeIndex] * sizeof(HashNode*), HybridMemory::indexPriorityOf(m_indexName));
+        HybridMemory::free(m_buckets, m_tag);
         m_buckets = newBuckets;
         m_sizeIndex = newSizeIndex;
     }

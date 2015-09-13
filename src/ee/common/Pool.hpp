@@ -89,13 +89,8 @@ public:
 #else
         char *storage = new char[m_allocationSize];
 #endif*/
-#ifdef TEMPPOOL_IN_DRAM
-        m_memoryNodeType = HybridMemory::DRAM;
-        char *storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, HybridMemory::DRAM));
-#else
-        m_memoryNodeType = HybridMemory::otherPriorityOf("tempPool");
-        char *storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, m_memoryNodeType));
-#endif
+        m_tag = HybridMemory::otherPriorityOf("tempPool");
+        char *storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, m_tag));
         m_chunks.push_back(Chunk(m_allocationSize, storage));
     }
 
@@ -118,13 +113,8 @@ public:
 #else
         char *storage = new char[m_allocationSize];
 #endif*/
-#ifdef TEMPPOOL_IN_DRAM
-        m_memoryNodeType = HybridMemory::DRAM;
-        char *storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, HybridMemory::DRAM));
-#else
-        m_memoryNodeType = HybridMemory::otherPriorityOf("tempPool");
-        char *storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, m_memoryNodeType));
-#endif
+        m_tag = HybridMemory::otherPriorityOf("tempPool");
+        char *storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, m_tag));
         m_chunks.push_back(Chunk(allocationSize, storage));
     }
 
@@ -138,7 +128,7 @@ public:
 #else
             delete [] m_chunks[ii].m_chunkData;
 #endif*/
-            HybridMemory::free(m_chunks[ii].m_chunkData, m_chunks[ii].m_size, m_memoryNodeType);
+            HybridMemory::free(m_chunks[ii].m_chunkData, m_tag);
         }
         for (std::size_t ii = 0; ii < m_oversizeChunks.size(); ii++) {
 /*#ifdef USE_MMAP
@@ -149,7 +139,7 @@ public:
 #else
             delete [] m_oversizeChunks[ii].m_chunkData;
 #endif*/
-            HybridMemory::free(m_oversizeChunks[ii].m_chunkData, m_oversizeChunks[ii].m_size, m_memoryNodeType);
+            HybridMemory::free(m_oversizeChunks[ii].m_chunkData, m_tag);
         }
     }
 
@@ -179,11 +169,7 @@ public:
 #else
                 char *storage = new char[size];
 #endif*/
-#ifdef TEMPPOOL_IN_DRAM
-                char* storage = static_cast<char*>(HybridMemory::alloc(nexthigher(size), HybridMemory::DRAM));
-#else
-                char* storage = static_cast<char*>(HybridMemory::alloc(nexthigher(size), m_memoryNodeType));
-#endif
+                char* storage = static_cast<char*>(HybridMemory::alloc(nexthigher(size), m_tag));
                 m_oversizeChunks.push_back(Chunk(nexthigher(size), storage));
                 Chunk &newChunk = m_oversizeChunks.back();
                 newChunk.m_offset = size;
@@ -216,11 +202,7 @@ public:
 #else
                 char *storage = new char[m_allocationSize];
 #endif*/
-#ifdef TEMPPOOL_IN_DRAM
-                char* storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, HybridMemory::DRAM));
-#else
-                char* storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, m_memoryNodeType));
-#endif
+                char* storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, m_tag));
                 m_chunks.push_back(Chunk(m_allocationSize, storage));
                 Chunk &newChunk = m_chunks.back();
                 newChunk.m_offset = size;
@@ -263,7 +245,7 @@ public:
 #else
             delete [] m_oversizeChunks[ii].m_chunkData;
 #endif*/
-            HybridMemory::free(m_oversizeChunks[ii].m_chunkData, m_oversizeChunks[ii].m_size, m_memoryNodeType);
+            HybridMemory::free(m_oversizeChunks[ii].m_chunkData, m_tag);
         }
         m_oversizeChunks.clear();
 
@@ -286,7 +268,7 @@ public:
 #else
                 delete []m_chunks[ii].m_chunkData;
 #endif*/
-                HybridMemory::free(m_chunks[ii].m_chunkData, m_chunks[ii].m_size, m_memoryNodeType);
+                HybridMemory::free(m_chunks[ii].m_chunkData, m_tag);
             }
             m_chunks.resize(m_maxChunkCount);
         }
@@ -321,7 +303,7 @@ private:
     Pool(const Pool&);
     Pool& operator=(const Pool&);
     
-    HybridMemory::MEMORY_NODE_TYPE m_memoryNodeType;
+    tag_t m_tag;
 };
 #else
 /**

@@ -367,7 +367,7 @@ void NValue::deserializeIntoANewNValueList(SerializeInput &input, Pool *dataPool
 void NValue::allocateANewNValueList(size_t length, ValueType elementType)
 {
     int trueSize = NValueList::allocationSizeForLength(length);
-    char* storage = allocateValueStorage(trueSize, NULL);
+    char* storage = allocateValueStorage(trueSize, (Pool*) NULL);
     ::memset(storage, 0, trueSize);
     new (storage) NValueList(length, elementType);
 }

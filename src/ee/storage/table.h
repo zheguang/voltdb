@@ -278,7 +278,7 @@ class Table {
                                 Pool *stringPool,
                                 ReferenceSerializeOutput *uniqueViolationOutput = NULL);
     void loadTuplesFromNoHeader(SerializeInput &serialize_in,
-                                HybridMemory::MEMORY_NODE_TYPE memoryNodeType,
+                                const tag_t& tag,
                                 ReferenceSerializeOutput *uniqueViolationOutput = NULL);
 
     /**
@@ -289,7 +289,7 @@ class Table {
                         Pool *stringPool,
                         ReferenceSerializeOutput *uniqueViolationOutput = NULL);
     void loadTuplesFrom(SerializeInput &serialize_in,
-                        HybridMemory::MEMORY_NODE_TYPE memoryNodeType,
+                        const tag_t& tag,
                         ReferenceSerializeOutput *uniqueViolationOutput = NULL);
 
 
@@ -445,6 +445,9 @@ protected:
     std::vector<TableIndex*> m_indexes;
     std::vector<TableIndex*> m_uniqueIndexes;
     TableIndex *m_pkeyIndex;
+
+    // xmem
+    //tag_t m_tag; TODO
 
   private:
     int32_t m_refcount;

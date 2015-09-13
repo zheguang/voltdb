@@ -215,7 +215,7 @@ public:
     }
 
     void setNValue(const int idx, voltdb::NValue value);
-    void setNValueDeepCopy(const int idx, voltdb::NValue value, HybridMemory::MEMORY_NODE_TYPE memoryNodeType);
+    void setNValueDeepCopy(const int idx, voltdb::NValue value, const tag_t& tag);
     /*
      * Copies range of NValues from one tuple to another.
      */
@@ -229,7 +229,7 @@ public:
      * to provide NULL for stringPool in which case the strings will
      * be allocated on the heap.
      */
-    void setNValueAllocateForObjectCopies(const int idx, voltdb::NValue value, HybridMemory::MEMORY_NODE_TYPE memoryNodeType);
+    void setNValueAllocateForObjectCopies(const int idx, voltdb::NValue value, const tag_t& tag);
 
     /** How long is a tuple? */
     inline int tupleLength() const {
@@ -288,11 +288,11 @@ public:
     std::string debugNoHeader() const;
 
     /** Copy values from one tuple into another (uses memcpy) */
-    void copyForPersistentInsert(const TableTuple &source, const HybridMemory::MEMORY_NODE_TYPE& priority);
+    void copyForPersistentInsert(const TableTuple &source, const tag_t& tag);
     // The vector "output" arguments detail the non-inline object memory management
     // required of the upcoming release or undo.
     void copyForPersistentUpdate(const TableTuple &source,
-                                 std::vector<char*> &oldObjects, std::vector<char*> &newObjects, const HybridMemory::MEMORY_NODE_TYPE& priority);
+                                 std::vector<char*> &oldObjects, std::vector<char*> &newObjects, const tag_t& tag);
     void copy(const TableTuple &source);
 
     /** this does set NULL in addition to clear string count.*/
@@ -304,7 +304,7 @@ public:
     int compare(const TableTuple &other) const;
 
     void deserializeFrom(voltdb::SerializeInput &tupleIn, Pool *stringPool);
-    void deserializeFrom(voltdb::SerializeInput &tupleIn, HybridMemory::MEMORY_NODE_TYPE memoryNodeType);
+    void deserializeFrom(voltdb::SerializeInput &tupleIn, const tag_t& tag);
     void serializeTo(voltdb::SerializeOutput &output);
     void serializeToExport(voltdb::ExportSerializeOutput &io,
                           int colOffset, uint8_t *nullArray);
@@ -491,7 +491,7 @@ inline void TableTuple::setNValue(const int idx, voltdb::NValue value) {
     value.serializeToTupleStorage(dataPtr, isInlined, columnLength, isInBytes);
 }
 
-inline void TableTuple::setNValueDeepCopy(const int idx, voltdb::NValue value, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) {
+inline void TableTuple::setNValueDeepCopy(const int idx, voltdb::NValue value, const tag_t& tag) {
     assert(m_schema);
     assert(m_data);
 
@@ -501,7 +501,7 @@ inline void TableTuple::setNValueDeepCopy(const int idx, voltdb::NValue value, H
     const bool isInBytes = columnInfo->inBytes;
     char *dataPtr = getWritableDataPtr(columnInfo);
     const int32_t columnLength = columnInfo->length;
-    value.serializeToTupleStorageDeepCopy(dataPtr, isInlined, columnLength, isInBytes, memoryNodeType);
+    value.serializeToTupleStorageDeepCopy(dataPtr, isInlined, columnLength, isInBytes, tag);
 }
 
 /** Multi column version. */
@@ -515,7 +515,7 @@ inline void TableTuple::setNValues(int beginIdx, TableTuple lhs, int begin, int 
 }
 
 /* Copy strictly by value from slimvalue into this tuple */
-inline void TableTuple::setNValueAllocateForObjectCopies(const int idx, voltdb::NValue value, HybridMemory::MEMORY_NODE_TYPE memoryNodeType)
+inline void TableTuple::setNValueAllocateForObjectCopies(const int idx, voltdb::NValue value, const tag_t& tag)
 {
     assert(m_schema);
     assert(m_data);
@@ -528,13 +528,13 @@ inline void TableTuple::setNValueAllocateForObjectCopies(const int idx, voltdb::
     const int32_t columnLength = columnInfo->length;
 
     value.serializeToTupleStorageAllocateForObjects(dataPtr, isInlined,
-                                                    columnLength, isInBytes, memoryNodeType);
+                                                    columnLength, isInBytes, tag);
 }
 
 /*
  * With a persistent insert the copy should do an allocation for all uninlinable strings
  */
-inline void TableTuple::copyForPersistentInsert(const voltdb::TableTuple &source, const HybridMemory::MEMORY_NODE_TYPE& priority) {
+inline void TableTuple::copyForPersistentInsert(const voltdb::TableTuple &source, const tag_t& tag) {
     assert(m_schema);
     assert(source.m_schema);
     assert(source.m_data);
@@ -563,7 +563,7 @@ inline void TableTuple::copyForPersistentInsert(const voltdb::TableTuple &source
                     m_schema->getUninlinedObjectColumnInfoIndex(ii);
             setNValueAllocateForObjectCopies(uinlineableObjectColumnIndex,
                     source.getNValue(uinlineableObjectColumnIndex),
-                    priority);
+                    tag);
         }
         m_data[0] = source.m_data[0];
     }
@@ -575,7 +575,7 @@ inline void TableTuple::copyForPersistentInsert(const voltdb::TableTuple &source
  */
 inline void TableTuple::copyForPersistentUpdate(const TableTuple &source,
                                                 std::vector<char*> &oldObjects, std::vector<char*> &newObjects,
-                                                const HybridMemory::MEMORY_NODE_TYPE& priority)
+                                                const tag_t& tag)
 {
     assert(m_schema);
     assert(m_schema == source.m_schema);
@@ -607,7 +607,7 @@ inline void TableTuple::copyForPersistentUpdate(const TableTuple &source,
                     oldObjects.push_back(*mPtr);
                     // TODO: Here, it's known that the column is an object type, and yet
                     // setNValueAllocateForObjectCopies is called to figure this all out again.
-                    setNValueAllocateForObjectCopies(ii, source.getNValue(ii), priority);
+                    setNValueAllocateForObjectCopies(ii, source.getNValue(ii), tag);
                     // Yes, uses the same old pointer as two statements ago to get a new value. Neat.
                     newObjects.push_back(*mPtr);
                 }
@@ -631,7 +631,7 @@ inline void TableTuple::copyForPersistentUpdate(const TableTuple &source,
                 // 2) do the same wholesale tuple memcpy as in the no-objects "else" clause, below,
                 // 3) replace the object pointer at each "changed object pointer offset"
                 //    with a pointer to an object copy of its new referent.
-                setNValueAllocateForObjectCopies(ii, source.getNValue(ii), priority);
+                setNValueAllocateForObjectCopies(ii, source.getNValue(ii), tag);
             }
         }
         // This obscure assignment is propagating the tuple flags rather than leaving it to the caller.
@@ -688,7 +688,7 @@ inline void TableTuple::deserializeFrom(voltdb::SerializeInput &tupleIn, Pool *d
     }
 }
 
-inline void TableTuple::deserializeFrom(voltdb::SerializeInput &tupleIn, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) {
+inline void TableTuple::deserializeFrom(voltdb::SerializeInput &tupleIn, const tag_t& tag) {
     assert(m_schema);
     assert(m_data);
 
@@ -709,7 +709,7 @@ inline void TableTuple::deserializeFrom(voltdb::SerializeInput &tupleIn, HybridM
          * serializing to tuple storage.
          */
         char *dataPtr = getWritableDataPtr(columnInfo);
-        NValue::deserializeFrom(tupleIn, memoryNodeType, dataPtr, columnInfo->getVoltType(),
+        NValue::deserializeFrom(tupleIn, tag, dataPtr, columnInfo->getVoltType(),
                 columnInfo->inlined, static_cast<int32_t>(columnInfo->length), columnInfo->inBytes);
     }
 }

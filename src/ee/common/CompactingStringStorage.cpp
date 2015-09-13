@@ -27,20 +27,20 @@ using boost::shared_ptr;
 
 typedef boost::shared_ptr<CompactingStringPool> PoolPtrType;
 typedef boost::unordered_map<size_t, PoolPtrType> MapType;
-typedef boost::unordered_map<HybridMemory::MEMORY_NODE_TYPE,MapType> MapsType;
+typedef boost::unordered_map<tag_t,MapType> MapsType;
 
-PoolPtrType CompactingStringStorage::get(size_t size, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) {
+PoolPtrType CompactingStringStorage::get(size_t size, const tag_t& tag) {
     size_t alloc_size = ThreadLocalPool::getAllocationSizeForObject(size);
     if (alloc_size == 0)
     {
         throwFatalException("Attempted to allocate an object then the 1 meg limit. Requested size was %d",
             static_cast<int32_t>(size));
     }
-    return getExact(alloc_size, memoryNodeType);
+    return getExact(alloc_size, tag);
 }
 
-PoolPtrType CompactingStringStorage::getExact(size_t size, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) {
-    MapType *poolMap = getPoolMapFrom(memoryNodeType);
+PoolPtrType CompactingStringStorage::getExact(size_t size, const tag_t& tag) {
+    MapType *poolMap = getPoolMapFrom(tag);
     MapType::iterator iter = poolMap->find(size);
     int32_t ssize = static_cast<int32_t>(size);
     PoolPtrType pool;
@@ -48,7 +48,7 @@ PoolPtrType CompactingStringStorage::getExact(size_t size, HybridMemory::MEMORY_
         // compute num_elements to be closest multiple
         // leading to a 2Meg buffer
         int32_t num_elements = (2 * 1024 * 1024 / ssize) + 1;
-        pool = PoolPtrType(new CompactingStringPool(ssize, num_elements, memoryNodeType));
+        pool = PoolPtrType(new CompactingStringPool(ssize, num_elements, tag));
         poolMap->insert(pair<size_t, PoolPtrType>(size, pool));
     }
     else
@@ -58,11 +58,11 @@ PoolPtrType CompactingStringStorage::getExact(size_t size, HybridMemory::MEMORY_
     return pool;
 }
 
-MapType *CompactingStringStorage::getPoolMapFrom(HybridMemory::MEMORY_NODE_TYPE memoryNodeType) {
-  if (m_poolsMap.find(memoryNodeType) == m_poolsMap.end()) {
-    m_poolsMap[memoryNodeType] = MapType();
+MapType *CompactingStringStorage::getPoolMapFrom(const tag_t& tag) {
+  if (m_poolsMap.find(tag) == m_poolsMap.end()) {
+    m_poolsMap[tag] = MapType();
   }
-  return &m_poolsMap[memoryNodeType];
+  return &m_poolsMap[tag];
 }
 
 size_t CompactingStringStorage::getPoolAllocationSize()
