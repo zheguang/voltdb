@@ -17,7 +17,7 @@ using std::string;
 
 static const int MAX_NUM_TAGS = 128;
 static string g_xmemTags[MAX_NUM_TAGS];
-static int g_numXmemTags;
+static int g_numXmemTags = 0;
 static const MEMORY_NODE_TYPE OS_HEAP = -2;
 
 void* HybridMemory::alloc(size_t sz, MEMORY_NODE_TYPE memoryNodeType) {
@@ -142,5 +142,23 @@ MEMORY_NODE_TYPE HybridMemory::otherPriorityOf(const std::string& name) {
   }
   //fprintf(stderr, "Got index priority of (%s) as (%d).\n", name.c_str(), priority);
   return priority;
+}
+
+string HybridMemory::getXmemTagsString() {
+  const size_t buffer_len = 2048;
+  char buffer[buffer_len];
+  //for (map<string,int>::const_iterator it = xmemTags.begin(); it != xmemTags.end(); it++) {
+  for (int i = 0; i < g_numXmemTags; i++) {
+    assert(strlen(buffer) < buffer_len);
+    char* next_loc = buffer + strlen(buffer);
+    size_t remain_len = buffer_len - strlen(buffer);
+    snprintf(next_loc, remain_len, "%d -> %s\n", i, g_xmemTags[i].c_str());
+  }
+
+  return string(buffer);
+}
+
+void HybridMemory::clearXmemTags() {
+  g_numXmemTags = 0;
 }
 

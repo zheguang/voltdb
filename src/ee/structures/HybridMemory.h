@@ -18,6 +18,8 @@ namespace voltdb {
     static MEMORY_NODE_TYPE indexPriorityOf(const std::string& name);
     static MEMORY_NODE_TYPE tablePriorityOf(const std::string& name);
     static MEMORY_NODE_TYPE otherPriorityOf(const std::string& name);
+    static std::string getXmemTagsString();
+    static void clearXmemTags();
 
   private:
       HybridMemory();

@@ -451,7 +451,7 @@ void VoltDBEngine::printBench() {
     }
   }
 
-  printf("{'backend': {'id': %d, 'backendTime': %ld.%.9ld, 'indexExecutorsTime': %ld.%.9ld, 'indexTime': %ld.%.9ld, 'backendCalls': %ld, 'indexExecutorsCalls': %ld, 'indexCalls': %ld, 'indexes': [%s]}}\n",
+  /*printf("{'backend': {'id': %d, 'backendTime': %ld.%.9ld, 'indexExecutorsTime': %ld.%.9ld, 'indexTime': %ld.%.9ld, 'backendCalls': %ld, 'indexExecutorsCalls': %ld, 'indexCalls': %ld, 'indexes': [%s]}}\n",
          m_executorContext->m_partitionId,
          m_backendTime.tv_sec,
          m_backendTime.tv_nsec,
@@ -463,7 +463,12 @@ void VoltDBEngine::printBench() {
          m_numIndexExecutorsCalls,
          numIndexCalls,
          asString(indexBenchMap).c_str()
+  );*/
+  printf("{'backend': {'id': %d, 'xmemTags': [%s]}}\n",
+         m_executorContext->m_partitionId,
+         HybridMemory::getXmemTagsString().c_str()
   );
+
   fflush(stdout);
 }
 
@@ -523,6 +528,8 @@ void VoltDBEngine::clearBench() {
 
   m_numBackendCalls = 0;
   m_numIndexExecutorsCalls = 0;
+
+  HybridMemory::clearXmemTags();
 
   printf("Backend[%d]: clear time\n",
          m_executorContext->m_partitionId);
