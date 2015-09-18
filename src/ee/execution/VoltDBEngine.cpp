@@ -465,10 +465,11 @@ void VoltDBEngine::printBench() {
          asString(indexBenchMap).c_str()
   );*/
 
-  printf("{'backend': {'partition': %d, 'xmemTags': '%s'}}\n",
+  /*printf("{'backend': {'partition': %d, 'xmemTags': '%s'}}\n",
       m_executorContext->m_partitionId,
       HybridMemory::getXmemTagsString().c_str()
-  );
+  );*/
+  HybridMemory::printXmemTagsString();
 
   fflush(stdout);
 }

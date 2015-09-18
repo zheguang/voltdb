@@ -107,6 +107,13 @@ string HybridMemory::getXmemTagsString() {
   return string(buffer);
 }
 
+void HybridMemory::printXmemTagsString() {
+  for (int i = 0; i < g_numXmemTags; i++) {
+    printf("%d -> %s\n", i, g_xmemTags[i].c_str());
+  }
+}
+
+
 void HybridMemory::clearXmemTags() {
   g_numXmemTags = 0;
 }

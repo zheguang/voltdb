@@ -22,6 +22,7 @@ namespace voltdb {
 
     static std::string getXmemTagsString();
     static void clearXmemTags();
+    static void printXmemTagsString();
 
   private:
       HybridMemory();
