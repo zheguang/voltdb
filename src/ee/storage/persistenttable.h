@@ -344,7 +344,7 @@ class PersistentTable : public Table, public UndoQuantumReleaseInterest,
     /**
      * Process the updates from a recovery message
      */
-    void processRecoveryMessage(RecoveryProtoMsg* message, HybridMemory::MEMORY_NODE_TYPE memoryNodeType);
+    void processRecoveryMessage(RecoveryProtoMsg* message, MEMORY_NODE_TYPE memoryNodeType);
 
     /**
      * Create a tree index on the primary key and then iterate it and hash

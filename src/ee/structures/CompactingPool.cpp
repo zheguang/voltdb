@@ -22,7 +22,7 @@
 using namespace voltdb;
 using namespace std;
 
-CompactingPool::CompactingPool(int32_t elementSize, int32_t elementsPerBuffer, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) :
+CompactingPool::CompactingPool(int32_t elementSize, int32_t elementsPerBuffer, MEMORY_NODE_TYPE memoryNodeType) :
     m_size(elementSize), m_allocator(elementSize, elementsPerBuffer, memoryNodeType)
 {
 }

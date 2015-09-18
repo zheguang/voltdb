@@ -90,8 +90,8 @@ public:
         char *storage = new char[m_allocationSize];
 #endif*/
 #ifdef TEMPPOOL_IN_DRAM
-        m_memoryNodeType = HybridMemory::DRAM;
-        char *storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, HybridMemory::DRAM));
+        //m_memoryNodeType = HybridMemory::DRAM;
+        //char *storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, HybridMemory::DRAM));
 #else
         m_memoryNodeType = HybridMemory::otherPriorityOf("tempPool");
         char *storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, m_memoryNodeType));
@@ -119,8 +119,8 @@ public:
         char *storage = new char[m_allocationSize];
 #endif*/
 #ifdef TEMPPOOL_IN_DRAM
-        m_memoryNodeType = HybridMemory::DRAM;
-        char *storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, HybridMemory::DRAM));
+        //m_memoryNodeType = HybridMemory::DRAM;
+        //char *storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, HybridMemory::DRAM));
 #else
         m_memoryNodeType = HybridMemory::otherPriorityOf("tempPool");
         char *storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, m_memoryNodeType));
@@ -180,7 +180,7 @@ public:
                 char *storage = new char[size];
 #endif*/
 #ifdef TEMPPOOL_IN_DRAM
-                char* storage = static_cast<char*>(HybridMemory::alloc(nexthigher(size), HybridMemory::DRAM));
+                //char* storage = static_cast<char*>(HybridMemory::alloc(nexthigher(size), HybridMemory::DRAM));
 #else
                 char* storage = static_cast<char*>(HybridMemory::alloc(nexthigher(size), m_memoryNodeType));
 #endif
@@ -217,7 +217,7 @@ public:
                 char *storage = new char[m_allocationSize];
 #endif*/
 #ifdef TEMPPOOL_IN_DRAM
-                char* storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, HybridMemory::DRAM));
+                //char* storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, HybridMemory::DRAM));
 #else
                 char* storage = static_cast<char*>(HybridMemory::alloc(m_allocationSize, m_memoryNodeType));
 #endif
@@ -321,7 +321,7 @@ private:
     Pool(const Pool&);
     Pool& operator=(const Pool&);
     
-    HybridMemory::MEMORY_NODE_TYPE m_memoryNodeType;
+    MEMORY_NODE_TYPE m_memoryNodeType;
 };
 #else
 /**

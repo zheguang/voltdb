@@ -278,7 +278,7 @@ class Table {
                                 Pool *stringPool,
                                 ReferenceSerializeOutput *uniqueViolationOutput = NULL);
     void loadTuplesFromNoHeader(SerializeInput &serialize_in,
-                                HybridMemory::MEMORY_NODE_TYPE memoryNodeType,
+                                MEMORY_NODE_TYPE memoryNodeType,
                                 ReferenceSerializeOutput *uniqueViolationOutput = NULL);
 
     /**
@@ -289,7 +289,7 @@ class Table {
                         Pool *stringPool,
                         ReferenceSerializeOutput *uniqueViolationOutput = NULL);
     void loadTuplesFrom(SerializeInput &serialize_in,
-                        HybridMemory::MEMORY_NODE_TYPE memoryNodeType,
+                        MEMORY_NODE_TYPE memoryNodeType,
                         ReferenceSerializeOutput *uniqueViolationOutput = NULL);
 
 

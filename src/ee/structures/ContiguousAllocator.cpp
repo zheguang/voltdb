@@ -23,7 +23,7 @@
 
 using namespace voltdb;
 
-ContiguousAllocator::ContiguousAllocator(int32_t allocSize, int32_t chunkSize, HybridMemory::MEMORY_NODE_TYPE memoryNodeType)
+ContiguousAllocator::ContiguousAllocator(int32_t allocSize, int32_t chunkSize, MEMORY_NODE_TYPE memoryNodeType)
 : m_count(0), m_allocSize(allocSize), m_chunkSize(chunkSize), m_tail(NULL), m_blockCount(0), m_memoryNodeType(memoryNodeType) {}
 
 ContiguousAllocator::~ContiguousAllocator() {

@@ -259,7 +259,7 @@ class NValue {
        allocated storage for a copy of the object. */
     void serializeToTupleStorageAllocateForObjects(
         void *storage, const bool isInlined, const int32_t maxLength,
-        const bool isInBytes, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) const;
+        const bool isInBytes, MEMORY_NODE_TYPE memoryNodeType) const;
 
     /* Serialize the scalar this NValue represents to the storage area
        provided. If the scalar is an Object type then the object will
@@ -269,7 +269,7 @@ class NValue {
     void serializeToTupleStorage(
         void *storage, const bool isInlined, const int32_t maxLength, const bool isInBytes) const;
     void serializeToTupleStorageDeepCopy(
-        void *storage, const bool isInlined, const int32_t maxLength, const bool isInBytes, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) const;
+        void *storage, const bool isInlined, const int32_t maxLength, const bool isInBytes, MEMORY_NODE_TYPE memoryNodeType) const;
 
     /* Deserialize a scalar value of the specified type from the
        SerializeInput directly into the tuple storage area
@@ -281,7 +281,7 @@ class NValue {
         const ValueType type, bool isInlined, int32_t maxLength, bool isInBytes);
 
     static void deserializeFrom(
-        SerializeInput &input, HybridMemory::MEMORY_NODE_TYPE memoryNodeType, char *storage,
+        SerializeInput &input, MEMORY_NODE_TYPE memoryNodeType, char *storage,
         const ValueType type, bool isInlined, int32_t maxLength, bool isInBytes);
 
         // TODO: no callers use the first form; Should combine these
@@ -636,7 +636,7 @@ class NValue {
     // Helpers for inList.
     // These are purposely not inlines to avoid exposure of NValueList details.
     void deserializeIntoANewNValueList(SerializeInput &input, Pool *dataPool);
-    void allocateANewNValueList(size_t elementCount, ValueType elementType);
+    void allocateANewNValueList(size_t elementCount, ValueType elementType, MEMORY_NODE_TYPE memoryNodeType);
 
     // Promotion Rules. Initialized in NValue.cpp
     static ValueType s_intPromotionTable[];
@@ -2167,10 +2167,10 @@ class NValue {
         return retval;
     }
 
-    static NValue getAllocatedArrayValueFromSizeAndType(size_t elementCount, ValueType elementType)
+    static NValue getAllocatedArrayValueFromSizeAndType(size_t elementCount, ValueType elementType, MEMORY_NODE_TYPE memoryNodeType)
     {
         NValue retval(VALUE_TYPE_ARRAY);
-        retval.allocateANewNValueList(elementCount, elementType);
+        retval.allocateANewNValueList(elementCount, elementType, memoryNodeType);
         return retval;
     }
 
@@ -2199,7 +2199,7 @@ class NValue {
         return retval;
     }
 
-    static NValue getAllocatedValue(ValueType type, const char* value, size_t size, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) {
+    static NValue getAllocatedValue(ValueType type, const char* value, size_t size, MEMORY_NODE_TYPE memoryNodeType) {
         NValue retval(type);
         char* storage = retval.allocateValueStorage((int32_t)size, memoryNodeType);
         ::memcpy(storage, value, (int32_t)size);
@@ -2219,7 +2219,7 @@ class NValue {
         return storage;
     }
 
-    char* allocateValueStorage(int32_t length, HybridMemory::MEMORY_NODE_TYPE memoryNodeType)
+    char* allocateValueStorage(int32_t length, MEMORY_NODE_TYPE memoryNodeType)
     {
         // This unsets the NValue's null tag and returns the length of the length.
         const int8_t lengthLength = setObjectLength(length);
@@ -2635,7 +2635,7 @@ inline NValue NValue::initFromTupleStorage(const void *storage, ValueType type, 
  * allocated storage for a copy of the object.
  */
 inline void NValue::serializeToTupleStorageAllocateForObjects(void *storage, const bool isInlined,
-        const int32_t maxLength, const bool isInBytes, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) const
+        const int32_t maxLength, const bool isInBytes, MEMORY_NODE_TYPE memoryNodeType) const
 {
     const ValueType type = getValueType();
 
@@ -2759,7 +2759,7 @@ inline void NValue::serializeToTupleStorage(void *storage, const bool isInlined,
 }
 
 inline void NValue::serializeToTupleStorageDeepCopy(void *storage, const bool isInlined,
-        const int32_t maxLength, const bool isInBytes, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) const
+        const int32_t maxLength, const bool isInBytes, MEMORY_NODE_TYPE memoryNodeType) const
 {
     const ValueType type = getValueType();
     switch (type) {
@@ -2909,7 +2909,7 @@ inline void NValue::deserializeFrom(SerializeInput &input, Pool* dataPool, char 
     }
 }
 
-inline void NValue::deserializeFrom(SerializeInput &input, HybridMemory::MEMORY_NODE_TYPE memoryNodeType, char *storage,
+inline void NValue::deserializeFrom(SerializeInput &input, MEMORY_NODE_TYPE memoryNodeType, char *storage,
         const ValueType type, bool isInlined, int32_t maxLength, bool isInBytes) {
 
     switch (type) {

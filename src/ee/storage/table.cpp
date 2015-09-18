@@ -387,7 +387,7 @@ bool Table::equals(voltdb::Table *other) {
 }
 
 void Table::loadTuplesFromNoHeader(SerializeInput &serialize_io,
-                                   HybridMemory::MEMORY_NODE_TYPE memoryNodeType,
+                                   MEMORY_NODE_TYPE memoryNodeType,
                                    ReferenceSerializeOutput *uniqueViolationOutput) {
     int tupleCount = serialize_io.readInt();
     assert(tupleCount >= 0);
@@ -471,7 +471,7 @@ void Table::loadTuplesFromNoHeader(SerializeInput &serialize_io,
 }
 
 void Table::loadTuplesFrom(SerializeInput &serialize_io,
-                           HybridMemory::MEMORY_NODE_TYPE memoryNodeType,
+                           MEMORY_NODE_TYPE memoryNodeType,
                            ReferenceSerializeOutput *uniqueViolationOutput) {
     /*
      * directly receives a VoltTable buffer.

@@ -215,7 +215,7 @@ public:
     }
 
     void setNValue(const int idx, voltdb::NValue value);
-    void setNValueDeepCopy(const int idx, voltdb::NValue value, HybridMemory::MEMORY_NODE_TYPE memoryNodeType);
+    void setNValueDeepCopy(const int idx, voltdb::NValue value, MEMORY_NODE_TYPE memoryNodeType);
     /*
      * Copies range of NValues from one tuple to another.
      */
@@ -229,7 +229,7 @@ public:
      * to provide NULL for stringPool in which case the strings will
      * be allocated on the heap.
      */
-    void setNValueAllocateForObjectCopies(const int idx, voltdb::NValue value, HybridMemory::MEMORY_NODE_TYPE memoryNodeType);
+    void setNValueAllocateForObjectCopies(const int idx, voltdb::NValue value, MEMORY_NODE_TYPE memoryNodeType);
 
     /** How long is a tuple? */
     inline int tupleLength() const {
@@ -288,11 +288,11 @@ public:
     std::string debugNoHeader() const;
 
     /** Copy values from one tuple into another (uses memcpy) */
-    void copyForPersistentInsert(const TableTuple &source, const HybridMemory::MEMORY_NODE_TYPE& priority);
+    void copyForPersistentInsert(const TableTuple &source, const MEMORY_NODE_TYPE& priority);
     // The vector "output" arguments detail the non-inline object memory management
     // required of the upcoming release or undo.
     void copyForPersistentUpdate(const TableTuple &source,
-                                 std::vector<char*> &oldObjects, std::vector<char*> &newObjects, const HybridMemory::MEMORY_NODE_TYPE& priority);
+                                 std::vector<char*> &oldObjects, std::vector<char*> &newObjects, const MEMORY_NODE_TYPE& priority);
     void copy(const TableTuple &source);
 
     /** this does set NULL in addition to clear string count.*/
@@ -304,7 +304,7 @@ public:
     int compare(const TableTuple &other) const;
 
     void deserializeFrom(voltdb::SerializeInput &tupleIn, Pool *stringPool);
-    void deserializeFrom(voltdb::SerializeInput &tupleIn, HybridMemory::MEMORY_NODE_TYPE memoryNodeType);
+    void deserializeFrom(voltdb::SerializeInput &tupleIn, MEMORY_NODE_TYPE memoryNodeType);
     void serializeTo(voltdb::SerializeOutput &output);
     void serializeToExport(voltdb::ExportSerializeOutput &io,
                           int colOffset, uint8_t *nullArray);
@@ -491,7 +491,7 @@ inline void TableTuple::setNValue(const int idx, voltdb::NValue value) {
     value.serializeToTupleStorage(dataPtr, isInlined, columnLength, isInBytes);
 }
 
-inline void TableTuple::setNValueDeepCopy(const int idx, voltdb::NValue value, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) {
+inline void TableTuple::setNValueDeepCopy(const int idx, voltdb::NValue value, MEMORY_NODE_TYPE memoryNodeType) {
     assert(m_schema);
     assert(m_data);
 
@@ -515,7 +515,7 @@ inline void TableTuple::setNValues(int beginIdx, TableTuple lhs, int begin, int 
 }
 
 /* Copy strictly by value from slimvalue into this tuple */
-inline void TableTuple::setNValueAllocateForObjectCopies(const int idx, voltdb::NValue value, HybridMemory::MEMORY_NODE_TYPE memoryNodeType)
+inline void TableTuple::setNValueAllocateForObjectCopies(const int idx, voltdb::NValue value, MEMORY_NODE_TYPE memoryNodeType)
 {
     assert(m_schema);
     assert(m_data);
@@ -534,7 +534,7 @@ inline void TableTuple::setNValueAllocateForObjectCopies(const int idx, voltdb::
 /*
  * With a persistent insert the copy should do an allocation for all uninlinable strings
  */
-inline void TableTuple::copyForPersistentInsert(const voltdb::TableTuple &source, const HybridMemory::MEMORY_NODE_TYPE& priority) {
+inline void TableTuple::copyForPersistentInsert(const voltdb::TableTuple &source, const MEMORY_NODE_TYPE& priority) {
     assert(m_schema);
     assert(source.m_schema);
     assert(source.m_data);
@@ -575,7 +575,7 @@ inline void TableTuple::copyForPersistentInsert(const voltdb::TableTuple &source
  */
 inline void TableTuple::copyForPersistentUpdate(const TableTuple &source,
                                                 std::vector<char*> &oldObjects, std::vector<char*> &newObjects,
-                                                const HybridMemory::MEMORY_NODE_TYPE& priority)
+                                                const MEMORY_NODE_TYPE& priority)
 {
     assert(m_schema);
     assert(m_schema == source.m_schema);
@@ -688,7 +688,7 @@ inline void TableTuple::deserializeFrom(voltdb::SerializeInput &tupleIn, Pool *d
     }
 }
 
-inline void TableTuple::deserializeFrom(voltdb::SerializeInput &tupleIn, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) {
+inline void TableTuple::deserializeFrom(voltdb::SerializeInput &tupleIn, MEMORY_NODE_TYPE memoryNodeType) {
     assert(m_schema);
     assert(m_data);
 

@@ -27,9 +27,9 @@ using boost::shared_ptr;
 
 typedef boost::shared_ptr<CompactingStringPool> PoolPtrType;
 typedef boost::unordered_map<size_t, PoolPtrType> MapType;
-typedef boost::unordered_map<HybridMemory::MEMORY_NODE_TYPE,MapType> MapsType;
+typedef boost::unordered_map<MEMORY_NODE_TYPE,MapType> MapsType;
 
-PoolPtrType CompactingStringStorage::get(size_t size, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) {
+PoolPtrType CompactingStringStorage::get(size_t size, MEMORY_NODE_TYPE memoryNodeType) {
     size_t alloc_size = ThreadLocalPool::getAllocationSizeForObject(size);
     if (alloc_size == 0)
     {
@@ -39,7 +39,7 @@ PoolPtrType CompactingStringStorage::get(size_t size, HybridMemory::MEMORY_NODE_
     return getExact(alloc_size, memoryNodeType);
 }
 
-PoolPtrType CompactingStringStorage::getExact(size_t size, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) {
+PoolPtrType CompactingStringStorage::getExact(size_t size, MEMORY_NODE_TYPE memoryNodeType) {
     MapType *poolMap = getPoolMapFrom(memoryNodeType);
     MapType::iterator iter = poolMap->find(size);
     int32_t ssize = static_cast<int32_t>(size);
@@ -58,7 +58,7 @@ PoolPtrType CompactingStringStorage::getExact(size_t size, HybridMemory::MEMORY_
     return pool;
 }
 
-MapType *CompactingStringStorage::getPoolMapFrom(HybridMemory::MEMORY_NODE_TYPE memoryNodeType) {
+MapType *CompactingStringStorage::getPoolMapFrom(MEMORY_NODE_TYPE memoryNodeType) {
   if (m_poolsMap.find(memoryNodeType) == m_poolsMap.end()) {
     m_poolsMap[memoryNodeType] = MapType();
   }

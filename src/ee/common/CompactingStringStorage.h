@@ -32,14 +32,14 @@ namespace voltdb {
 
         ~CompactingStringStorage() {}
 
-        boost::shared_ptr<CompactingStringPool> get(size_t size, HybridMemory::MEMORY_NODE_TYPE memoryNodeType);
+        boost::shared_ptr<CompactingStringPool> get(size_t size, MEMORY_NODE_TYPE memoryNodeType);
 
-        boost::shared_ptr<CompactingStringPool> getExact(size_t size, HybridMemory::MEMORY_NODE_TYPE memoryNodeType);
+        boost::shared_ptr<CompactingStringPool> getExact(size_t size, MEMORY_NODE_TYPE memoryNodeType);
 
         std::size_t getPoolAllocationSize();
 
     private:
-        boost::unordered_map<size_t, boost::shared_ptr<CompactingStringPool> > *getPoolMapFrom(HybridMemory::MEMORY_NODE_TYPE memoryNodeType);
+        boost::unordered_map<size_t, boost::shared_ptr<CompactingStringPool> > *getPoolMapFrom(MEMORY_NODE_TYPE memoryNodeType);
 
       //DRAM = 0,
       //DRAM_SECONDARY_PRIORITY,
@@ -47,7 +47,7 @@ namespace voltdb {
       //DRAM_FOURTH_PRIORITY,
       //DRAM_FIFITH_PRIORITY,
       //NVM,
-        boost::unordered_map<HybridMemory::MEMORY_NODE_TYPE,boost::unordered_map<size_t, boost::shared_ptr<CompactingStringPool> > > m_poolsMap;
+        boost::unordered_map<MEMORY_NODE_TYPE,boost::unordered_map<size_t, boost::shared_ptr<CompactingStringPool> > > m_poolsMap;
     };
 }
 

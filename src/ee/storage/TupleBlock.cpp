@@ -23,7 +23,7 @@ namespace voltdb {
 
 volatile int tupleBlocksAllocated = 0;
 
-TupleBlock::TupleBlock(Table *table, TBBucketPtr bucket, HybridMemory::MEMORY_NODE_TYPE memoryNodeType) :
+TupleBlock::TupleBlock(Table *table, TBBucketPtr bucket, MEMORY_NODE_TYPE memoryNodeType) :
         m_table(table),
         m_storage(NULL),
         m_references(0),

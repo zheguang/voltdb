@@ -364,10 +364,11 @@ void NValue::deserializeIntoANewNValueList(SerializeInput &input, Pool *dataPool
     // would likely require some kind of sorting/re-org of values at this point post-update pre-lookup.
 }
 
-void NValue::allocateANewNValueList(size_t length, ValueType elementType)
+void NValue::allocateANewNValueList(size_t length, ValueType elementType, MEMORY_NODE_TYPE memoryNodeType)
 {
     int trueSize = NValueList::allocationSizeForLength(length);
-    char* storage = allocateValueStorage(trueSize, NULL);
+    //char* storage = allocateValueStorage(trueSize, NULL);
+    char* storage = allocateValueStorage(trueSize, memoryNodeType);
     ::memset(storage, 0, trueSize);
     new (storage) NValueList(length, elementType);
 }

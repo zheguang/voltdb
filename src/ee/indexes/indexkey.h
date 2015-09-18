@@ -509,7 +509,7 @@ struct GenericPersistentKey : public GenericKey<keySize>
         }*/
         for (int ii = 0; ii < columnCount; ++ii) {
             //keyTuple.setNValue(ii, tuple->getNValue(notUsedIndices[ii]));
-            keyTuple.setNValueAllocateForObjectCopies(ii, tuple->getNValue(notUsedIndices[ii]), HybridMemory::DRAM);
+            keyTuple.setNValueAllocateForObjectCopies(ii, tuple->getNValue(notUsedIndices[ii]), HybridMemory::otherPriorityOf("miscel"));
         }
     }
 

@@ -1,6 +1,8 @@
 #include <numa.h>
 #include <numaif.h>
 #include <cstdlib>
+#include <map>
+#include <string>
 
 #include "HybridMemory.h"
 #include "common/FatalException.hpp"
@@ -10,6 +12,13 @@
 #define PAGE_MASK ~(PAGE_SIZE - 1)
 
 using namespace voltdb;
+using std::map;
+using std::string;
+
+static const int MAX_NUM_TAGS = 128;
+static string g_xmemTags[MAX_NUM_TAGS];
+static int g_numXmemTags;
+static const MEMORY_NODE_TYPE OS_HEAP = -2;
 
 void* HybridMemory::alloc(size_t sz, MEMORY_NODE_TYPE memoryNodeType) {
   void* result;
@@ -21,7 +30,8 @@ void* HybridMemory::alloc(size_t sz, MEMORY_NODE_TYPE memoryNodeType) {
       }
       break;
     default:
-      result = xmalloc(xmemTagOf(memoryNodeType), sz);
+      result = std::malloc(sz);
+      //result = xmalloc(memoryNodeType, sz);
       if (!result) {
         throwFatalException("Cannot allocate using xmalloc.");
       }
@@ -35,52 +45,25 @@ void HybridMemory::free(void* start, size_t sz, MEMORY_NODE_TYPE memoryNodeType)
       std::free(start);
       break;
     default:
-      xfree(start);
+      std::free(start);
+      //xfree(start);
   }
 }
 
-void HybridMemory::assertAddress(void* start, MEMORY_NODE_TYPE memoryNodeType) {
-  int numObjs = 1;
-  int status[numObjs];
-  void *page[numObjs];
-  page[0] = (void *)((unsigned long)start & PAGE_MASK);
-
-  long rc = move_pages(0, numObjs, page, NULL, status, MPOL_MF_MOVE); // Get the status on current node.
-
-  if (rc) {
-    throwFatalException("Unexpected error in assert address: cannot move page.");
+MEMORY_NODE_TYPE HybridMemory::xmemTagOf(const std::string& name) {
+  /*if (g_xmemTags.find(name) == g_xmemTags.end()) {
+    g_xmemTags[name] = (int) g_xmemTags.size();
+  }*/
+  for (int i = 0; i < g_numXmemTags; i++) {
+    if (g_xmemTags[i].compare(name) == 0) {
+      return i;
+    }
   }
-  int memoryNode = memoryNodeOf(memoryNodeType);
-  if (status[0] != memoryNode) {
-    throwFatalException("Address error: not on the expected memory node. Expected: %d, actual: %d. Poiter: %p. Page: %p\n.", memoryNode, status[0], start, page[0]);
-  }
-}
-
-int HybridMemory::xmemTagOf(MEMORY_NODE_TYPE memoryNodeType) {
-  int tag;
-  switch (memoryNodeType) {
-    case DRAM:
-      tag = XMEM_AUTO(0);
-      break;
-    case DRAM_SECONDARY_PRIORITY:
-      tag = XMEM_AUTO(1);
-      break;
-    case DRAM_THIRD_PRIORITY:
-      tag = XMEM_AUTO(2);
-      break;
-    case DRAM_FOURTH_PRIORITY:
-      tag = XMEM_AUTO(3);
-      break;
-    case DRAM_FIFITH_PRIORITY:
-      tag = XMEM_AUTO(4);
-      break;
-    case NVM:
-      tag = XMEM_AUTO(5);
-      break;
-    default:
-      throwFatalException("Non supported memory node type");
-  }
-  return tag;
+  g_xmemTags[g_numXmemTags] = name;
+  MEMORY_NODE_TYPE result = g_numXmemTags;
+  g_numXmemTags++;
+  return result;
+  //return OS_HEAP;
 }
 
 /*xmem_classifier_t HybridMemory::xmemClassifierOf(MEMORY_NODE_TYPE memoryNodeType) {
@@ -111,7 +94,7 @@ int HybridMemory::xmemTagOf(MEMORY_NODE_TYPE memoryNodeType) {
 }*/
 
 
-HybridMemory::MEMORY_NODE_TYPE HybridMemory::tablePriorityOf(const std::string& name) {
+MEMORY_NODE_TYPE HybridMemory::tablePriorityOf(const std::string& name) {
   /*MEMORY_NODE_TYPE priority;
   if (name.compare("CUSTOMER_NAME") == 0) {
     priority = NVM;
@@ -122,11 +105,11 @@ HybridMemory::MEMORY_NODE_TYPE HybridMemory::tablePriorityOf(const std::string& 
   }
   //fprintf(stderr, "Got table priority of (%s) as (%d).\n", name.c_str(), priority);
   return priority;*/
-  return DRAM_FIFITH_PRIORITY;
+  return xmemTagOf(name);
 }
 
-HybridMemory::MEMORY_NODE_TYPE HybridMemory::indexPriorityOf(const std::string& name) {
-  MEMORY_NODE_TYPE priority;
+MEMORY_NODE_TYPE HybridMemory::indexPriorityOf(const std::string& name) {
+  /*MEMORY_NODE_TYPE priority;
   if (name.find("TREE") != std::string::npos) {
     priority = DRAM_SECONDARY_PRIORITY;
   } else if (name.find("HASH") != std::string::npos) {
@@ -136,10 +119,11 @@ HybridMemory::MEMORY_NODE_TYPE HybridMemory::indexPriorityOf(const std::string& 
     fprintf(stderr, "Got index priority of (%s) as (%d).\n", name.c_str(), priority);
   }
   //fprintf(stderr, "Got index priority of (%s) as (%d).\n", name.c_str(), priority);
-  return priority;
+  return priority;*/
+  return xmemTagOf(name);
 }
 
-HybridMemory::MEMORY_NODE_TYPE HybridMemory::otherPriorityOf(const std::string& name) {
+MEMORY_NODE_TYPE HybridMemory::otherPriorityOf(const std::string& name) {
   MEMORY_NODE_TYPE priority;
   if (name.compare("tempTable") == 0) {
     priority = OS_HEAP;
@@ -149,6 +133,10 @@ HybridMemory::MEMORY_NODE_TYPE HybridMemory::otherPriorityOf(const std::string& 
     priority = OS_HEAP;
   } else if (name.compare("binaryValue") == 0) {
     priority = OS_HEAP;
+  } else if (name.compare("arrayValue") == 0) {
+    priority = OS_HEAP;
+  } else if (name.compare("miscel") == 0) {
+    priority = OS_HEAP;
   } else {
     throwFatalException("unsupported priority type: %s\n", name.c_str());
   }
@@ -156,18 +144,3 @@ HybridMemory::MEMORY_NODE_TYPE HybridMemory::otherPriorityOf(const std::string& 
   return priority;
 }
 
-
-int HybridMemory::memoryNodeOf(MEMORY_NODE_TYPE memoryNodeType) {
-  int memoryNode = 0;
-  switch (memoryNodeType) {
-    case DRAM:
-      memoryNode = 0;
-      break;
-    case NVM:
-      memoryNode = 2;
-      break;
-    default:
-      throwFatalException("Non supported memory node type");
-  }
-  return memoryNode;
-}
