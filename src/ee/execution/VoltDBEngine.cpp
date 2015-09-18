@@ -530,6 +530,8 @@ void VoltDBEngine::clearBench() {
   m_numBackendCalls = 0;
   m_numIndexExecutorsCalls = 0;
 
+  HybridMemory::clearXmemTags();
+
   printf("Backend[%d]: clear time\n",
          m_executorContext->m_partitionId);
   fflush(stdout);

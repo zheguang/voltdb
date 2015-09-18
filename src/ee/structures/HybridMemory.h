@@ -9,7 +9,6 @@
 namespace voltdb {
 
   typedef int tag_t;
-  const tag_t OS_HEAP = -1;
 
   class HybridMemory {
   public:
@@ -22,6 +21,7 @@ namespace voltdb {
     static tag_t otherPriorityOf(const std::string& name);
 
     static std::string getXmemTagsString();
+    static void clearXmemTags();
 
   private:
       HybridMemory();

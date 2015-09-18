@@ -636,7 +636,7 @@ class NValue {
     // Helpers for inList.
     // These are purposely not inlines to avoid exposure of NValueList details.
     void deserializeIntoANewNValueList(SerializeInput &input, Pool *dataPool);
-    void allocateANewNValueList(size_t elementCount, ValueType elementType);
+    void allocateANewNValueList(size_t elementCount, ValueType elementType, const tag_t& xmemTag);
 
     // Promotion Rules. Initialized in NValue.cpp
     static ValueType s_intPromotionTable[];
@@ -2167,10 +2167,10 @@ class NValue {
         return retval;
     }
 
-    static NValue getAllocatedArrayValueFromSizeAndType(size_t elementCount, ValueType elementType)
+    static NValue getAllocatedArrayValueFromSizeAndType(size_t elementCount, ValueType elementType, const tag_t& xmemTag)
     {
         NValue retval(VALUE_TYPE_ARRAY);
-        retval.allocateANewNValueList(elementCount, elementType);
+        retval.allocateANewNValueList(elementCount, elementType, xmemTag);
         return retval;
     }
 

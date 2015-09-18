@@ -1,7 +1,6 @@
 #include <numa.h>
 #include <numaif.h>
 #include <cstdlib>
-#include <map>
 #include <string>
 
 #include "HybridMemory.h"
@@ -11,13 +10,14 @@
 #define PAGE_SIZE (1 << 12)
 #define PAGE_MASK ~(PAGE_SIZE - 1)
 
-using std::map;
 using std::string;
 
 using namespace voltdb;
 
-map<string,int> xmemTags;
-int nextTag = 0;
+static const int MAX_NUM_XMEM_TAGS = 128;
+static string g_xmemTags[MAX_NUM_XMEM_TAGS];
+static int g_numXmemTags = 0;
+static const tag_t OS_HEAP = -2;
 
 void* HybridMemory::alloc(size_t sz, const tag_t& tag) {
   void* result;
@@ -47,12 +47,22 @@ void HybridMemory::free(void* start, const tag_t& tag) {
   }
 }
 
-int HybridMemory::xmemTagOf(const string& name) {
-  if (xmemTags.find(name) == xmemTags.end()) {
-    xmemTags[name] = nextTag;
+tag_t HybridMemory::xmemTagOf(const string& name) {
+  /*if (g_xmemTags.find(name) == g_xmemTags.end()) {
+    g_xmemTags[name] = nextTag;
     nextTag++;
   }
-  return xmemTags[name];
+  return g_xmemTags[name];*/
+  for (int i = 0; i < g_numXmemTags; i++) {
+    if (g_xmemTags[i].compare(name) == 0) {
+      return i;
+    }
+  }
+  assert(g_numXmemTags < MAX_NUM_XMEM_TAGS);
+  g_xmemTags[g_numXmemTags] = name;
+  tag_t result = g_numXmemTags;
+  g_numXmemTags++;
+  return result;
 }
 
 tag_t HybridMemory::tablePriorityOf(const std::string& name) {
@@ -73,6 +83,8 @@ tag_t HybridMemory::otherPriorityOf(const std::string& name) {
     result = OS_HEAP;
   } else if (name.compare("binaryValue") == 0) {
     result = OS_HEAP;
+  } else if (name.compare("arrayValue") == 0) {
+    result = OS_HEAP;
   } else if (name.compare("miscel") == 0) {
     result = OS_HEAP;
   } else {
@@ -84,12 +96,17 @@ tag_t HybridMemory::otherPriorityOf(const std::string& name) {
 string HybridMemory::getXmemTagsString() {
   const size_t buffer_len = 2048;
   char buffer[buffer_len];
-  for (map<string,int>::const_iterator it = xmemTags.begin(); it != xmemTags.end(); it++) {
+  //for (map<string,int>::const_iterator it = g_xmemTags.begin(); it != g_xmemTags.end(); it++) {
+  for (int i = 0; i < g_numXmemTags; i++) {
     assert(strlen(buffer) < buffer_len);
     char* next_loc = buffer + strlen(buffer);
     size_t remain_len = buffer_len - strlen(buffer);
-    snprintf(next_loc, remain_len, "%d -> %s\n", it->second, it->first.c_str());
+    snprintf(next_loc, remain_len, "%d -> %s\n", i, g_xmemTags[i].c_str());
   }
 
   return string(buffer);
+}
+
+void HybridMemory::clearXmemTags() {
+  g_numXmemTags = 0;
 }

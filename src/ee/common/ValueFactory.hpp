@@ -96,7 +96,7 @@ public:
 
     static NValue getArrayValueFromSizeAndType(size_t elementCount, ValueType elementType)
     {
-        return NValue::getAllocatedArrayValueFromSizeAndType(elementCount, elementType);
+        return NValue::getAllocatedArrayValueFromSizeAndType(elementCount, elementType, HybridMemory::otherPriorityOf("arrayValue"));
     }
 
     static inline NValue getAddressValue(void *address) {
