@@ -32,8 +32,7 @@ void* HybridMemory::alloc(size_t sz, MEMORY_NODE_TYPE memoryNodeType) {
       }
       break;
     default:
-      result = std::malloc(sz);
-      //result = xmalloc(memoryNodeType, sz);
+      result = xmalloc(memoryNodeType, sz);
       if (!result) {
         throwFatalException("Cannot allocate using xmalloc.");
       }
@@ -47,8 +46,7 @@ void HybridMemory::free(void* start, size_t sz, MEMORY_NODE_TYPE memoryNodeType)
       std::free(start);
       break;
     default:
-      std::free(start);
-      //xfree(start);
+      xfree(start);
   }
 }
 
