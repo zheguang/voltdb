@@ -201,6 +201,7 @@ CompactingMap<Key, Data, Compare, hasRank>::CompactingMap(const std::string& ind
       m_unique(unique),
       m_comper(comper)
   {
+    fprintf(stderr, "[debug] creating tree compacting map: %s\n", indexName.c_str());
     NIL.left = NIL.right = NIL.parent = &NIL;
     NIL.color = BLACK;
     if (hasRank)

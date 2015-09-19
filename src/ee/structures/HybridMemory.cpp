@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <map>
 #include <string>
+#include <pthread.h>
 
 #include "HybridMemory.h"
 #include "common/FatalException.hpp"
@@ -15,6 +16,7 @@ using namespace voltdb;
 using std::map;
 using std::string;
 
+//static pthread_mutex_t g_xmemTagsMutex;
 static const int MAX_NUM_TAGS = 128;
 static string g_xmemTags[MAX_NUM_TAGS];
 static int g_numXmemTags = 0;
@@ -54,14 +56,17 @@ MEMORY_NODE_TYPE HybridMemory::xmemTagOf(const std::string& name) {
   /*if (g_xmemTags.find(name) == g_xmemTags.end()) {
     g_xmemTags[name] = (int) g_xmemTags.size();
   }*/
+  //pthread_mutex_lock(&g_xmemTagsMutex);
   for (int i = 0; i < g_numXmemTags; i++) {
     if (g_xmemTags[i].compare(name) == 0) {
+      //pthread_mutex_unlock(&g_xmemTagsMutex);
       return i;
     }
   }
   g_xmemTags[g_numXmemTags] = name;
   MEMORY_NODE_TYPE result = g_numXmemTags;
   g_numXmemTags++;
+  //pthread_mutex_unlock(&g_xmemTagsMutex);
   return result;
   //return OS_HEAP;
 }
@@ -120,7 +125,9 @@ MEMORY_NODE_TYPE HybridMemory::indexPriorityOf(const std::string& name) {
   }
   //fprintf(stderr, "Got index priority of (%s) as (%d).\n", name.c_str(), priority);
   return priority;*/
-  return xmemTagOf(name);
+  MEMORY_NODE_TYPE result = xmemTagOf(name);
+  fprintf(stderr, "[debug] got index priority of: %d -> %s\n", result, name.c_str());
+  return result;
 }
 
 MEMORY_NODE_TYPE HybridMemory::otherPriorityOf(const std::string& name) {
@@ -145,20 +152,15 @@ MEMORY_NODE_TYPE HybridMemory::otherPriorityOf(const std::string& name) {
 }
 
 string HybridMemory::getXmemTagsString() {
-  const size_t buffer_len = 2048;
-  char buffer[buffer_len];
   //for (map<string,int>::const_iterator it = xmemTags.begin(); it != xmemTags.end(); it++) {
+  string result = "";
   for (int i = 0; i < g_numXmemTags; i++) {
-    assert(strlen(buffer) < buffer_len);
-    char* next_loc = buffer + strlen(buffer);
-    size_t remain_len = buffer_len - strlen(buffer);
-    snprintf(next_loc, remain_len, "%d -> %s\n", i, g_xmemTags[i].c_str());
+    const size_t buffer_len = 128;
+    char buffer[buffer_len];
+    snprintf(buffer, buffer_len, "%d -> %s\n", i, g_xmemTags[i].c_str());
+    result += string(buffer);
   }
 
-  return string(buffer);
-}
-
-void HybridMemory::clearXmemTags() {
-  g_numXmemTags = 0;
+  return result;
 }
 

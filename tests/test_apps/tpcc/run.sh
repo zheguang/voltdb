@@ -66,9 +66,9 @@ function client() {
     srccompile
     java -classpath obj:$CLASSPATH:obj com.MyTPCC \
         --servers=localhost \
-        --duration=180 \
-        --warehouses=512 \
-        --scalefactor=8
+        --duration=20 \
+        --warehouses=64 \
+        --scalefactor=16
 }
 
 function help() {
