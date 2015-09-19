@@ -17,10 +17,41 @@ using std::map;
 using std::string;
 
 //static pthread_mutex_t g_xmemTagsMutex;
-static const int MAX_NUM_TAGS = 128;
-static string g_xmemTags[MAX_NUM_TAGS];
+//static const int MAX_NUM_TAGS = 128;
+//static string g_xmemTags[MAX_NUM_TAGS];
+static string g_xmemTags[] = {
+    "VOLTDB_AUTOGEN_CONSTRAINT_IDX_C_PK_HASH",
+    "IDX_CUSTOMER_TREE",
+    "VOLTDB_AUTOGEN_CONSTRAINT_IDX_C_U_TREE",
+    "IDX_CUSTOMER_NAME_TREE",
+    "VOLTDB_AUTOGEN_CONSTRAINT_IDX_D_PK_HASH",
+    "VOLTDB_AUTOGEN_CONSTRAINT_IDX_I_PK_TREE",
+    "VOLTDB_AUTOGEN_IDX_PK_LOADER_PERMIT_PERMIT",
+    "VOLTDB_AUTOGEN_CONSTRAINT_IDX_NO_PK_TREE",
+    "VOLTDB_AUTOGEN_CONSTRAINT_IDX_O_PK_HASH",
+    "IDX_ORDERS_HASH",
+    "VOLTDB_AUTOGEN_CONSTRAINT_IDX_O_U_HASH",
+    "VOLTDB_AUTOGEN_CONSTRAINT_IDX_OL_PK_HASH",
+    "IDX_ORDER_LINE_TREE",
+    "VOLTDB_AUTOGEN_IDX_PK_RUN_PERMIT_PERMIT",
+    "VOLTDB_AUTOGEN_CONSTRAINT_IDX_S_PK_HASH",
+    "VOLTDB_AUTOGEN_CONSTRAINT_IDX_W_PK_TREE",
+    "LOADER_PERMIT",
+    "STOCK",
+    "WAREHOUSE",
+    "DISTRICT",
+    "CUSTOMER",
+    "ORDERS",
+    "NEW_ORDER",
+    "ORDER_LINE",
+    "HISTORY",
+    "ITEM",
+    "CUSTOMER_NAME",
+    "RUN_PERMIT"
+};
 static int g_numXmemTags = 0;
 static const MEMORY_NODE_TYPE OS_HEAP = -2;
+static const MEMORY_NODE_TYPE UNKNOWN = 44;
 
 void* HybridMemory::alloc(size_t sz, MEMORY_NODE_TYPE memoryNodeType) {
   void* result;
@@ -61,12 +92,14 @@ MEMORY_NODE_TYPE HybridMemory::xmemTagOf(const std::string& name) {
       return i;
     }
   }
-  g_xmemTags[g_numXmemTags] = name;
-  MEMORY_NODE_TYPE result = g_numXmemTags;
-  g_numXmemTags++;
-  //pthread_mutex_unlock(&g_xmemTagsMutex);
-  return result;
+  //g_xmemTags[g_numXmemTags] = name;
+  //MEMORY_NODE_TYPE result = g_numXmemTags;
+  //g_numXmemTags++;
+  ////pthread_mutex_unlock(&g_xmemTagsMutex);
+  //return result;
   //return OS_HEAP;
+  fprintf(stderr, "[warn] cannot find xmem tag for: %s; use %d\n", name.c_str(), UNKNOWN);
+  return UNKNOWN;
 }
 
 /*xmem_classifier_t HybridMemory::xmemClassifierOf(MEMORY_NODE_TYPE memoryNodeType) {
