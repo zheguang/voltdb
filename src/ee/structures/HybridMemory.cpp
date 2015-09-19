@@ -49,7 +49,7 @@ static string g_xmemTags[] = {
     "CUSTOMER_NAME",
     "RUN_PERMIT"
 };
-static int g_numXmemTags = 0;
+static const int g_numXmemTags = 28;
 static const MEMORY_NODE_TYPE OS_HEAP = -2;
 static const MEMORY_NODE_TYPE UNKNOWN = 44;
 
