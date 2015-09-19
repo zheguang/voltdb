@@ -126,7 +126,6 @@ MEMORY_NODE_TYPE HybridMemory::indexPriorityOf(const std::string& name) {
   //fprintf(stderr, "Got index priority of (%s) as (%d).\n", name.c_str(), priority);
   return priority;*/
   MEMORY_NODE_TYPE result = xmemTagOf(name);
-  fprintf(stderr, "[debug] got index priority of: %d -> %s\n", result, name.c_str());
   return result;
 }
 
