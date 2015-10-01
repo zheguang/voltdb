@@ -182,12 +182,12 @@ void setupSigHandler(void) {
 }
 
 SHAREDLIB_JNIEXPORT jint JNICALL Java_org_voltdb_jni_ExecutionEngine_nativeXmemInit(JNIEnv *env, jobject obj) {
-    xmem_init();
+    //xmem_init();
     return org_voltdb_jni_ExecutionEngine_ERRORCODE_SUCCESS;
 }
 
 SHAREDLIB_JNIEXPORT jint JNICALL Java_org_voltdb_jni_ExecutionEngine_nativeXmemDestroy(JNIEnv *env, jobject obj) {
-    xmem_destroy();
+    //xmem_destroy();
     return org_voltdb_jni_ExecutionEngine_ERRORCODE_SUCCESS;
 }
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -e
 
 APPNAME="tpcc"
 
@@ -55,10 +56,16 @@ function catalog() {
 
 # run the voltdb server locally
 function server() {
+    echo "[info] xmem wrapper build"
+    (cd $VOLTDB_BIN/../lib/cc && make clean && make)
+    echo "[info] start xmem init"
+    $VOLTDB_BIN/../lib/cc/VoltDBXmem.out init
     # if a catalog doesn't exist, build one
     if [ ! -f $APPNAME.jar ]; then catalog; fi
     # run the server
     $VOLTDB create -d deployment.xml -l $LICENSE -H $HOST $APPNAME.jar
+    echo "[info] start xmem destroy"
+    $VOLTDB_BIN/../lib/cc/VoltDBXmem.out destroy
 }
 
 # run the client that drives the example
